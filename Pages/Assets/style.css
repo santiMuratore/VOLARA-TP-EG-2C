@@ -1,0 +1,994 @@
+/* ─── Variables ─────────────────────────────────────────── */
+:root {
+    --volara-red:        #E51B23;
+    --volara-red-hover:  #C9141C;
+    --volara-red-light:  #FDEAEB;
+    --volara-dark:       #151D25;
+    --volara-black:      #0A0E13;
+    --volara-white:      #FFFFFF;
+    --volara-gray:       #6B7280;
+    --volara-gray-light: #F4F6F8;
+    --volara-border:     #DDE2E7;
+
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius-sm:  8px;
+    --radius-md:  12px;
+    --radius-lg:  16px;
+    --radius-xl:  24px;
+    --shadow-sm:  0 1px 3px rgba(21, 29, 37, 0.06);
+    --shadow-md:  0 4px 16px rgba(21, 29, 37, 0.08);
+    --shadow-lg:  0 8px 32px rgba(21, 29, 37, 0.12);
+    --transition: 0.2s ease;
+    --navbar-h:   72px;
+}
+
+/* ─── Reset & Base ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-family: var(--font-primary);
+    color: var(--volara-dark);
+    background: var(--volara-white);
+    line-height: 1.6;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main { flex: 1; }
+
+a {
+    color: var(--volara-red);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+a:hover { color: var(--volara-red-hover); }
+
+img { max-width: 100%; height: auto; }
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--volara-dark);
+}
+
+/* ─── Navbar ────────────────────────────────────────────── */
+.volara-navbar {
+    background: var(--volara-white);
+    border-bottom: 1px solid var(--volara-border);
+    min-height: var(--navbar-h);
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    transition: box-shadow var(--transition), border-color var(--transition);
+}
+.volara-navbar.scrolled {
+    border-color: transparent;
+    box-shadow: 0 4px 18px rgba(21, 29, 37, 0.1);
+}
+
+.volara-navbar .navbar-brand img {
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+    display: block;
+    background: var(--volara-white);
+}
+.volara-navbar .navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    padding: 0;
+}
+
+.volara-navbar .nav-link {
+    color: var(--volara-dark);
+    font-weight: 500;
+    font-size: 0.925rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: var(--radius-sm);
+    transition: color var(--transition), background var(--transition), transform var(--transition);
+}
+.volara-navbar .nav-link:hover,
+.volara-navbar .nav-link.active {
+    color: var(--volara-red);
+    background: var(--volara-red-light);
+}
+.volara-navbar .nav-link:hover { transform: translateY(-1px); }
+.volara-navbar .nav-link i { font-size: 0.9rem; }
+.volara-navbar .navbar-nav.me-auto { gap: 0.5rem; }
+
+.volara-navbar .navbar-toggler {
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+.volara-navbar .navbar-toggler:focus { box-shadow: none; }
+
+.user-menu .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.user-menu .nav-link::after { margin-left: 0.15rem; }
+.user-menu .dropdown-menu {
+    min-width: 12rem;
+    margin-top: 0.65rem;
+    padding: 0.45rem;
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-md);
+}
+.user-menu .dropdown-item {
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+}
+.user-menu .dropdown-item:hover { background: var(--volara-gray-light); }
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--volara-red-light);
+    color: var(--volara-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+.profile-avatar { width: 52px; height: 52px; font-size: 1rem; flex: 0 0 auto; }
+
+/* ─── Buttons ───────────────────────────────────────────── */
+.btn-volara {
+    background: var(--volara-red);
+    color: var(--volara-white);
+    border: 2px solid var(--volara-red);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.925rem;
+    padding: 0.625rem 1.5rem;
+    transition: background var(--transition), border-color var(--transition), transform 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+.btn-volara:hover {
+    background: var(--volara-red-hover);
+    border-color: var(--volara-red-hover);
+    color: var(--volara-white);
+    transform: translateY(-1px);
+}
+.btn-volara:active { transform: translateY(0); }
+.btn-volara:focus-visible {
+    outline: 2px solid var(--volara-red);
+    outline-offset: 2px;
+}
+
+.btn-volara-outline {
+    background: transparent;
+    color: var(--volara-red);
+    border: 2px solid var(--volara-red);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.925rem;
+    padding: 0.625rem 1.5rem;
+    transition: all var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+.btn-volara-outline:hover {
+    background: var(--volara-red);
+    color: var(--volara-white);
+}
+
+.btn-volara-dark {
+    background: var(--volara-dark);
+    color: var(--volara-white);
+    border: 2px solid var(--volara-dark);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    transition: all var(--transition);
+    cursor: pointer;
+}
+.btn-volara-dark:hover {
+    background: var(--volara-black);
+    border-color: var(--volara-black);
+    color: var(--volara-white);
+}
+
+.btn-volara-sm {
+    padding: 0.375rem 1rem;
+    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+}
+
+.btn-volara-lg {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+}
+
+/* ─── Cards ─────────────────────────────────────────────── */
+.volara-card {
+    background: var(--volara-white);
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: box-shadow var(--transition), transform var(--transition);
+}
+.volara-card:hover { box-shadow: var(--shadow-md); }
+
+.volara-card-flat {
+    background: var(--volara-gray-light);
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+}
+
+.stat-card {
+    background: var(--volara-white);
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--volara-dark);
+    line-height: 1;
+}
+.stat-card .stat-label {
+    font-size: 0.85rem;
+    color: var(--volara-gray);
+    font-weight: 500;
+}
+.stat-card .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+.stat-icon-red    { background: var(--volara-red-light); color: var(--volara-red); }
+.stat-icon-dark   { background: #E8ECF0; color: var(--volara-dark); }
+
+/* ─── Flight Cards ──────────────────────────────────────── */
+.flight-card {
+    background: var(--volara-white);
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    transition: box-shadow var(--transition), border-color var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+.flight-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: transparent;
+}
+
+.flight-card .promo-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.flight-route {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.flight-airport {
+    text-align: center;
+    min-width: 70px;
+}
+.flight-airport .code {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--volara-dark);
+    line-height: 1;
+}
+.flight-airport .time {
+    font-size: 0.85rem;
+    color: var(--volara-gray);
+    margin-top: 0.25rem;
+}
+.flight-airport .city {
+    font-size: 0.75rem;
+    color: var(--volara-gray);
+}
+
+.flight-line {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    position: relative;
+}
+.flight-line::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--volara-border);
+    transform: translateY(-50%);
+}
+.flight-line .duration {
+    background: var(--volara-white);
+    padding: 0 0.75rem;
+    font-size: 0.8rem;
+    color: var(--volara-gray);
+    position: relative;
+    z-index: 1;
+}
+.flight-line .plane-icon {
+    background: var(--volara-white);
+    padding: 0 0.5rem;
+    color: var(--volara-red);
+    position: relative;
+    z-index: 1;
+    font-size: 1.1rem;
+}
+
+.flight-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--volara-border);
+    align-items: center;
+}
+.flight-meta-item {
+    font-size: 0.85rem;
+    color: var(--volara-gray);
+}
+.flight-meta-item strong { color: var(--volara-dark); }
+
+.flight-price {
+    margin-left: auto;
+    text-align: right;
+}
+.flight-price .amount {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--volara-dark);
+}
+.flight-price .original {
+    font-size: 0.85rem;
+    color: var(--volara-gray);
+    text-decoration: line-through;
+}
+
+/* ─── Badges ────────────────────────────────────────────── */
+.volara-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+.badge-pending   { background: #FEF3C7; color: #92400E; }
+.badge-approved  { background: #D1FAE5; color: #065F46; }
+.badge-confirmed { background: #DBEAFE; color: #1E40AF; }
+.badge-denied    { background: #FEE2E2; color: #991B1B; }
+.badge-cancelled { background: #F3F4F6; color: #6B7280; }
+.badge-neutral   { background: #E8ECF0; color: var(--volara-dark); }
+.badge-promo     { background: var(--volara-red-light); color: var(--volara-red); }
+
+/* ─── Forms ─────────────────────────────────────────────── */
+.volara-input,
+.volara-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--volara-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-primary);
+    font-size: 0.925rem;
+    color: var(--volara-dark);
+    background: var(--volara-white);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+.volara-input:focus,
+.volara-select:focus {
+    outline: none;
+    border-color: var(--volara-red);
+    box-shadow: 0 0 0 3px rgba(229, 27, 35, 0.12);
+}
+.volara-input::placeholder { color: #A0A8B0; }
+
+.volara-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--volara-dark);
+    margin-bottom: 0.375rem;
+}
+
+.form-group { margin-bottom: 1.25rem; }
+
+.form-error {
+    color: var(--volara-red);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.is-invalid {
+    border-color: var(--volara-red) !important;
+}
+
+/* ─── Hero ──────────────────────────────────────────────── */
+.hero {
+    background-image: url('../img/destinos/138416-avion_blanco_en_el_aire_durante_el_dia-3840x2160.jpg');
+    background-size: cover;
+    background-position: center 42%;
+    padding: 4rem 0 5rem;
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 14, 19, 0.56);
+    pointer-events: none;
+}
+.hero > .container {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 800;
+    color: var(--volara-white);
+    line-height: 1.15;
+    margin-bottom: 1rem;
+}
+.hero-title span { color: #FF6B70; }
+
+.hero-subtitle {
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.88);
+    max-width: 520px;
+    margin-bottom: 2.5rem;
+}
+
+/* ─── Search Box ────────────────────────────────────────── */
+.search-box {
+    background: var(--volara-white);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--volara-border);
+}
+
+.search-box .trip-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.trip-toggle-btn {
+    padding: 0.5rem 1.25rem;
+    border-radius: 100px;
+    border: 1.5px solid var(--volara-border);
+    background: transparent;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--volara-gray);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.trip-toggle-btn.active {
+    background: var(--volara-red);
+    border-color: var(--volara-red);
+    color: var(--volara-white);
+}
+
+.search-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    align-items: start;
+}
+.search-fields .search-btn-wrap {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 1.65rem;
+}
+.search-fields .form-error {
+    min-height: 1.25rem;
+}
+
+/* ─── Alerts ────────────────────────────────────────────── */
+.volara-alert {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-size: 0.925rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.alert-success { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+.alert-danger  { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.alert-warning { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.alert-info    { background: #DBEAFE; color: #1E40AF; border: 1px solid #BFDBFE; }
+
+/* ─── Tables ────────────────────────────────────────────── */
+.volara-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.volara-table thead th {
+    background: var(--volara-gray-light);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--volara-gray);
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--volara-border);
+}
+.volara-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.volara-table thead th:last-child  { border-radius: 0 var(--radius-sm) 0 0; }
+.volara-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--volara-border);
+    font-size: 0.925rem;
+    vertical-align: middle;
+}
+.volara-table tbody tr:hover { background: var(--volara-gray-light); }
+.volara-table tbody tr:last-child td { border-bottom: none; }
+
+.table-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+.table-action-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--volara-border);
+    background: var(--volara-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--volara-gray);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 0.9rem;
+}
+.table-action-btn:hover {
+    border-color: var(--volara-red);
+    color: var(--volara-red);
+    background: var(--volara-red-light);
+}
+.table-action-btn.danger:hover {
+    border-color: #991B1B;
+    color: #991B1B;
+    background: #FEE2E2;
+}
+
+/* ─── Seat Map ──────────────────────────────────────────── */
+.seat-map-container {
+    background: var(--volara-gray-light);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    overflow-x: auto;
+}
+
+.seat-map {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 280px;
+}
+
+.seat-map-header {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.seat-map-header .cabin-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--volara-gray);
+}
+
+.seat-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.seat-row-number {
+    width: 24px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--volara-gray);
+    font-weight: 600;
+}
+.seat-aisle { width: 24px; }
+
+.seat {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--volara-border);
+    background: var(--volara-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--volara-gray);
+    cursor: pointer;
+    transition: all var(--transition);
+    -webkit-user-select: none;
+    user-select: none;
+}
+.seat:hover:not(.occupied):not(.selected) {
+    border-color: var(--volara-red);
+    color: var(--volara-red);
+}
+.seat.selected {
+    background: var(--volara-red);
+    border-color: var(--volara-red);
+    color: var(--volara-white);
+}
+.seat.occupied {
+    background: #E8ECF0;
+    border-color: #E8ECF0;
+    color: #A0A8B0;
+    cursor: not-allowed;
+}
+
+.seat-legend {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+.seat-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--volara-gray);
+}
+.seat-legend-item .seat { width: 24px; height: 24px; cursor: default; pointer-events: none; }
+
+/* ─── Flight detail & seat selection ───────────────────── */
+.flight-detail-layout,
+.seat-selection-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.75fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+.flight-detail-card { padding: 2rem; }
+.flight-detail-route {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--volara-border);
+    border-bottom: 1px solid var(--volara-border);
+}
+.flight-detail-route > div:not(.flight-detail-line) { display: grid; gap: 0.25rem; }
+.flight-detail-route > div:last-child { text-align: right; }
+.flight-detail-route strong { font-size: 2.5rem; color: var(--volara-dark); line-height: 1; }
+.flight-detail-route span { color: var(--volara-gray); font-size: 0.85rem; }
+.flight-detail-route time { font-weight: 700; font-size: 1.1rem; }
+.flight-detail-line { display: grid; justify-items: center; gap: 0.4rem; color: var(--volara-red); }
+.flight-detail-line span { color: var(--volara-gray); font-size: 0.75rem; white-space: nowrap; }
+.flight-detail-line i { font-size: 1.4rem; }
+.flight-detail-info,
+.seat-summary-details,
+.reservation-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1.5rem 0 0; }
+.flight-detail-info div,
+.seat-summary-details div,
+.reservation-details div { display: grid; gap: 0.25rem; }
+.flight-detail-info dt,
+.seat-summary-details dt,
+.reservation-details dt { color: var(--volara-gray); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+.flight-detail-info dd,
+.seat-summary-details dd,
+.reservation-details dd { margin: 0; font-weight: 600; }
+.flight-summary-card { position: sticky; top: 96px; }
+.eyebrow { color: var(--volara-red); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.flight-summary-price { display: grid; gap: 0.15rem; margin: 1.5rem 0; }
+.flight-summary-price span { color: var(--volara-gray); font-size: 0.8rem; }
+.flight-summary-price strong { color: var(--volara-dark); font-size: 2rem; line-height: 1.1; }
+.flight-summary-price del { color: var(--volara-gray); font-size: 0.85rem; }
+.seat-cabin-panel { background: #F7F8FA; border: 1px solid var(--volara-border); border-radius: var(--radius-xl); padding: 1.5rem; }
+.seat-cabin-header { display: flex; justify-content: space-between; gap: 1rem; align-items: start; margin-bottom: 1.25rem; }
+.seat-cabin-header h2 { margin: 0.35rem 0 0; font-size: 1.35rem; }
+.seat-class-label { background: var(--volara-dark); color: var(--volara-white); border-radius: 100px; padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 700; }
+.seat-airplane { background: var(--volara-white); border: 1px solid var(--volara-border); border-radius: 48% 48% 20px 20px / 28px 28px 20px 20px; padding: 1.25rem 1rem 1.5rem; }
+.seat-cockpit { display: flex; justify-content: center; align-items: center; gap: 0.5rem; color: var(--volara-gray); font-size: 0.75rem; margin-bottom: 1rem; }
+.seat-cockpit i { color: var(--volara-red); }
+.seat-map-modern { gap: 0.65rem; }
+.seat-map-modern .seat-map-header { display: grid; grid-template-columns: 24px 1fr; width: min(100%, 340px); margin-bottom: 0; }
+.seat-column-labels { display: grid; grid-template-columns: repeat(6, 40px); gap: 0.5rem; justify-content: center; color: var(--volara-gray); font-size: 0.7rem; font-weight: 700; }
+.seat-map-modern .seat-row { gap: 0.5rem; }
+.seat-map-modern .seat { background: #DDEAFF; border-color: #C5D9F5; color: #37649A; border-radius: 8px 8px 5px 5px; }
+.seat-map-modern .seat:hover:not(.occupied):not(.selected) { background: #BBD3F5; border-color: #7FAAE5; color: #244B7B; }
+.seat-map-modern .seat.selected { background: var(--volara-red); border-color: var(--volara-red); color: var(--volara-white); }
+.seat-map-modern .seat.occupied { background: #EEF0F2; border-color: #E1E4E8; color: #A0A8B0; }
+.seat-map-modern .seat-aisle { width: 1rem; }
+.reservation-success { text-align: center; padding: 2.5rem; }
+.reservation-success-icon { width: 56px; height: 56px; display: grid; place-items: center; margin: 0 auto 1rem; border-radius: 50%; background: #D1FAE5; color: #047857; font-size: 1.75rem; }
+.reservation-code { display: grid; gap: 0.25rem; margin: 1.5rem 0; padding: 1rem; background: var(--volara-gray-light); border-radius: var(--radius-md); }
+.reservation-code span { color: var(--volara-gray); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+.reservation-code strong { letter-spacing: 0.12em; font-size: 1.25rem; }
+.reservation-list { display: grid; gap: 1rem; }
+.reservation-card { padding: 1.5rem; }
+.reservation-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.reservation-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px solid var(--volara-border); color: var(--volara-gray); font-size: 0.875rem; }
+.reservation-card-meta i { color: var(--volara-red); margin-right: 0.25rem; }
+.reservation-card-meta strong { margin-left: auto; color: var(--volara-dark); font-size: 1.25rem; }
+.reservation-card-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
+
+/* ─── Footer ────────────────────────────────────────────── */
+.volara-footer {
+    background: var(--volara-dark);
+    color: rgba(255,255,255,0.7);
+    padding: 3.5rem 0 0;
+    margin-top: auto;
+}
+.volara-footer a {
+    color: rgba(255,255,255,0.7);
+    transition: color var(--transition);
+}
+.volara-footer a:hover { color: var(--volara-white); }
+
+.footer-brand img { height: 36px; filter: brightness(0) invert(1); opacity: 0.9; }
+.footer-brand p { font-size: 0.875rem; margin-top: 1rem; max-width: 280px; }
+
+.footer-heading {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--volara-white);
+    margin-bottom: 1rem;
+}
+.footer-links { list-style: none; padding: 0; margin: 0; }
+.footer-links li { margin-bottom: 0.5rem; }
+.footer-links a { font-size: 0.875rem; }
+
+.footer-bottom {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 1.5rem 0;
+    margin-top: 2.5rem;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* ─── Section Utilities ─────────────────────────────────── */
+.section { padding: 4rem 0; }
+.section-gray { background: var(--volara-gray-light); }
+.section-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+.section-subtitle {
+    color: var(--volara-gray);
+    margin-bottom: 2.5rem;
+    font-size: 1rem;
+}
+
+.page-header {
+    background: var(--volara-gray-light);
+    padding: 2.5rem 0;
+    border-bottom: 1px solid var(--volara-border);
+}
+.page-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+.page-header .breadcrumb {
+    margin: 0;
+    font-size: 0.85rem;
+}
+.breadcrumb-item a { color: var(--volara-gray); }
+.breadcrumb-item.active { color: var(--volara-dark); }
+
+/* ─── Pagination ────────────────────────────────────────── */
+.volara-pagination {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+.volara-pagination a,
+.volara-pagination span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--volara-border);
+    color: var(--volara-dark);
+    transition: all var(--transition);
+}
+.volara-pagination a:hover {
+    border-color: var(--volara-red);
+    color: var(--volara-red);
+    background: var(--volara-red-light);
+}
+.volara-pagination .active {
+    background: var(--volara-red);
+    border-color: var(--volara-red);
+    color: var(--volara-white);
+}
+
+/* ─── Dashboard ─────────────────────────────────────────── */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+/* ─── Novedades Cards ───────────────────────────────────── */
+.news-card {
+    background: var(--volara-white);
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: box-shadow var(--transition);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.news-card:hover { box-shadow: var(--shadow-md); }
+.news-card-body { padding: 1.5rem; flex: 1; }
+.news-card-body h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+.news-card-body p { font-size: 0.9rem; color: var(--volara-gray); margin: 0; }
+.news-card-date {
+    font-size: 0.75rem;
+    color: var(--volara-gray);
+    margin-bottom: 0.75rem;
+}
+
+/* ─── Empty State ───────────────────────────────────────── */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--volara-gray);
+}
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+}
+
+/* ─── Responsive ────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .volara-navbar .navbar-collapse {
+        background: var(--volara-white);
+        padding: 1rem;
+        border-top: 1px solid var(--volara-border);
+        margin-top: 0.5rem;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-md);
+    }
+    .volara-navbar .navbar-nav { gap: 0.25rem; }
+    .volara-navbar .nav-link { width: 100%; }
+    .volara-navbar .navbar-nav.ms-auto { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--volara-border); }
+    .volara-navbar .btn-volara-sm { display: inline-flex; width: 100%; justify-content: center; margin-top: 0.25rem; }
+    .user-menu .dropdown-menu { margin-top: 0.25rem; box-shadow: none !important; }
+    .flight-detail-layout,
+    .seat-selection-layout { grid-template-columns: 1fr; }
+    .flight-summary-card { position: static; }
+    .flight-route { gap: 1rem; }
+    .flight-airport .code { font-size: 1.4rem; }
+    .flight-price { margin-left: 0; margin-top: 1rem; text-align: left; }
+}
+
+@media (max-width: 767.98px) {
+    .volara-navbar .navbar-brand img {
+        width: 48px;
+        height: 48px;
+    }
+    .hero { padding: 2.5rem 0 3rem; }
+    .search-box { padding: 1.25rem; border-radius: var(--radius-lg); }
+    .search-fields { grid-template-columns: 1fr; }
+    .section { padding: 2.5rem 0; }
+
+    .volara-table-responsive {
+        display: block;
+        overflow-x: auto;
+    }
+
+    .flight-card { padding: 1.25rem; }
+    .flight-meta { flex-direction: column; align-items: flex-start; }
+
+    .flight-detail-card { padding: 1.25rem; }
+    .flight-detail-route strong { font-size: 2rem; }
+    .flight-detail-route { gap: 0.5rem; }
+    .seat-cabin-panel { padding: 1rem 0.5rem; }
+    .seat-airplane { padding-inline: 0.25rem; overflow-x: auto; }
+    .seat-map-modern .seat { width: 34px; height: 34px; font-size: 0.6rem; }
+    .seat-column-labels { grid-template-columns: repeat(6, 34px); gap: 0.5rem; }
+    .seat-map-modern .seat-row { gap: 0.5rem; }
+    .seat-map-modern .seat-aisle { width: 0.5rem; }
+    .reservation-success { padding: 1.5rem; }
+    .reservation-card { padding: 1.25rem; }
+    .reservation-card-top { flex-direction: column; }
+    .reservation-card-meta { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
+    .reservation-card-meta strong { margin-left: 0; }
+    .reservation-card-actions { justify-content: flex-start; flex-wrap: wrap; }
+
+    .footer-bottom { flex-direction: column; text-align: center; }
+}
+
+@media (max-width: 575.98px) {
+    .hero-title { font-size: 1.75rem; }
+    .seat { width: 34px; height: 34px; font-size: 0.6rem; }
+}
+
+/* ─── Accessibility ─────────────────────────────────────── */
+:focus-visible {
+    outline: 2px solid var(--volara-red);
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
