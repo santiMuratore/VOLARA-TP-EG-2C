@@ -47,6 +47,7 @@ require_once __DIR__ . '/../Includes/header.php';
             <th>Descripción</th>
             <th>Descuento</th>
             <th>Estado</th>
+            <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
@@ -55,6 +56,10 @@ require_once __DIR__ . '/../Includes/header.php';
                 <td><?= htmlspecialchars($promocion['descripcion']) ?></td>
                 <td><?= htmlspecialchars($promocion['descuento']) ?>%</td>
                 <td><?= htmlspecialchars($promocion['estado']) ?></td>
+                <td>
+                    <a href="modificarPromocion.php?id=<?= (int) $promocion['codPromocion'] ?>"
+                    class="btn btn-sm btn-outline-primary">Modificar</a>
+                </td>
             </tr>
         <?php endforeach; ?>
     </tbody>
@@ -77,6 +82,9 @@ require_once __DIR__ . '/../Includes/header.php';
     </ul>
 </nav>
 <?php endif; ?>
+<button class="btn btn-primary" href="altaPromocion.php">
+    Crear promoción
+</button>
 </main>
 
 <?php require_once __DIR__ . '/../Includes/footer.php'; ?>
