@@ -60,6 +60,10 @@ require_once __DIR__ . '/../Includes/header.php';
                     <a href="modificarPromocion.php?id=<?= (int) $promocion['codPromocion'] ?>"
                     class="btn btn-sm btn-outline-primary">Modificar</a>
                 </td>
+                <td>
+                    <a href="eliminarPromocion.php?id=<?= (int) $promocion['codPromocion'] ?>"
+                    class="btn btn-sm btn-outline-danger">Eliminar</a>
+                </td>
             </tr>
         <?php endforeach; ?>
     </tbody>
@@ -82,8 +86,8 @@ require_once __DIR__ . '/../Includes/header.php';
     </ul>
 </nav>
 <?php endif; ?>
-<button class="btn btn-primary" href="altaPromocion.php">
-    Crear promoción
+<button class="btn btn-primary" >
+   <a href="altaPromocion.php">Crear promoción</a> 
 </button>
 </main>
 
