@@ -78,3 +78,7 @@ function usuarioActual(): array
 
     return $usuario;
 }
+function claseInvalida(array $errores, string $campo): string
+    {
+        return isset($errores[$campo]) ? 'is-invalid' : ''; // Devuelve 'is-invalid' si el campo tiene error.
+    }

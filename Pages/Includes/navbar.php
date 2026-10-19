@@ -17,13 +17,14 @@
 
 
 ?>
-<nav>
+<link href="../Assets/style.css" rel="stylesheet"/>
+<nav class="navbar navbar-expand-lg volara-navbar">
     <div>
-        <a href="" title="INICIO" target=_self>
+        <a class="navbar-brand" href="" title="INICIO" target=_self>
             <img src="/../VOLARA-TP-EG-2C/Imagenes/Volara-Sistema_de_aerolineas.png" alt="Inicio VOLARA" height="40">
         </a>
     </div>
-    <div align="right">
+    <div>
         <?php if($usuario){
             echo "Mi perfil";
         }

@@ -2,15 +2,256 @@
     require_once __DIR__ . '/../Includes/functions.php';
     $conexion = conectarDB();
     $titulo = "Vuelos";
+
+    $errores = [];
+    $exito = '';
+    $clases = ['economica', 'premium', 'business'];
+
+    if(isset($_POST["enviar"])){
+        $origen = trim($_POST['origen'] ?? '');
+        $destino = trim($_POST['destino'] ?? '');
+        $fecha = $_POST['fecha'] ?? '';
+        $hora = $_POST['hora'] ?? '';
+        $precio = $_POST['precio'] ?? '';
+        $cantidad = $_POST['cantidad'] ?? '';
+        $clase = $_POST['clase'] ?? '';
+
+        //Validaciones del servidor
+        if ($origen === '') {
+            $errores['origen'] = 'Complete el origen.';
+        }
+        if ($destino === '') {
+            $errores['destino'] = 'Complete el destino.';
+        } elseif (mb_strtolower($origen) === mb_strtolower($destino)) {
+            $errores['destino'] = 'El destino debe ser distinto del origen.';
+        }
+        if ($fecha === '' || strtotime($fecha) === false) {
+            $errores['fecha'] = 'Ingrese una fecha válida.';
+        } elseif ($fecha <= date('Y-m-d')) {
+            $errores['fecha'] = 'La fecha debe ser futura.';
+        }
+        if ($hora === '') {
+            $errores['hora'] = 'Ingrese la hora.';
+        }
+        if (!is_numeric($precio) || $precio <= 0) {
+            $errores['precio'] = 'El precio debe ser mayor a cero.';
+        }
+        if (filter_var($cantidad, FILTER_VALIDATE_INT) === false || $cantidad <= 0) {
+            $errores['cantidad'] = 'La cantidad de asientos debe ser mayor a cero.';
+        }
+        if (!in_array($clase, $clases, true)) {
+            $errores['clase'] = 'Seleccione una clase válida.';
+        }
+
+        // Solo si no hay errores se inserta
+        if (empty($errores)) {
+            //Buscar código IATA
+            $codAerolinea = $_SESSION['codAerolinea'];
+            $consulta = $conexion->prepare("SELECT codigoIATA FROM aerolineas WHERE codAerolinea = :cod");
+            $consulta->execute(['cod' => $codAerolinea]);
+            $iata = $consulta->fetchColumn();
+
+            //Buscar Últimos 3 dígitos
+            $consulta = $conexion->prepare("SELECT MAX(CAST(SUBSTRING(codigoVuelo, 4) AS UNSIGNED)) FROM vuelos WHERE codAerolinea = :cod");
+            $consulta->execute(['cod' => $codAerolinea]);
+            $ultimo = (int) $consulta->fetchColumn();   // MAX da NULL si no hay vuelos; (int) lo vuelve 0
+
+            //Armar códigoVuelo
+            $codigoVuelo = $iata . sprintf('%03d', $ultimo + 1);    //sprintf relleno con 0. '%03d' rellena con 0 hasta 3 dígitos.
+
+            //Insertar Vuelo a DB.
+            $sql = "INSERT INTO vuelos (codigoVuelo, codAerolinea, origen, destino, fecha, hora, precio, asientosTotal, asientosDisponibles, clase)
+                    VALUES (:codigoVuelo, :codAerolinea, :origen, :destino, :fecha, :hora, :precio, :asientos, :asientos, :clase)";
+            try {
+                $consulta = $conexion->prepare($sql);
+                $consulta->execute(['codigoVuelo' => $codigoVuelo,
+                                    'codAerolinea' => $codAerolinea,
+                                    'origen' => $origen,
+                                    'destino' => $destino,
+                                    'fecha' => $fecha,
+                                    'hora' => $hora,
+                                    'precio' => $precio,
+                                    'asientos' => $cantidad,
+                                    'clase' => $clase]);
+                $exito = "Vuelo $codigoVuelo creado correctamente.";
+                $_POST = [];   // vacía el formulario
+            } catch (PDOException $e) {
+                $errores['general'] = 'No se pudo guardar el vuelo.';
+            }
+        }
+    }
+
+    // Vuelos de la aerolínea del CEO logueado (después del INSERT, así aparece el nuevo)
+    $consulta = $conexion->prepare("SELECT codVuelo, codigoVuelo, origen, destino, fecha, hora, precio, asientosTotal, asientosDisponibles, clase
+                                    FROM vuelos
+                                    WHERE codAerolinea = :cod
+                                    ORDER BY fecha, hora");
+    $consulta->execute(['cod' => $_SESSION['codAerolinea'] ?? null]);
+    $vuelos = $consulta->fetchAll(PDO::FETCH_ASSOC);
+
+    $nombresClase = ['economica' => 'Económica', 'premium' => 'Premium', 'business' => 'Business'];
+
     require_once __DIR__ . '/../Includes/header.php';
-
-
-
-
-
-
+    require_once __DIR__ . '/../Includes/navbar.php';
 ?>
+<main>
+    <div class="container py-4">
+        <div class="row g-4">
 
+            <div class="col-lg-5">
+                <div class="volara-card">
+                    <h2 class="h4">Nuevo Vuelo</h2>
+
+                    <?php if ($exito !== ''): ?>
+                        <div class="volara-alert alert-success"><?= htmlspecialchars($exito) ?></div>
+                    <?php endif; ?>
+                    <?php if (isset($errores['general'])): ?>
+                        <div class="volara-alert alert-danger"><?= htmlspecialchars($errores['general']) ?></div>
+                    <?php endif; ?>
+
+                    <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]) ?>" method="post" novalidate>
+
+                        <!-- Fila 1: origen y destino -->
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="volara-label" for="origen">Origen *</label>
+                                <input class="volara-input <?= claseInvalida($errores, 'origen') ?>" type="text" id="origen" name="origen"
+                                       value="<?= htmlspecialchars($_POST['origen'] ?? '') ?>" required>
+                                <?php if (isset($errores['origen'])): ?>
+                                    <div class="form-error"><?= htmlspecialchars($errores['origen']) ?></div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="col-md-6 form-group">
+                                <label class="volara-label" for="destino">Destino *</label>
+                                <input class="volara-input <?= claseInvalida($errores, 'destino') ?>" type="text" id="destino" name="destino"
+                                       value="<?= htmlspecialchars($_POST['destino'] ?? '') ?>" required>
+                                <?php if (isset($errores['destino'])): ?>
+                                    <div class="form-error"><?= htmlspecialchars($errores['destino']) ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Fila 2: fecha y hora -->
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label class="volara-label" for="fecha">Fecha *</label>
+                                <input class="volara-input <?= claseInvalida($errores, 'fecha') ?>" type="date" id="fecha" name="fecha"
+                                       value="<?= htmlspecialchars($_POST['fecha'] ?? '') ?>" required>
+                                <?php if (isset($errores['fecha'])): ?>
+                                    <div class="form-error"><?= htmlspecialchars($errores['fecha']) ?></div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="col-md-6 form-group">
+                                <label class="volara-label" for="hora">Hora *</label>
+                                <input class="volara-input <?= claseInvalida($errores, 'hora') ?>" type="time" id="hora" name="hora"
+                                       value="<?= htmlspecialchars($_POST['hora'] ?? '') ?>" required>
+                                <?php if (isset($errores['hora'])): ?>
+                                    <div class="form-error"><?= htmlspecialchars($errores['hora']) ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Fila 3: clase, precio y cantidad de asientos -->
+                        <div class="row">
+                            <div class="col-md-4 form-group">
+                                <label class="volara-label" for="clase">Clase *</label>
+                                <select class="volara-select <?= claseInvalida($errores, 'clase') ?>" id="clase" name="clase" required>
+                                    <option value="economica" <?= ($_POST['clase'] ?? '') === 'economica' ? 'selected' : '' ?>>Económica</option>
+                                    <option value="premium" <?= ($_POST['clase'] ?? '') === 'premium' ? 'selected' : '' ?>>Premium</option>
+                                    <option value="business" <?= ($_POST['clase'] ?? '') === 'business' ? 'selected' : '' ?>>Business</option>
+                                </select>
+                                <?php if (isset($errores['clase'])): ?>
+                                    <div class="form-error"><?= htmlspecialchars($errores['clase']) ?></div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label class="volara-label" for="precio">Precio *</label>
+                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" step="0.5"
+                                       value="<?= htmlspecialchars($_POST['precio'] ?? '') ?>" required>
+                                <?php if (isset($errores['precio'])): ?>
+                                    <div class="form-error"><?= htmlspecialchars($errores['precio']) ?></div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="col-md-4 form-group">
+                                <label class="volara-label" for="cantidad">Asientos *</label>
+                                <input class="volara-input <?= claseInvalida($errores, 'cantidad') ?>" type="number" id="cantidad" name="cantidad"
+                                       value="<?= htmlspecialchars($_POST['cantidad'] ?? '') ?>" required>
+                                <?php if (isset($errores['cantidad'])): ?>
+                                    <div class="form-error"><?= htmlspecialchars($errores['cantidad']) ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <input type="submit" name="enviar" value="Nuevo Vuelo" class="btn-volara">
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="volara-card">
+                    <h2 class="h4">Vuelos de mi aerolínea</h2>
+                    <p class="section-subtitle mb-3"><?= count($vuelos) ?> <?= count($vuelos) === 1 ? 'registro' : 'registros' ?></p>
+
+                    <?php if (empty($vuelos)): ?>
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="bi bi-airplane"></i></div>
+                            <p>Todavía no cargaste vuelos.</p>
+                        </div>
+                    <?php else: ?>
+                        <div style="max-height: 480px; overflow-y: auto;">
+                            <table class="volara-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vuelo</th>
+                                        <th>Ruta</th>
+                                        <th>Salida</th>
+                                        <th>Disponibilidad</th>
+                                        <th>Precio</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($vuelos as $vuelo): ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?= htmlspecialchars($vuelo['codigoVuelo']) ?></strong><br>
+                                                <small><?= htmlspecialchars($nombresClase[$vuelo['clase']] ?? $vuelo['clase']) ?></small>
+                                            </td>
+                                            <td><?= htmlspecialchars($vuelo['origen']) ?> → <?= htmlspecialchars($vuelo['destino']) ?></td>
+                                            <td>
+                                                <?= date('d/m/Y', strtotime($vuelo['fecha'])) ?><br>
+                                                <small><?= substr($vuelo['hora'], 0, 5) ?></small>
+                                            </td>
+                                            <td>
+                                                <?php if ($vuelo['asientosDisponibles'] > 0): ?>
+                                                    <span class="volara-badge badge-approved"><?= (int) $vuelo['asientosDisponibles'] ?> / <?= (int) $vuelo['asientosTotal'] ?></span>
+                                                <?php else: ?>
+                                                    <span class="volara-badge badge-cancelled">Agotado</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>$<?= number_format($vuelo['precio'], 2, ',', '.') ?></td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button type="button" class="table-action-btn" aria-label="Editar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>"><i class="bi bi-pencil"></i></button>
+                                                    <button type="button" class="table-action-btn danger" aria-label="Eliminar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>"><i class="bi bi-trash"></i></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
 <?php
     require_once __DIR__ . '/../Includes/footer.php';
 ?>
