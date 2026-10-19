@@ -4,6 +4,45 @@ requerirRol('administrador');
 
 $conexion = conectarDB();
 
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $codPromocion = (int) ($_POST['codPromocion'] ?? 0);
+    $accion = $_POST['accion'] ?? '';
+    $paginaVuelta = max(1, (int) ($_POST['pagina'] ?? 1));
+
+    if ($codPromocion < 1 || !in_array($accion, ['aprobar', 'denegar'], true)) {
+        $error = 'La solicitud no es válida.';
+    } else {
+        $nuevoEstado = $accion === 'aprobar' ? 'aprobada' : 'denegada';
+        try {
+            $consulta = $conexion->prepare(
+                "UPDATE promociones
+                 SET estado = :estado
+                 WHERE codPromocion = :codPromocion
+                   AND estado = 'pendiente'"
+            );
+            $consulta->execute([
+                'estado'       => $nuevoEstado,
+                'codPromocion' => $codPromocion,
+            ]);
+
+            if ($consulta->rowCount() === 0) {
+                $error = 'Esa promoción ya no está pendiente.';
+            } else {
+                header('Location: promocionesPendientes.php?pagina=' . $paginaVuelta);
+                exit;
+            }
+        } catch (PDOException $e) {
+            if ($e->getCode() === '45000') {
+                $error = 'Esa aerolínea ya tiene una promoción aprobada. Solo puede haber una vigente.';
+            } else {
+                throw $e;
+            }
+        }
+    }
+}
+
 // 1) Total de pendientes (de todas las aerolíneas)
 $totalPendientes = (int) $conexion
     ->query("SELECT COUNT(*) FROM promociones WHERE estado = 'pendiente'")
@@ -35,6 +74,10 @@ require_once __DIR__ . '/../Includes/header.php';
 ?>
 
 <main class="container my-4">
+    <h1>Promociones pendientes</h1>
+    <?php if ($error !== ''): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
     <?php if (empty($pendientes)): ?>
         <div class="alert alert-info">No hay promociones pendientes de revisión.</div>
     <?php else: ?>
@@ -52,6 +95,14 @@ require_once __DIR__ . '/../Includes/header.php';
                         <td><?= htmlspecialchars($promocion['aerolinea']) ?></td>
                         <td><?= htmlspecialchars($promocion['descripcion']) ?></td>
                         <td><?= htmlspecialchars($promocion['descuento']) ?>%</td>
+                        <td>
+                            <form method="post" class="d-flex gap-1">
+                                <input type="hidden" name="codPromocion" value="<?= (int) $promocion['codPromocion'] ?>">
+                                <input type="hidden" name="pagina" value="<?= $pagina ?>">
+                                <button type="submit" name="accion" value="aprobar" class="btn btn-sm btn-success">Aprobar</button>
+                                <button type="submit" name="accion" value="denegar" class="btn btn-sm btn-danger">Denegar</button>
+                            </form>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
