@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../Includes/functions.php';
+require_once __DIR__ . '/../Includes/reportes.php';
 requerirRol('administrador');
 
 $conexion = conectarDB();
@@ -8,11 +9,6 @@ $aerolineas = $conexion->query(
     "SELECT codAerolinea, nombre FROM aerolineas ORDER BY nombre"
 )->fetchAll(PDO::FETCH_ASSOC);
 
-function fechaValida(string $fecha): bool
-{
-    $d = DateTime::createFromFormat('Y-m-d', $fecha);
-    return $d !== false && $d->format('Y-m-d') === $fecha;
-}
 
 $errores = [];
 $codAerolinea = (int) ($_GET['aerolinea'] ?? 0);
