@@ -87,7 +87,7 @@ require_once __DIR__ . '/../Includes/header.php';
 </nav>
 <?php endif; ?>
 <button class="btn btn-primary" >
-   <a href="altaPromocion.php">Crear promoción</a> 
+   <a href="altaPromocion.php" style="color: white;">Crear promoción</a> 
 </button>
 </main>
 

@@ -43,19 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// 1) Total de pendientes (de todas las aerolíneas)
 $totalPendientes = (int) $conexion
     ->query("SELECT COUNT(*) FROM promociones WHERE estado = 'pendiente'")
     ->fetchColumn();
 
-// 2) Página actual, total de páginas y offset
 $porPagina = 5;
 $pagina = isset($_GET['pagina']) ? (int) $_GET['pagina'] : 1;
 $totalPaginas = max(1, (int) ceil($totalPendientes / $porPagina));
 $pagina = max(1, min($pagina, $totalPaginas));
 $offset = ($pagina - 1) * $porPagina;
 
-// 3) Solo las filas de esta página
 $consulta = $conexion->prepare(
     "SELECT p.codPromocion, p.descripcion, p.descuento, a.nombre AS aerolinea
      FROM promociones p
