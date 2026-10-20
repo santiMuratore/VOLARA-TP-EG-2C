@@ -16,11 +16,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $nuevoEstado = $accion === 'aprobar' ? 'aprobada' : 'denegada';
         try {
+            $conexion->beginTransaction();
+
+            if ($accion === 'aprobar') {
+                $consulta = $conexion->prepare(
+                    "SELECT codAerolinea FROM promociones
+                    WHERE codPromocion = :codPromocion AND estado = 'pendiente'"
+                );
+                $consulta->execute(['codPromocion' => $codPromocion]);
+                $codAerolinea = $consulta->fetchColumn();
+
+                if ($codAerolinea !== false) {
+                    $consulta = $conexion->prepare(
+                        "UPDATE promociones SET estado = 'pendiente'
+                        WHERE codAerolinea = :codAerolinea AND estado = 'aprobada'"
+                    );
+                    $consulta->execute(['codAerolinea' => $codAerolinea]);
+                }
+            }
+
             $consulta = $conexion->prepare(
-                "UPDATE promociones
-                 SET estado = :estado
-                 WHERE codPromocion = :codPromocion
-                   AND estado = 'pendiente'"
+                "UPDATE promociones SET estado = :estado
+                WHERE codPromocion = :codPromocion AND estado = 'pendiente'"
             );
             $consulta->execute([
                 'estado'       => $nuevoEstado,
@@ -28,14 +45,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             if ($consulta->rowCount() === 0) {
+                $conexion->rollBack();
                 $error = 'Esa promoción ya no está pendiente.';
             } else {
+                $conexion->commit();
                 header('Location: promocionesPendientes.php?pagina=' . $paginaVuelta);
                 exit;
             }
         } catch (PDOException $e) {
+            if ($conexion->inTransaction()) {
+                $conexion->rollBack();
+            }
             if ($e->getCode() === '45000') {
-                $error = 'Esa aerolínea ya tiene una promoción aprobada. Solo puede haber una vigente.';
+                $error = 'No se pudo aprobar: la aerolínea ya tiene una promoción aprobada.';
             } else {
                 throw $e;
             }
