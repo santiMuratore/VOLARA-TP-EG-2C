@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . '/../Includes/functions.php';
-require __DIR__ . '/../Includes/header.php';
+require_once __DIR__ . '/../../Includes/functions.php';
+require_once __DIR__ . '/../../Includes/functionsF2.php';
+require __DIR__ . '/../../Includes/header.php';
 
 $titulo = 'Vuelos - Volara';
 ?>
@@ -83,7 +84,7 @@ $titulo = 'Vuelos - Volara';
     </div>
     <?php if (!isset($_SESSION['codUsuario'])): ?>
         <div class="mt-3 text-center">
-            <a href="<?= BASE_URL ?>/Pages/login.php" class="btn btn-volara">
+            <a href="<?= BASE_URL ?>/Auth/login.php" class="btn btn-volara">
                 <i class="bi bi-door-open me-2"></i> Iniciar sesión para reservar
             </a>
         </div>
