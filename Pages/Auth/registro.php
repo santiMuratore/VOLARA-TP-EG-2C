@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/../Includes/functions.php';
 
+require_once __DIR__ . '/../Includes/mailer.php';
+
 $conexion = conectarDB();
 
 $sqlAerolineas = "
@@ -173,7 +175,55 @@ if (empty($errores)) {
         'tokenValidacion' => $tokenValidacion
     ]);
 
-    $mensajeExito = 'Registro realizado correctamente.';
+    if ($tipoUsuario === 'usuario') {
+
+        $enlaceValidacion =
+            BASE_URL
+            . '/Auth/validarCuenta.php?token='
+            . urlencode($tokenValidacion);
+
+        $cuerpo = "
+            <h2>Bienvenido a Volara</h2>
+
+            <p>
+                Hola " . htmlspecialchars($nombre) . ",
+                gracias por registrarte en Volara.
+            </p>
+
+            <p>
+                Para activar tu cuenta, hacé clic en el siguiente enlace:
+            </p>
+
+            <p>
+                <a href=\"$enlaceValidacion\">
+                    Validar mi cuenta
+                </a>
+            </p>
+        ";
+
+        $mailEnviado = enviarMail(
+            $mail,
+            'Validá tu cuenta de Volara',
+            $cuerpo
+        );
+
+        if ($mailEnviado) {
+
+            $mensajeExito =
+                'Registro realizado correctamente. Revisá tu correo para activar tu cuenta.';
+
+        } else {
+
+            $mensajeExito =
+                'La cuenta fue creada, pero no pudimos enviar el correo de validación.';
+        }
+
+    } else {
+
+        $mensajeExito =
+            'Registro realizado correctamente. Tu cuenta está pendiente de autorización.';
+    }
+    
 }
 
 echo '<pre>';

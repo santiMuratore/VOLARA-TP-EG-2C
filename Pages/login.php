@@ -6,7 +6,7 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $mail = $_POST['mail'] ?? '';
+    $mail = trim($_POST['mail'] ?? '');
     $clave = $_POST['clave'] ?? '';
 
     $conexion = conectarDB();
@@ -17,7 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             mail,
             clave,
             tipoUsuario,
-            codAerolinea
+            codAerolinea,
+            estadoUsuario
         FROM usuarios
         WHERE mail = :mail
     ";
@@ -31,18 +32,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = $consulta->fetch(PDO::FETCH_ASSOC);
 
 
-    if ($usuario && password_verify($clave, $usuario['clave'])) {
+    if (!$usuario || !password_verify($clave, $usuario['clave'])) {
+
+        $error = 'Mail o contraseña incorrectos.';
+
+    } elseif ($usuario['estadoUsuario'] === 'pendiente de validación') {
+
+        $error = 'Debés validar tu cuenta desde el enlace que enviamos a tu correo.';
+
+    } elseif ($usuario['estadoUsuario'] === 'pendiente de autorización') {
+
+        $error = 'Tu cuenta está pendiente de autorización por un administrador.';
+
+    } elseif ($usuario['estadoUsuario'] === 'rechazado') {
+
+        $error = 'Tu cuenta fue rechazada y no puede iniciar sesión.';
+
+    } elseif ($usuario['estadoUsuario'] === 'activo') {
+
+        session_regenerate_id(true);
 
         $_SESSION['codUsuario'] = $usuario['codUsuario'];
         $_SESSION['tipoUsuario'] = $usuario['tipoUsuario'];
         $_SESSION['codAerolinea'] = $usuario['codAerolinea'];
 
-         echo 'Login correcto';
-         
-    } else {
-
-        $error = 'Mail o contraseña incorrectos.';
-
+        echo 'Login correcto';
     }
 }
 ?>
@@ -55,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         type="email"
         id="mail"
         name="mail"
+        value="<?= htmlspecialchars($mail) ?>"
         required
     >
 
