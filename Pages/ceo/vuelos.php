@@ -1,5 +1,5 @@
 <?php
-    require_once __DIR__ . '/../Includes/functions.php';
+    require_once __DIR__ . '/../../Includes/functions.php';
     requerirRol('ceo aerolínea');
     $conexion = conectarDB();
     $titulo = "Vuelos";
@@ -83,17 +83,35 @@
     }
 
     // Vuelos de la aerolínea del CEO logueado (después del INSERT, así aparece el nuevo)
+    $codAerolineaActual = $_SESSION['codAerolinea'] ?? null;
+    $porPagina = 5;
+
+    // Total de vuelos, para calcular cuántas páginas hay
+    $consulta = $conexion->prepare("SELECT COUNT(*) FROM vuelos WHERE codAerolinea = :cod");
+    $consulta->execute(['cod' => $codAerolineaActual]);
+    $totalVuelos = (int) $consulta->fetchColumn();
+    $totalPaginas = max(1, (int) ceil($totalVuelos / $porPagina));
+
+    // Página pedida por la URL (?pagina=2), limitada al rango válido
+    $pagina = filter_input(INPUT_GET, 'pagina', FILTER_VALIDATE_INT) ?: 1;
+    $pagina = min(max($pagina, 1), $totalPaginas);
+    $desde = ($pagina - 1) * $porPagina;
+
     $consulta = $conexion->prepare("SELECT codVuelo, codigoVuelo, origen, destino, fecha, hora, precio, asientosTotal, asientosDisponibles, clase
                                     FROM vuelos
                                     WHERE codAerolinea = :cod
-                                    ORDER BY fecha, hora");
-    $consulta->execute(['cod' => $_SESSION['codAerolinea'] ?? null]);
+                                    ORDER BY fecha, hora
+                                    LIMIT :limite OFFSET :desde");
+    $consulta->bindValue(':cod', $codAerolineaActual);
+    $consulta->bindValue(':limite', $porPagina, PDO::PARAM_INT);   // LIMIT/OFFSET exigen enteros
+    $consulta->bindValue(':desde', $desde, PDO::PARAM_INT);
+    $consulta->execute();
     $vuelos = $consulta->fetchAll(PDO::FETCH_ASSOC);
 
     $nombresClase = ['economica' => 'Económica', 'premium' => 'Premium', 'business' => 'Business'];
 
-    require_once __DIR__ . '/../Includes/header.php';
-    require_once __DIR__ . '/../Includes/navbar.php';
+    require_once __DIR__ . '/../../Includes/header.php';
+    require_once __DIR__ . '/../../Includes/navbar.php';
 ?>
 <main>
     <div class="container py-4">
@@ -195,7 +213,7 @@
             <div class="col-lg-7">
                 <div class="volara-card">
                     <h2 class="h4">Vuelos de mi aerolínea</h2>
-                    <p class="section-subtitle mb-3"><?= count($vuelos) ?> <?= count($vuelos) === 1 ? 'registro' : 'registros' ?></p>
+                    <p class="section-subtitle mb-3"><?= $totalVuelos ?> <?= $totalVuelos === 1 ? 'registro' : 'registros' ?></p>
 
                     <?php if (empty($vuelos)): ?>
                         <div class="empty-state">
@@ -203,7 +221,7 @@
                             <p>Todavía no cargaste vuelos.</p>
                         </div>
                     <?php else: ?>
-                        <div style="max-height: 480px; overflow-y: auto;">
+                        <div class="volara-table-responsive">
                             <table class="volara-table">
                                 <thead>
                                     <tr>
@@ -246,6 +264,26 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <?php if ($totalPaginas > 1): ?>
+                            <nav class="volara-pagination" aria-label="Paginación de vuelos">
+                                <?php if ($pagina > 1): ?>
+                                    <a href="?pagina=<?= $pagina - 1 ?>" aria-label="Página anterior"><i class="bi bi-chevron-left"></i></a>
+                                <?php endif; ?>
+
+                                <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                                    <?php if ($i === $pagina): ?>
+                                        <span class="active" aria-current="page"><?= $i ?></span>
+                                    <?php else: ?>
+                                        <a href="?pagina=<?= $i ?>"><?= $i ?></a>
+                                    <?php endif; ?>
+                                <?php endfor; ?>
+
+                                <?php if ($pagina < $totalPaginas): ?>
+                                    <a href="?pagina=<?= $pagina + 1 ?>" aria-label="Página siguiente"><i class="bi bi-chevron-right"></i></a>
+                                <?php endif; ?>
+                            </nav>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -254,5 +292,5 @@
     </div>
 </main>
 <?php
-    require_once __DIR__ . '/../Includes/footer.php';
+    require_once __DIR__ . '/../../Includes/footer.php';
 ?>
