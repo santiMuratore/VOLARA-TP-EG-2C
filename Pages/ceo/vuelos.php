@@ -1,5 +1,6 @@
 <?php
     require_once __DIR__ . '/../Includes/functions.php';
+    requerirRol('ceo aerolínea');
     $conexion = conectarDB();
     $titulo = "Vuelos";
 
