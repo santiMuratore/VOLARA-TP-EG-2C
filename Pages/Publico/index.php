@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . '/../Includes/functions.php';
-require __DIR__ . '/../Includes/header.php';
+require_once __DIR__ . '/../../Includes/functions.php';
+require_once __DIR__ . '/../../Includes/functionsF2.php';
+require __DIR__ . '/../../Includes/header.php';
 
 $titulo = 'Volara - Inicio';
 ?>
@@ -84,6 +85,6 @@ $titulo = 'Volara - Inicio';
 </div>
 </main>
 
-<?php require __DIR__ . '/../Includes/footer.php'; ?>
+<?php require __DIR__ . '/../../Includes/footer.php'; ?>
 </body>
 </html>

@@ -56,37 +56,62 @@ function paginar(int $totalRegistros, int $porPagina = 10, int $paginaActual = 1
         'offset' => ($paginaActual - 1) * $porPagina,
     ];
 }
-
 /**
  * Genera los enlaces HTML de paginación.
+ *
+ * @param int    $totalRegistros Cantidad total de registros.
+ * @param int    $porPagina      Cantidad de registros por página.
+ * @param int    $paginaActual   Página seleccionada.
+ * @param string $urlBase        URL de la sección.
+ * @param string $parametro      Nombre del parámetro de URL.
  */
 function generarPaginacionHTML(
+    int $totalRegistros,
+    int $porPagina,
     int $paginaActual,
-    int $totalPaginas,
+    string $urlBase,
     string $parametro = 'pagina'
 ): string {
+    $porPagina = max(1, $porPagina);
+    $totalRegistros = max(0, $totalRegistros);
+
+    $totalPaginas = max(
+        1,
+        (int) ceil($totalRegistros / $porPagina)
+    );
+
+    $paginaActual = max(1, min($paginaActual, $totalPaginas));
+
     if ($totalPaginas <= 1) {
         return '';
     }
 
-    $paginaActual = max(1, min($paginaActual, $totalPaginas));
-    $html = '<nav aria-label="Paginación"><ul class="pagination">';
+    $html = '<nav aria-label="Paginación">';
+    $html .= '<ul class="pagination">';
 
-    for ($pagina = 1; $pagina <= $totalPaginas; $pagina++) {
-        $activa = $pagina === $paginaActual ? ' active' : '';
-        $ariaActual = $pagina === $paginaActual
+    for ($p = 1; $p <= $totalPaginas; $p++) {
+        $activa = ($p === $paginaActual) ? ' active' : '';
+        $ariaActual = ($p === $paginaActual)
             ? ' aria-current="page"'
             : '';
 
-        $url = htmlspecialchars(
-            '?' . rawurlencode($parametro) . '=' . $pagina,
+        $separador = str_contains($urlBase, '?') ? '&' : '?';
+
+        $url = $urlBase
+            . $separador
+            . rawurlencode($parametro)
+            . '='
+            . $p;
+
+        $urlSegura = htmlspecialchars(
+            $url,
             ENT_QUOTES,
             'UTF-8'
         );
 
         $html .= '<li class="page-item' . $activa . '">';
-        $html .= '<a class="page-link" href="' . $url . '"' . $ariaActual . '>';
-        $html .= $pagina;
+        $html .= '<a class="page-link" href="' . $urlSegura . '"' . $ariaActual . '>';
+        $html .= $p;
         $html .= '</a></li>';
     }
 
@@ -94,16 +119,30 @@ function generarPaginacionHTML(
 
     return $html;
 }
-
 /**
  * Devuelve las rutas del sitio público.
+ */
+/**
+ * Devuelve las rutas públicas del sitio.
  */
 function obtenerRutasSitio(): array
 {
     return [
-        'inicio' => BASE_URL . '/Pages/index.php',
-        'aerolineas' => BASE_URL . '/Pages/Publico/aerolineas.php',
-        'novedades' => BASE_URL . '/Pages/Publico/novedades.php',
-        'mapa_sitio' => BASE_URL . '/Pages/Publico/mapa-sitio.php',
+        [
+            'url' => BASE_URL . '/Pages/Publico/index.php',
+            'enlace' => 'Inicio',
+        ],
+        [
+            'url' => BASE_URL . '/Pages/Publico/aerolineas.php',
+            'enlace' => 'Aerolíneas',
+        ],
+        [
+            'url' => BASE_URL . '/Pages/Publico/vuelos.php',
+            'enlace' => 'Vuelos',
+        ],
+        [
+            'url' => BASE_URL . '/Pages/Publico/mapa-sitio.php',
+            'enlace' => 'Mapa de sitio',
+        ],
     ];
 }
