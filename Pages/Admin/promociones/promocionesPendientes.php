@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../Includes/functions.php';
+require_once __DIR__ . '/../../../Includes/functions.php';
 requerirRol('administrador');
 
 $conexion = conectarDB();
@@ -89,60 +89,83 @@ $consulta->execute();
 $pendientes = $consulta->fetchAll(PDO::FETCH_ASSOC);
 
 $titulo = 'Promociones pendientes';
-require_once __DIR__ . '/../Includes/header.php';
+require_once __DIR__ . '/../../../Includes/header.php';
+require_once __DIR__ . '/../../../Includes/navbar.php';
 ?>
 
 <main class="container my-4">
     <h1>Promociones pendientes</h1>
+
     <?php if ($error !== ''): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <div class="volara-alert alert-danger" role="alert"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
+
     <?php if (empty($pendientes)): ?>
-        <div class="alert alert-info">No hay promociones pendientes de revisión.</div>
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-check2-circle" aria-hidden="true"></i></div>
+            <p>No hay promociones pendientes de revisión.</p>
+        </div>
     <?php else: ?>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Aerolínea</th>
-                    <th>Descripción</th>
-                    <th>Descuento</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($pendientes as $promocion): ?>
+        <div class="volara-table-responsive">
+            <table class="volara-table">
+                <thead>
                     <tr>
-                        <td><?= htmlspecialchars($promocion['aerolinea']) ?></td>
-                        <td><?= htmlspecialchars($promocion['descripcion']) ?></td>
-                        <td><?= htmlspecialchars($promocion['descuento']) ?>%</td>
-                        <td>
-                            <form method="post" class="d-flex gap-1">
-                                <input type="hidden" name="codPromocion" value="<?= (int) $promocion['codPromocion'] ?>">
-                                <input type="hidden" name="pagina" value="<?= $pagina ?>">
-                                <button type="submit" name="accion" value="aprobar" class="btn btn-sm btn-success">Aprobar</button>
-                                <button type="submit" name="accion" value="denegar" class="btn btn-sm btn-danger">Denegar</button>
-                            </form>
-                        </td>
+                        <th scope="col">Aerolínea</th>
+                        <th scope="col">Descripción</th>
+                        <th scope="col">Descuento</th>
+                        <th scope="col">Acciones</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach ($pendientes as $promocion): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($promocion['aerolinea']) ?></td>
+                            <td><?= htmlspecialchars($promocion['descripcion']) ?></td>
+                            <td><?= htmlspecialchars($promocion['descuento']) ?>%</td>
+                            <td>
+                                <form method="post" class="table-actions">
+                                    <input type="hidden" name="codPromocion" value="<?= (int) $promocion['codPromocion'] ?>">
+                                    <input type="hidden" name="pagina" value="<?= $pagina ?>">
+                                    <button type="submit" name="accion" value="aprobar"
+                                            class="table-action-btn" aria-label="Aprobar promoción" title="Aprobar">
+                                        <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                    </button>
+                                    <button type="submit" name="accion" value="denegar"
+                                            class="table-action-btn danger" aria-label="Denegar promoción" title="Denegar">
+                                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
 
         <nav aria-label="Paginación de promociones pendientes">
-            <ul class="pagination">
-                <li class="page-item <?= $pagina <= 1 ? 'disabled' : '' ?>">
-                    <a class="page-link" href="?pagina=<?= $pagina - 1 ?>">Anterior</a>
-                </li>
+            <div class="volara-pagination">
+                <?php if ($pagina > 1): ?>
+                    <a href="?pagina=<?= $pagina - 1 ?>">Anterior</a>
+                <?php else: ?>
+                    <span aria-disabled="true">Anterior</span>
+                <?php endif; ?>
+
                 <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                    <li class="page-item <?= $i === $pagina ? 'active' : '' ?>">
-                        <a class="page-link" href="?pagina=<?= $i ?>"><?= $i ?></a>
-                    </li>
+                    <?php if ($i === $pagina): ?>
+                        <span class="active" aria-current="page"><?= $i ?></span>
+                    <?php else: ?>
+                        <a href="?pagina=<?= $i ?>"><?= $i ?></a>
+                    <?php endif; ?>
                 <?php endfor; ?>
-                <li class="page-item <?= $pagina >= $totalPaginas ? 'disabled' : '' ?>">
-                    <a class="page-link" href="?pagina=<?= $pagina + 1 ?>">Siguiente</a>
-                </li>
-            </ul>
+
+                <?php if ($pagina < $totalPaginas): ?>
+                    <a href="?pagina=<?= $pagina + 1 ?>">Siguiente</a>
+                <?php else: ?>
+                    <span aria-disabled="true">Siguiente</span>
+                <?php endif; ?>
+            </div>
         </nav>
     <?php endif; ?>
 </main>
 
-<?php require_once __DIR__ . '/../Includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../../Includes/footer.php'; ?>
