@@ -1,315 +1,965 @@
-/* ─── Variables ─────────────────────────────────────────── */
+/* =========================================================
+   VOLARA — Sistema de reservas de vuelos
+   Hoja de estilos principal
+   Ubicación prevista: Pages/Assets/style.css
+   ========================================================= */
+
+/* ─── 1. Variables ──────────────────────────────────────── */
 :root {
-    --volara-red:        #E51B23;
-    --volara-red-hover:  #C9141C;
-    --volara-red-light:  #FDEAEB;
-    --volara-dark:       #151D25;
-    --volara-black:      #0A0E13;
-    --volara-white:      #FFFFFF;
-    --volara-gray:       #6B7280;
+    --volara-red: #E51B23;
+    --volara-red-hover: #C9141C;
+    --volara-red-light: #FDEAEB;
+    --volara-dark: #151D25;
+    --volara-black: #0A0E13;
+    --volara-white: #FFFFFF;
+    --volara-gray: #6B7280;
     --volara-gray-light: #F4F6F8;
-    --volara-border:     #DDE2E7;
+    --volara-border: #DDE2E7;
+    --volara-success: #087443;
+    --volara-success-light: #D1FAE5;
+    --volara-warning: #92400E;
+    --volara-warning-light: #FEF3C7;
 
     --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --radius-sm:  8px;
-    --radius-md:  12px;
-    --radius-lg:  16px;
-    --radius-xl:  24px;
+
+    --radius-xs: 6px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
     --radius-pill: 999px;
-    --shadow-sm:  0 1px 3px rgba(21, 29, 37, 0.06);
-    --shadow-md:  0 4px 16px rgba(21, 29, 37, 0.08);
-    --shadow-lg:  0 8px 32px rgba(21, 29, 37, 0.12);
-    --transition: 0.2s ease;
-    --navbar-h:   80px;
+
+    --shadow-sm: 0 2px 8px rgba(21, 29, 37, 0.05);
+    --shadow-md: 0 8px 24px rgba(21, 29, 37, 0.09);
+    --shadow-lg: 0 16px 44px rgba(21, 29, 37, 0.14);
+    --shadow-red: 0 8px 22px rgba(229, 27, 35, 0.20);
+
+    --transition: 180ms ease;
+    --navbar-h: 80px;
+    --content-width: 1200px;
 }
 
-/* ─── Reset & Base ──────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; }
+/* ─── 2. Reset y estilos base ───────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
 
 html {
     scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--navbar-h) + 1rem);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-    font-family: var(--font-primary);
-    color: var(--volara-dark);
-    background: var(--volara-white);
-    line-height: 1.6;
-    margin: 0;
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
     overflow-x: hidden;
+    background: var(--volara-white);
+    color: var(--volara-dark);
+    font-family: var(--font-primary);
+    font-size: 16px;
+    line-height: 1.65;
 }
 
-main { flex: 1; }
+main {
+    flex: 1 0 auto;
+    width: 100%;
+}
+
+.container {
+    --bs-gutter-x: 1.5rem;
+}
+
+::selection {
+    background: var(--volara-red-light);
+    color: var(--volara-dark);
+}
+
+img,
+svg,
+video {
+    max-width: 100%;
+}
+
+img {
+    height: auto;
+}
 
 a {
     color: var(--volara-red);
     text-decoration: none;
     transition: color var(--transition);
 }
-a:hover { color: var(--volara-red-hover); }
 
-img { max-width: 100%; height: auto; }
-
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    line-height: 1.25;
-    color: var(--volara-dark);
+a:hover {
+    color: var(--volara-red-hover);
 }
 
-/* ─── Navbar ────────────────────────────────────────────── */
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin-top: 0;
+    color: var(--volara-dark);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+}
+
+p:last-child {
+    margin-bottom: 0;
+}
+
+.text-muted {
+    color: var(--volara-gray) !important;
+}
+
+/* Accesibilidad: enlace para saltar directamente al contenido */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 1rem;
+    z-index: 2000;
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--volara-dark);
+    color: var(--volara-white);
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+}
+
+.skip-link:focus {
+    top: 1rem;
+    color: var(--volara-white);
+    outline: 3px solid var(--volara-red);
+    outline-offset: 3px;
+}
+
+:focus-visible {
+    outline: 2px solid var(--volara-red);
+    outline-offset: 3px;
+}
+
+/* ─── 3. Navbar ─────────────────────────────────────────── */
 .volara-navbar {
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--volara-border);
-    min-height: var(--navbar-h);
     position: sticky;
     top: 0;
     z-index: 1030;
+    min-height: var(--navbar-h);
     padding: 0.65rem 0;
-    transition: background var(--transition), box-shadow var(--transition), border-color var(--transition);
+    border-bottom: 1px solid rgba(221, 226, 231, 0.9);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 2px 12px rgba(21, 29, 37, 0.035);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    transition: background var(--transition), box-shadow var(--transition);
 }
+
 .volara-navbar.scrolled {
-    box-shadow: 0 8px 28px rgba(21, 29, 37, 0.08);
+    box-shadow: 0 8px 28px rgba(21, 29, 37, 0.09);
 }
 
 .volara-navbar .navbar-brand {
     display: inline-flex;
     align-items: center;
     gap: 0.7rem;
-    line-height: 1;
     padding: 0;
     color: var(--volara-dark);
-    text-decoration: none;
+    line-height: 1;
 }
-.volara-navbar .navbar-brand:hover { color: var(--volara-dark); }
+
+.volara-navbar .navbar-brand:hover {
+    color: var(--volara-dark);
+}
+
+.volara-navbar .navbar-brand img {
+    display: block;
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+    transition: transform var(--transition);
+}
+
+.volara-navbar .navbar-brand:hover img {
+    transform: scale(1.035);
+}
+
 .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 36px;
     height: 36px;
     border-radius: 11px;
     background: var(--volara-red);
     color: var(--volara-white);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
     font-size: 1rem;
+    font-weight: 800;
     letter-spacing: -0.04em;
 }
+
 .brand-name {
-    font-weight: 800;
     font-size: 1rem;
+    font-weight: 800;
     letter-spacing: 0.14em;
 }
 
+.volara-navbar .navbar-nav.me-auto {
+    gap: 0.15rem;
+}
+
 .volara-navbar .nav-link {
-    color: var(--volara-dark);
-    font-weight: 500;
-    font-size: 0.9rem;
-    letter-spacing: 0.02em;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.55rem 0.9rem;
+    padding: 0.58rem 0.8rem;
     border-radius: var(--radius-pill);
+    color: var(--volara-dark);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    white-space: nowrap;
     transition: color var(--transition), background var(--transition);
 }
+
+.volara-navbar .nav-link i {
+    font-size: 0.95rem;
+}
+
 .volara-navbar .nav-link:hover,
 .volara-navbar .nav-link.active {
-    color: var(--volara-red);
     background: var(--volara-red-light);
+    color: var(--volara-red);
 }
-.volara-navbar .nav-link i { font-size: 0.9rem; }
-.volara-navbar .navbar-nav.me-auto { gap: 0.15rem; }
+
+.volara-navbar .nav-link.active {
+    font-weight: 700;
+}
+
 .volara-navbar .nav-cta {
     margin-left: 0.35rem;
 }
 
 .volara-navbar .navbar-toggler {
+    padding: 0.45rem 0.6rem;
     border: 1px solid var(--volara-border);
     border-radius: var(--radius-sm);
-    padding: 0.4rem 0.55rem;
+    color: var(--volara-dark);
+    background: var(--volara-white);
 }
-.volara-navbar .navbar-toggler:focus { box-shadow: 0 0 0 3px rgba(229, 27, 35, 0.16); }
+
+.volara-navbar .navbar-toggler:hover {
+    border-color: var(--volara-red);
+    background: var(--volara-gray-light);
+}
+
+.volara-navbar .navbar-toggler:focus {
+    box-shadow: 0 0 0 3px rgba(229, 27, 35, 0.16);
+}
+
+.volara-navbar .dropdown-menu {
+    min-width: 13rem;
+    margin-top: 0.55rem;
+    padding: 0.45rem;
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-md);
+    background: var(--volara-white);
+    box-shadow: var(--shadow-md);
+}
+
+.volara-navbar .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--volara-dark);
+    font-size: 0.875rem;
+    white-space: normal;
+    transition: color var(--transition), background var(--transition);
+}
+
+.volara-navbar .dropdown-item:hover,
+.volara-navbar .dropdown-item:focus {
+    background: var(--volara-red-light);
+    color: var(--volara-red);
+}
+
+.volara-navbar .dropdown-item:active {
+    background: var(--volara-red);
+    color: var(--volara-white);
+}
+
+.volara-navbar .dropdown-divider {
+    border-color: var(--volara-border);
+}
 
 .user-menu .nav-link {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
-.user-menu .nav-link::after { margin-left: 0.15rem; }
+
+.user-menu .nav-link::after {
+    margin-left: 0.15rem;
+}
+
 .user-menu .dropdown-menu {
-    min-width: 12rem;
-    margin-top: 0.65rem;
-    padding: 0.45rem;
-    border: 1px solid var(--volara-border);
-    border-radius: var(--radius-md);
+    min-width: 13rem;
 }
-.user-menu .dropdown-item {
-    border-radius: var(--radius-sm);
-    padding: 0.6rem 0.75rem;
-    font-size: 0.9rem;
-}
-.user-menu .dropdown-item:hover { background: var(--volara-gray-light); }
+
 .user-avatar {
-    width: 32px;
-    height: 32px;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: var(--volara-red-light);
     color: var(--volara-red);
-    display: flex;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.profile-avatar {
+    display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 0.8rem;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    font-size: 1rem;
 }
-.profile-avatar { width: 52px; height: 52px; font-size: 1rem; flex: 0 0 auto; }
 
-/* ─── Buttons ───────────────────────────────────────────── */
-.btn-volara {
-    background: var(--volara-red);
-    color: var(--volara-white);
-    border: 2px solid var(--volara-red);
-    border-radius: var(--radius-pill);
-    font-weight: 600;
-    font-size: 0.925rem;
-    padding: 0.7rem 1.55rem;
-    transition: background var(--transition), border-color var(--transition), transform 0.15s, box-shadow var(--transition);
+/* ─── 4. Botones ────────────────────────────────────────── */
+.btn-volara,
+.btn-volara-outline,
+.btn-volara-dark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     cursor: pointer;
+    font-weight: 700;
     text-decoration: none;
+    transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition), box-shadow var(--transition);
 }
-.btn-volara:hover {
-    background: var(--volara-red-hover);
-    border-color: var(--volara-red-hover);
+
+.btn-volara {
+    padding: 0.72rem 1.45rem;
+    border: 2px solid var(--volara-red);
+    border-radius: var(--radius-pill);
+    background: var(--volara-red);
     color: var(--volara-white);
-    transform: translateY(-1px);
+    font-size: 0.925rem;
+    box-shadow: 0 4px 12px rgba(229, 27, 35, 0.12);
 }
-.btn-volara:active { transform: translateY(0); }
-.btn-volara:focus-visible {
+
+.btn-volara:hover {
+    transform: translateY(-2px);
+    border-color: var(--volara-red-hover);
+    background: var(--volara-red-hover);
+    color: var(--volara-white);
+    box-shadow: var(--shadow-red);
+}
+
+.btn-volara:active {
+    transform: translateY(0);
+}
+
+.btn-volara:focus-visible,
+.btn-volara-outline:focus-visible,
+.btn-volara-dark:focus-visible {
     outline: 2px solid var(--volara-red);
-    outline-offset: 2px;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgba(229, 27, 35, 0.12);
 }
 
 .btn-volara-outline {
-    background: transparent;
-    color: var(--volara-red);
+    padding: 0.72rem 1.45rem;
     border: 2px solid var(--volara-red);
     border-radius: var(--radius-pill);
-    font-weight: 600;
+    background: var(--volara-white);
+    color: var(--volara-red);
     font-size: 0.925rem;
-    padding: 0.7rem 1.55rem;
-    transition: all var(--transition);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    text-decoration: none;
 }
+
 .btn-volara-outline:hover {
-    background: var(--volara-red);
+    transform: translateY(-2px);
+    border-color: var(--volara-red-hover);
+    background: var(--volara-red-hover);
     color: var(--volara-white);
 }
 
 .btn-volara-dark {
-    background: var(--volara-dark);
-    color: var(--volara-white);
+    padding: 0.65rem 1.4rem;
     border: 2px solid var(--volara-dark);
     border-radius: var(--radius-md);
-    font-weight: 600;
-    padding: 0.625rem 1.5rem;
-    transition: all var(--transition);
-    cursor: pointer;
+    background: var(--volara-dark);
+    color: var(--volara-white);
 }
+
 .btn-volara-dark:hover {
-    background: var(--volara-black);
+    transform: translateY(-1px);
     border-color: var(--volara-black);
+    background: var(--volara-black);
     color: var(--volara-white);
 }
 
 .btn-volara-sm {
-    padding: 0.375rem 1rem;
-    font-size: 0.85rem;
+    min-height: 36px;
+    padding: 0.4rem 1rem;
     border-radius: var(--radius-sm);
+    font-size: 0.84rem;
 }
 
 .btn-volara-lg {
-    padding: 0.875rem 2rem;
-    font-size: 1rem;
+    min-height: 50px;
+    padding: 0.85rem 1.7rem;
     border-radius: var(--radius-md);
+    font-size: 1rem;
 }
 
-/* ─── Cards ─────────────────────────────────────────────── */
+/* ─── 5. Tarjetas e iconos ──────────────────────────────── */
 .volara-card {
-    background: var(--volara-white);
+    height: 100%;
+    padding: 1.5rem;
     border: 1px solid var(--volara-border);
     border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    transition: box-shadow var(--transition), transform var(--transition);
+    background: var(--volara-white);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
 }
-.volara-card:hover { box-shadow: var(--shadow-md); }
+
+.volara-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(229, 27, 35, 0.20);
+    box-shadow: var(--shadow-md);
+}
 
 .volara-card-flat {
-    background: var(--volara-gray-light);
-    border: none;
-    border-radius: var(--radius-lg);
     padding: 1.5rem;
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-lg);
+    background: var(--volara-gray-light);
 }
 
 .stat-card {
-    background: var(--volara-white);
-    border: 1px solid var(--volara-border);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-lg);
+    background: var(--volara-white);
+    box-shadow: var(--shadow-sm);
 }
+
 .stat-card .stat-value {
+    color: var(--volara-dark);
     font-size: 2rem;
     font-weight: 800;
-    color: var(--volara-dark);
     line-height: 1;
 }
+
 .stat-card .stat-label {
-    font-size: 0.85rem;
     color: var(--volara-gray);
+    font-size: 0.85rem;
     font-weight: 500;
 }
+
+.stat-icon {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 1.3rem;
+}
+
 .stat-card .stat-icon {
     width: 44px;
     height: 44px;
-    border-radius: var(--radius-md);
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+.stat-icon-red {
+    background: var(--volara-red-light);
+    color: var(--volara-red);
+}
+
+.stat-icon-dark {
+    background: #E8ECF0;
+    color: var(--volara-dark);
+}
+
+/* ─── 6. Hero de inicio ─────────────────────────────────── */
+.hero {
+    position: relative;
+    isolation: isolate;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    min-height: 520px;
+    padding: clamp(3.5rem, 7vw, 6rem) 0;
+    overflow: hidden;
+    background-color: var(--volara-dark);
+    /* Desde Pages/Assets/style.css hasta Assets/Imagenes/avion-hero.jpg */
+    background-image: url('../Assets/Imagenes/138416-avion_blanco_en_el_aire_durante_el_dia-3840x2160.jpg');
+    background-position: center 45%;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
-.stat-icon-red    { background: var(--volara-red-light); color: var(--volara-red); }
-.stat-icon-dark   { background: #E8ECF0; color: var(--volara-dark); }
 
-/* ─── Flight Cards ──────────────────────────────────────── */
-.flight-card {
+.hero::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: '';
+    background: linear-gradient(90deg, rgba(10, 14, 19, 0.88) 0%, rgba(10, 14, 19, 0.72) 48%, rgba(10, 14, 19, 0.40) 100%);
+    pointer-events: none;
+}
+
+.hero > .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+.hero-title {
+    max-width: 900px;
+    margin-bottom: 1.25rem;
+    color: var(--volara-white);
+    font-size: clamp(2.4rem, 5.2vw, 4.35rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+}
+
+.hero-title span {
+    color: #FF7378;
+}
+
+.hero-subtitle {
+    max-width: 610px;
+    margin-bottom: 2rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    line-height: 1.75;
+}
+
+.hero .volara-badge {
+    margin-bottom: 1.25rem;
+}
+
+.hero .btn-volara-outline {
+    border-color: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--volara-white);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+.hero .btn-volara-outline:hover {
+    border-color: var(--volara-white);
     background: var(--volara-white);
+    color: var(--volara-dark);
+}
+
+.hero .volara-card {
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.20);
+}
+
+/* Opcionales: ilustraciones mockup si se usan en el hero */
+.hero-shell {
+    position: relative;
+}
+
+.hero-showcase {
+    position: relative;
+    min-height: 320px;
+}
+
+.phone-card {
+    position: absolute;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow-lg);
+    color: var(--volara-dark);
+}
+
+.phone-card-left {
+    top: 45px;
+    left: 0;
+    width: 210px;
+    transform: rotate(-7deg);
+}
+
+.phone-card-center {
+    top: 0;
+    left: 28%;
+    z-index: 2;
+    width: 220px;
+}
+
+.phone-card-right {
+    top: 85px;
+    right: 0;
+    width: 170px;
+    transform: rotate(6deg);
+}
+
+.phone-topbar,
+.ticket-row-top,
+.ticket-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.phone-brand {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+}
+
+.phone-time,
+.phone-dots {
+    color: var(--volara-gray);
+    font-size: 0.75rem;
+}
+
+.phone-ticket {
+    margin-top: 1rem;
+    padding: 0.9rem;
+    border-radius: var(--radius-md);
+    background: var(--volara-gray-light);
+}
+
+.ticket-label {
+    color: var(--volara-gray);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.ticket-icon {
+    color: var(--volara-red);
+}
+
+.ticket-airports {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.ticket-airports > div:not(.ticket-route) {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.ticket-airports > div:last-child {
+    text-align: right;
+}
+
+.ticket-airports small {
+    color: var(--volara-gray);
+    font-size: 0.65rem;
+}
+
+.ticket-airports strong {
+    font-size: 1.1rem;
+}
+
+.ticket-route {
+    color: var(--volara-red);
+}
+
+.ticket-meta {
+    padding-top: 0.65rem;
+    border-top: 1px dashed var(--volara-border);
+    font-size: 0.65rem;
+}
+
+.ticket-meta strong {
+    font-size: 0.75rem;
+}
+
+.plane-preview {
+    display: grid;
+    place-items: center;
+    min-height: 155px;
+    margin-top: 0.75rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, #F8E5D8, #E6D0C1);
+}
+
+.plane-visual {
+    position: relative;
+    width: 110px;
+    height: 72px;
+}
+
+.plane-body {
+    position: absolute;
+    top: 34px;
+    left: 9px;
+    width: 94px;
+    height: 9px;
+    border-radius: 50%;
+    background: #A66E4A;
+    transform: rotate(-20deg);
+}
+
+.plane-wing {
+    position: absolute;
+    top: 24px;
+    left: 44px;
+    width: 15px;
+    height: 38px;
+    border-radius: 3px;
+    background: #875637;
+    transform: rotate(-20deg) skewX(-22deg);
+}
+
+.plane-tail {
+    position: absolute;
+    top: 25px;
+    left: 10px;
+    width: 12px;
+    height: 19px;
+    border-radius: 3px;
+    background: #875637;
+    transform: rotate(-20deg);
+}
+
+.plane-caption {
+    padding-top: 0.75rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.seat-slab {
+    margin-top: 1rem;
+    padding: 1rem 0.65rem;
+    border-radius: var(--radius-md);
+    background: var(--volara-gray-light);
+}
+
+.seat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.45rem;
+}
+
+.seat-seat {
+    padding: 0.45rem 0.2rem;
+    border: 1px solid var(--volara-border);
+    border-radius: 6px;
+    background: var(--volara-white);
+    color: var(--volara-gray);
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.seat-seat.active {
+    border-color: var(--volara-red);
+    background: var(--volara-red);
+    color: var(--volara-white);
+}
+
+/* ─── 7. Buscador de vuelos ─────────────────────────────── */
+.search-box {
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-xl);
+    background: var(--volara-white);
+    box-shadow: var(--shadow-lg);
+}
+
+.search-box .trip-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.trip-toggle-btn {
+    padding: 0.55rem 1.25rem;
+    border: 1.5px solid var(--volara-border);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--volara-gray);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.trip-toggle-btn:hover {
+    border-color: var(--volara-red);
+    color: var(--volara-red);
+}
+
+.trip-toggle-btn.active {
+    border-color: var(--volara-red);
+    background: var(--volara-red);
+    color: var(--volara-white);
+}
+
+.search-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+    align-items: start;
+    gap: 1rem;
+}
+
+.search-fields .search-btn-wrap {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 1.65rem;
+}
+
+.search-fields .form-error {
+    min-height: 1.2rem;
+}
+
+/* ─── 8. Formularios ────────────────────────────────────── */
+.volara-input,
+.volara-select {
+    width: 100%;
+    min-height: 46px;
+    padding: 0.72rem 0.9rem;
+    border: 1.5px solid var(--volara-border);
+    border-radius: var(--radius-md);
+    background: var(--volara-white);
+    color: var(--volara-dark);
+    font-family: var(--font-primary);
+    font-size: 0.925rem;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.volara-input:hover,
+.volara-select:hover {
+    border-color: #B8C0C9;
+}
+
+.volara-input:focus,
+.volara-select:focus {
+    border-color: var(--volara-red);
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(229, 27, 35, 0.12);
+}
+
+.volara-input::placeholder {
+    color: #939BA5;
+}
+
+.volara-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--volara-dark);
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-error {
+    min-height: 1.1rem;
+    margin-top: 0.25rem;
+    color: var(--volara-red);
+    font-size: 0.78rem;
+}
+
+.is-invalid {
+    border-color: var(--volara-red) !important;
+}
+
+/* ─── 9. Badges y alertas ───────────────────────────────── */
+.volara-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+
+.badge-pending { background: #FEF3C7; color: #92400E; }
+.badge-approved { background: #D1FAE5; color: #065F46; }
+.badge-confirmed { background: #DBEAFE; color: #1E40AF; }
+.badge-denied { background: #FEE2E2; color: #991B1B; }
+.badge-cancelled { background: #F3F4F6; color: #6B7280; }
+.badge-neutral { background: #E8ECF0; color: var(--volara-dark); }
+.badge-promo { background: var(--volara-red-light); color: var(--volara-red); }
+
+.volara-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: 0.925rem;
+    font-weight: 500;
+}
+
+.alert-success { border-color: #A7F3D0; background: #D1FAE5; color: #065F46; }
+.alert-danger { border-color: #FECACA; background: #FEE2E2; color: #991B1B; }
+.alert-warning { border-color: #FDE68A; background: #FEF3C7; color: #92400E; }
+.alert-info { border-color: #BFDBFE; background: #DBEAFE; color: #1E40AF; }
+
+/* ─── 10. Vuelos ────────────────────────────────────────── */
+.flight-card {
+    position: relative;
+    height: 100%;
+    padding: 1.65rem;
+    overflow: hidden;
     border: 1px solid var(--volara-border);
     border-radius: var(--radius-lg);
-    padding: 1.75rem;
-    transition: box-shadow var(--transition), border-color var(--transition);
-    position: relative;
-    overflow: hidden;
+    background: var(--volara-white);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
 }
+
 .flight-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(229, 27, 35, 0.2);
     box-shadow: var(--shadow-md);
-    border-color: transparent;
 }
 
 .flight-card .promo-badge {
@@ -321,314 +971,240 @@ h1, h2, h3, h4, h5, h6 {
 .flight-route {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.25rem;
 }
+
 .flight-airport {
-    text-align: center;
     min-width: 70px;
+    text-align: center;
 }
+
 .flight-airport .code {
+    color: var(--volara-dark);
     font-size: 1.75rem;
     font-weight: 800;
-    color: var(--volara-dark);
     line-height: 1;
 }
+
 .flight-airport .time {
+    margin-top: 0.35rem;
+    color: var(--volara-gray);
     font-size: 0.85rem;
-    color: var(--volara-gray);
-    margin-top: 0.25rem;
 }
+
 .flight-airport .city {
-    font-size: 0.75rem;
     color: var(--volara-gray);
+    font-size: 0.75rem;
 }
 
 .flight-line {
-    flex: 1;
+    position: relative;
     display: flex;
+    flex: 1;
     flex-direction: column;
     align-items: center;
     gap: 0.25rem;
-    position: relative;
 }
+
 .flight-line::before {
-    content: '';
     position: absolute;
     top: 50%;
-    left: 0;
     right: 0;
+    left: 0;
     height: 2px;
     background: var(--volara-border);
+    content: '';
     transform: translateY(-50%);
 }
+
 .flight-line .duration {
+    position: relative;
+    z-index: 1;
+    padding: 0 0.65rem;
     background: var(--volara-white);
-    padding: 0 0.75rem;
-    font-size: 0.8rem;
     color: var(--volara-gray);
-    position: relative;
-    z-index: 1;
+    font-size: 0.76rem;
 }
+
 .flight-line .plane-icon {
-    background: var(--volara-white);
-    padding: 0 0.5rem;
-    color: var(--volara-red);
     position: relative;
     z-index: 1;
+    padding: 0 0.5rem;
+    background: var(--volara-white);
+    color: var(--volara-red);
     font-size: 1.1rem;
 }
 
 .flight-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
+    align-items: center;
+    gap: 0.85rem;
     margin-top: 1.25rem;
     padding-top: 1.25rem;
     border-top: 1px solid var(--volara-border);
-    align-items: center;
 }
+
 .flight-meta-item {
-    font-size: 0.85rem;
     color: var(--volara-gray);
+    font-size: 0.82rem;
 }
-.flight-meta-item strong { color: var(--volara-dark); }
+
+.flight-meta-item strong {
+    color: var(--volara-dark);
+}
 
 .flight-price {
     margin-left: auto;
     text-align: right;
 }
+
 .flight-price .amount {
-    font-size: 1.5rem;
-    font-weight: 800;
     color: var(--volara-dark);
+    font-size: 1.4rem;
+    font-weight: 800;
 }
+
 .flight-price .original {
-    font-size: 0.85rem;
     color: var(--volara-gray);
+    font-size: 0.85rem;
     text-decoration: line-through;
 }
 
-/* ─── Badges ────────────────────────────────────────────── */
-.volara-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.25rem 0.75rem;
-    border-radius: 100px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-}
-.badge-pending   { background: #FEF3C7; color: #92400E; }
-.badge-approved  { background: #D1FAE5; color: #065F46; }
-.badge-confirmed { background: #DBEAFE; color: #1E40AF; }
-.badge-denied    { background: #FEE2E2; color: #991B1B; }
-.badge-cancelled { background: #F3F4F6; color: #6B7280; }
-.badge-neutral   { background: #E8ECF0; color: var(--volara-dark); }
-.badge-promo     { background: var(--volara-red-light); color: var(--volara-red); }
-
-/* ─── Forms ─────────────────────────────────────────────── */
-.volara-input,
-.volara-select {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1.5px solid var(--volara-border);
-    border-radius: var(--radius-md);
-    font-family: var(--font-primary);
-    font-size: 0.925rem;
-    color: var(--volara-dark);
-    background: var(--volara-white);
-    transition: border-color var(--transition), box-shadow var(--transition);
-}
-.volara-input:focus,
-.volara-select:focus {
-    outline: none;
-    border-color: var(--volara-red);
-    box-shadow: 0 0 0 3px rgba(229, 27, 35, 0.12);
-}
-.volara-input::placeholder { color: #A0A8B0; }
-
-.volara-label {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--volara-dark);
-    margin-bottom: 0.375rem;
-}
-
-.form-group { margin-bottom: 1.25rem; }
-
-.form-error {
-    color: var(--volara-red);
-    font-size: 0.8rem;
-    margin-top: 0.25rem;
-}
-
-.is-invalid {
-    border-color: var(--volara-red) !important;
-}
-
-/* ─── Hero ──────────────────────────────────────────────── */
-.hero {
-    background-image: url('../img/destinos/138416-avion_blanco_en_el_aire_durante_el_dia-3840x2160.jpg');
-    background-size: cover;
-    background-position: center 42%;
-    padding: 4rem 0 5rem;
-    position: relative;
+/* ─── 11. Novedades ─────────────────────────────────────── */
+.news-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     overflow: hidden;
-}
-.hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(10, 14, 19, 0.56);
-    pointer-events: none;
-}
-.hero > .container {
-    position: relative;
-    z-index: 1;
-}
-
-.hero-title {
-    font-size: clamp(2rem, 5vw, 3.25rem);
-    font-weight: 800;
-    color: var(--volara-white);
-    line-height: 1.15;
-    margin-bottom: 1rem;
-}
-.hero-title span { color: #FF6B70; }
-
-.hero-subtitle {
-    font-size: 1.125rem;
-    color: rgba(255, 255, 255, 0.88);
-    max-width: 520px;
-    margin-bottom: 2.5rem;
-}
-
-/* ─── Search Box ────────────────────────────────────────── */
-.search-box {
-    background: var(--volara-white);
-    border-radius: var(--radius-xl);
-    padding: 2rem;
-    box-shadow: var(--shadow-lg);
     border: 1px solid var(--volara-border);
+    border-radius: var(--radius-lg);
+    background: var(--volara-white);
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
 }
 
-.search-box .trip-toggle {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
+.news-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(229, 27, 35, 0.2);
+    box-shadow: var(--shadow-md);
 }
-.trip-toggle-btn {
-    padding: 0.5rem 1.25rem;
-    border-radius: 100px;
-    border: 1.5px solid var(--volara-border);
-    background: transparent;
-    font-size: 0.85rem;
-    font-weight: 600;
+
+.news-card-body {
+    flex: 1;
+    padding: 1.45rem;
+}
+
+.news-card-body h3,
+.news-card-title {
+    margin-bottom: 0.65rem;
+    color: var(--volara-dark);
+    font-size: 1.08rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.news-card-body p,
+.news-card-text {
+    margin: 0;
     color: var(--volara-gray);
-    cursor: pointer;
-    transition: all var(--transition);
-}
-.trip-toggle-btn.active {
-    background: var(--volara-red);
-    border-color: var(--volara-red);
-    color: var(--volara-white);
+    font-size: 0.9rem;
+    line-height: 1.7;
 }
 
-.search-fields {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 1rem;
-    align-items: start;
-}
-.search-fields .search-btn-wrap {
-    display: flex;
-    align-items: flex-start;
-    padding-top: 1.65rem;
-}
-.search-fields .form-error {
-    min-height: 1.25rem;
+.news-card-date {
+    margin-bottom: 0.75rem;
+    color: var(--volara-gray);
+    font-size: 0.76rem;
 }
 
-/* ─── Alerts ────────────────────────────────────────────── */
-.volara-alert {
-    padding: 1rem 1.25rem;
-    border-radius: var(--radius-md);
-    font-size: 0.925rem;
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-.alert-success { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
-.alert-danger  { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
-.alert-warning { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-.alert-info    { background: #DBEAFE; color: #1E40AF; border: 1px solid #BFDBFE; }
-
-/* ─── Tables ────────────────────────────────────────────── */
+/* ─── 12. Tablas ────────────────────────────────────────── */
 .volara-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-md);
+    background: var(--volara-white);
+    overflow: hidden;
 }
+
 .volara-table thead th {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--volara-border);
     background: var(--volara-gray-light);
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
     color: var(--volara-gray);
-    padding: 0.875rem 1rem;
-    border-bottom: 1px solid var(--volara-border);
+    font-size: 0.77rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
+
 .volara-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
-.volara-table thead th:last-child  { border-radius: 0 var(--radius-sm) 0 0; }
+.volara-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+
 .volara-table tbody td {
-    padding: 1rem;
+    padding: 0.95rem 1rem;
     border-bottom: 1px solid var(--volara-border);
-    font-size: 0.925rem;
+    font-size: 0.9rem;
     vertical-align: middle;
+    overflow-wrap: anywhere;
 }
-.volara-table tbody tr:hover { background: var(--volara-gray-light); }
-.volara-table tbody tr:last-child td { border-bottom: none; }
+
+.volara-table tbody tr:hover {
+    background: #FAFBFC;
+}
+
+.volara-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.table-responsive,
+.volara-table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 
 .table-actions {
     display: flex;
     gap: 0.5rem;
 }
+
 .table-action-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--volara-border);
-    background: var(--volara-white);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-sm);
+    background: var(--volara-white);
     color: var(--volara-gray);
-    cursor: pointer;
-    transition: all var(--transition);
     font-size: 0.9rem;
-}
-.table-action-btn:hover {
-    border-color: var(--volara-red);
-    color: var(--volara-red);
-    background: var(--volara-red-light);
-}
-.table-action-btn.danger:hover {
-    border-color: #991B1B;
-    color: #991B1B;
-    background: #FEE2E2;
+    cursor: pointer;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
 }
 
-/* ─── Seat Map ──────────────────────────────────────────── */
+.table-action-btn:hover {
+    border-color: var(--volara-red);
+    background: var(--volara-red-light);
+    color: var(--volara-red);
+}
+
+.table-action-btn.danger:hover {
+    border-color: #991B1B;
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+/* ─── 13. Mapa de asientos ──────────────────────────────── */
 .seat-map-container {
-    background: var(--volara-gray-light);
-    border-radius: var(--radius-xl);
     padding: 2rem;
     overflow-x: auto;
+    border-radius: var(--radius-xl);
+    background: var(--volara-gray-light);
 }
 
 .seat-map {
@@ -640,15 +1216,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .seat-map-header {
-    text-align: center;
     margin-bottom: 1rem;
+    text-align: center;
 }
+
 .seat-map-header .cabin-label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
     color: var(--volara-gray);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 .seat-row {
@@ -656,240 +1233,503 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     gap: 0.5rem;
 }
+
 .seat-row-number {
     width: 24px;
-    text-align: center;
-    font-size: 0.75rem;
     color: var(--volara-gray);
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
 }
-.seat-aisle { width: 24px; }
+
+.seat-aisle {
+    width: 24px;
+}
 
 .seat {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-sm);
-    border: 2px solid var(--volara-border);
-    background: var(--volara-white);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
-    font-weight: 600;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--volara-border);
+    border-radius: var(--radius-sm);
+    background: var(--volara-white);
     color: var(--volara-gray);
+    font-size: 0.7rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all var(--transition);
-    -webkit-user-select: none;
     user-select: none;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+    -webkit-user-select: none;
 }
+
 .seat:hover:not(.occupied):not(.selected) {
     border-color: var(--volara-red);
     color: var(--volara-red);
 }
+
 .seat.selected {
-    background: var(--volara-red);
     border-color: var(--volara-red);
+    background: var(--volara-red);
     color: var(--volara-white);
 }
+
 .seat.occupied {
-    background: #E8ECF0;
     border-color: #E8ECF0;
-    color: #A0A8B0;
+    background: #E8ECF0;
+    color: #929BA5;
     cursor: not-allowed;
 }
 
 .seat-legend {
     display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    margin-top: 1.5rem;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
 }
+
 .seat-legend-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.8rem;
     color: var(--volara-gray);
+    font-size: 0.8rem;
 }
-.seat-legend-item .seat { width: 24px; height: 24px; cursor: default; pointer-events: none; }
 
-/* ─── Flight detail & seat selection ───────────────────── */
+.seat-legend-item .seat {
+    width: 24px;
+    height: 24px;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* ─── 14. Detalle de vuelo y reserva ────────────────────── */
 .flight-detail-layout,
 .seat-selection-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.75fr);
-    gap: 1.5rem;
     align-items: start;
+    gap: 1.5rem;
 }
-.flight-detail-card { padding: 2rem; }
+
+.flight-detail-card {
+    padding: 2rem;
+}
+
 .flight-detail-route {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    gap: 1.25rem;
     align-items: center;
+    gap: 1.25rem;
     padding: 1.5rem 0;
     border-top: 1px solid var(--volara-border);
     border-bottom: 1px solid var(--volara-border);
 }
-.flight-detail-route > div:not(.flight-detail-line) { display: grid; gap: 0.25rem; }
-.flight-detail-route > div:last-child { text-align: right; }
-.flight-detail-route strong { font-size: 2.5rem; color: var(--volara-dark); line-height: 1; }
-.flight-detail-route span { color: var(--volara-gray); font-size: 0.85rem; }
-.flight-detail-route time { font-weight: 700; font-size: 1.1rem; }
-.flight-detail-line { display: grid; justify-items: center; gap: 0.4rem; color: var(--volara-red); }
-.flight-detail-line span { color: var(--volara-gray); font-size: 0.75rem; white-space: nowrap; }
-.flight-detail-line i { font-size: 1.4rem; }
+
+.flight-detail-route > div:not(.flight-detail-line) {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.flight-detail-route > div:last-child {
+    text-align: right;
+}
+
+.flight-detail-route strong {
+    color: var(--volara-dark);
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.flight-detail-route span {
+    color: var(--volara-gray);
+    font-size: 0.85rem;
+}
+
+.flight-detail-route time {
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.flight-detail-line {
+    display: grid;
+    justify-items: center;
+    gap: 0.4rem;
+    color: var(--volara-red);
+}
+
+.flight-detail-line span {
+    color: var(--volara-gray);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.flight-detail-line i {
+    font-size: 1.4rem;
+}
+
 .flight-detail-info,
 .seat-summary-details,
-.reservation-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1.5rem 0 0; }
+.reservation-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0 0;
+}
+
 .flight-detail-info div,
 .seat-summary-details div,
-.reservation-details div { display: grid; gap: 0.25rem; }
+.reservation-details div {
+    display: grid;
+    gap: 0.25rem;
+}
+
 .flight-detail-info dt,
 .seat-summary-details dt,
-.reservation-details dt { color: var(--volara-gray); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+.reservation-details dt {
+    color: var(--volara-gray);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
 .flight-detail-info dd,
 .seat-summary-details dd,
-.reservation-details dd { margin: 0; font-weight: 600; }
-.flight-summary-card { position: sticky; top: 96px; }
-.eyebrow { color: var(--volara-red); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-.flight-summary-price { display: grid; gap: 0.15rem; margin: 1.5rem 0; }
-.flight-summary-price span { color: var(--volara-gray); font-size: 0.8rem; }
-.flight-summary-price strong { color: var(--volara-dark); font-size: 2rem; line-height: 1.1; }
-.flight-summary-price del { color: var(--volara-gray); font-size: 0.85rem; }
-.seat-cabin-panel { background: #F7F8FA; border: 1px solid var(--volara-border); border-radius: var(--radius-xl); padding: 1.5rem; }
-.seat-cabin-header { display: flex; justify-content: space-between; gap: 1rem; align-items: start; margin-bottom: 1.25rem; }
-.seat-cabin-header h2 { margin: 0.35rem 0 0; font-size: 1.35rem; }
-.seat-class-label { background: var(--volara-dark); color: var(--volara-white); border-radius: 100px; padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 700; }
-.seat-airplane { background: var(--volara-white); border: 1px solid var(--volara-border); border-radius: 48% 48% 20px 20px / 28px 28px 20px 20px; padding: 1.25rem 1rem 1.5rem; }
-.seat-cockpit { display: flex; justify-content: center; align-items: center; gap: 0.5rem; color: var(--volara-gray); font-size: 0.75rem; margin-bottom: 1rem; }
-.seat-cockpit i { color: var(--volara-red); }
-.seat-map-modern { gap: 0.65rem; }
-.seat-map-modern .seat-map-header { display: grid; grid-template-columns: 24px 1fr; width: min(100%, 340px); margin-bottom: 0; }
-.seat-column-labels { display: grid; grid-template-columns: repeat(6, 40px); gap: 0.5rem; justify-content: center; color: var(--volara-gray); font-size: 0.7rem; font-weight: 700; }
-.seat-map-modern .seat-row { gap: 0.5rem; }
-.seat-map-modern .seat { background: #DDEAFF; border-color: #C5D9F5; color: #37649A; border-radius: 8px 8px 5px 5px; }
-.seat-map-modern .seat:hover:not(.occupied):not(.selected) { background: #BBD3F5; border-color: #7FAAE5; color: #244B7B; }
-.seat-map-modern .seat.selected { background: var(--volara-red); border-color: var(--volara-red); color: var(--volara-white); }
-.seat-map-modern .seat.occupied { background: #EEF0F2; border-color: #E1E4E8; color: #A0A8B0; }
-.seat-map-modern .seat-aisle { width: 1rem; }
-.reservation-success { text-align: center; padding: 2.5rem; }
-.reservation-success-icon { width: 56px; height: 56px; display: grid; place-items: center; margin: 0 auto 1rem; border-radius: 50%; background: #D1FAE5; color: #047857; font-size: 1.75rem; }
-.reservation-code { display: grid; gap: 0.25rem; margin: 1.5rem 0; padding: 1rem; background: var(--volara-gray-light); border-radius: var(--radius-md); }
-.reservation-code span { color: var(--volara-gray); font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
-.reservation-code strong { letter-spacing: 0.12em; font-size: 1.25rem; }
-.reservation-list { display: grid; gap: 1rem; }
-.reservation-card { padding: 1.5rem; }
-.reservation-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
-.reservation-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px solid var(--volara-border); color: var(--volara-gray); font-size: 0.875rem; }
-.reservation-card-meta i { color: var(--volara-red); margin-right: 0.25rem; }
-.reservation-card-meta strong { margin-left: auto; color: var(--volara-dark); font-size: 1.25rem; }
-.reservation-card-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
-
-/* ─── Footer ────────────────────────────────────────────── */
-.volara-footer {
-    background: var(--volara-dark);
-    color: rgba(255,255,255,0.7);
-    padding: 3.5rem 0 0;
-    margin-top: auto;
-}
-.volara-footer a {
-    color: rgba(255,255,255,0.7);
-    transition: color var(--transition);
-}
-.volara-footer a:hover { color: var(--volara-white); }
-
-.footer-brand img { height: 36px; filter: brightness(0) invert(1); opacity: 0.9; }
-.footer-brand p { font-size: 0.875rem; margin-top: 1rem; max-width: 280px; }
-
-.footer-heading {
-    font-size: 0.8rem;
+.reservation-details dd {
+    margin: 0;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--volara-white);
-    margin-bottom: 1rem;
+    overflow-wrap: anywhere;
 }
-.footer-links { list-style: none; padding: 0; margin: 0; }
-.footer-links li { margin-bottom: 0.5rem; }
-.footer-links a { font-size: 0.875rem; }
 
-.footer-bottom {
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding: 1.5rem 0;
-    margin-top: 2.5rem;
+.flight-summary-card {
+    position: sticky;
+    top: calc(var(--navbar-h) + 1rem);
+}
+
+.eyebrow {
+    color: var(--volara-red);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.flight-summary-price {
+    display: grid;
+    gap: 0.15rem;
+    margin: 1.5rem 0;
+}
+
+.flight-summary-price span {
+    color: var(--volara-gray);
     font-size: 0.8rem;
+}
+
+.flight-summary-price strong {
+    color: var(--volara-dark);
+    font-size: 2rem;
+    line-height: 1.1;
+}
+
+.flight-summary-price del {
+    color: var(--volara-gray);
+    font-size: 0.85rem;
+}
+
+.seat-cabin-panel {
+    padding: 1.5rem;
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-xl);
+    background: #F7F8FA;
+}
+
+.seat-cabin-header {
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.seat-cabin-header h2 {
+    margin: 0.35rem 0 0;
+    font-size: 1.35rem;
+}
+
+.seat-class-label {
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: var(--volara-dark);
+    color: var(--volara-white);
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.seat-airplane {
+    padding: 1.25rem 1rem 1.5rem;
+    overflow-x: auto;
+    border: 1px solid var(--volara-border);
+    border-radius: 48% 48% 20px 20px / 28px 28px 20px 20px;
+    background: var(--volara-white);
+}
+
+.seat-cockpit {
+    display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--volara-gray);
+    font-size: 0.75rem;
+}
+
+.seat-cockpit i {
+    color: var(--volara-red);
+}
+
+.seat-map-modern {
+    gap: 0.65rem;
+}
+
+.seat-map-modern .seat-map-header {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    width: min(100%, 340px);
+    margin-bottom: 0;
+}
+
+.seat-column-labels {
+    display: grid;
+    grid-template-columns: repeat(6, 40px);
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--volara-gray);
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.seat-map-modern .seat-row {
+    gap: 0.5rem;
+}
+
+.seat-map-modern .seat {
+    border-color: #C5D9F5;
+    border-radius: 8px 8px 5px 5px;
+    background: #DDEAFF;
+    color: #37649A;
+}
+
+.seat-map-modern .seat:hover:not(.occupied):not(.selected) {
+    border-color: #7FAAE5;
+    background: #BBD3F5;
+    color: #244B7B;
+}
+
+.seat-map-modern .seat.selected {
+    border-color: var(--volara-red);
+    background: var(--volara-red);
+    color: var(--volara-white);
+}
+
+.seat-map-modern .seat.occupied {
+    border-color: #E1E4E8;
+    background: #EEF0F2;
+    color: #A0A8B0;
+}
+
+.seat-map-modern .seat-aisle {
+    width: 1rem;
+}
+
+.reservation-success {
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.reservation-success-icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: var(--volara-success-light);
+    color: var(--volara-success);
+    font-size: 1.75rem;
+}
+
+.reservation-code {
+    display: grid;
+    gap: 0.25rem;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: var(--volara-gray-light);
+}
+
+.reservation-code span {
+    color: var(--volara-gray);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.reservation-code strong {
+    font-size: 1.25rem;
+    letter-spacing: 0.12em;
+}
+
+.reservation-list {
+    display: grid;
     gap: 1rem;
 }
 
-/* ─── Section Utilities ─────────────────────────────────── */
-.section { padding: 4rem 0; }
-.section-gray { background: var(--volara-gray-light); }
-.section-title {
-    font-size: 1.75rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
+.reservation-card {
+    padding: 1.5rem;
 }
-.section-subtitle {
+
+.reservation-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.reservation-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--volara-border);
     color: var(--volara-gray);
-    margin-bottom: 2.5rem;
-    font-size: 1rem;
+    font-size: 0.875rem;
+}
+
+.reservation-card-meta i {
+    margin-right: 0.25rem;
+    color: var(--volara-red);
+}
+
+.reservation-card-meta strong {
+    margin-left: auto;
+    color: var(--volara-dark);
+    font-size: 1.25rem;
+}
+
+.reservation-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* ─── 15. Alertas y estados vacíos ──────────────────────── */
+.empty-state {
+    padding: 3rem 1rem;
+    color: var(--volara-gray);
+    text-align: center;
+}
+
+.empty-state-icon {
+    display: inline-block;
+    margin-bottom: 1rem;
+    opacity: 0.45;
+    font-size: 3rem;
+}
+
+/* ─── 16. Utilidades de sección y encabezados ───────────── */
+.section {
+    padding: clamp(3rem, 6vw, 5rem) 0;
+}
+
+.section-gray {
+    background: linear-gradient(180deg, #F7F8FA 0%, #F2F4F7 100%);
+}
+
+.section-title {
+    margin-bottom: 0.65rem;
+    font-size: clamp(1.65rem, 3vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+}
+
+.section-subtitle {
+    max-width: 650px;
+    margin-bottom: 2.25rem;
+    color: var(--volara-gray);
+    font-size: 0.98rem;
+    line-height: 1.7;
 }
 
 .page-header {
-    background: var(--volara-gray-light);
     padding: 2.5rem 0;
     border-bottom: 1px solid var(--volara-border);
+    background: var(--volara-gray-light);
 }
+
 .page-header h1 {
-    font-size: 1.75rem;
     margin-bottom: 0.25rem;
+    font-size: 1.75rem;
 }
+
 .page-header .breadcrumb {
     margin: 0;
     font-size: 0.85rem;
 }
-.breadcrumb-item a { color: var(--volara-gray); }
-.breadcrumb-item.active { color: var(--volara-dark); }
 
-/* ─── Pagination ────────────────────────────────────────── */
+.breadcrumb-item a {
+    color: var(--volara-gray);
+}
+
+.breadcrumb-item.active {
+    color: var(--volara-dark);
+}
+
+/* ─── 17. Paginación ────────────────────────────────────── */
 .volara-pagination {
     display: flex;
-    gap: 0.25rem;
+    flex-wrap: wrap;
     justify-content: center;
+    gap: 0.35rem;
     margin-top: 2rem;
 }
+
 .volara-pagination a,
 .volara-pagination span {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 40px;
     height: 40px;
-    border-radius: var(--radius-sm);
-    font-size: 0.875rem;
-    font-weight: 600;
+    padding: 0 0.65rem;
     border: 1px solid var(--volara-border);
+    border-radius: var(--radius-sm);
     color: var(--volara-dark);
+    font-size: 0.875rem;
+    font-weight: 700;
     transition: all var(--transition);
 }
+
 .volara-pagination a:hover {
     border-color: var(--volara-red);
-    color: var(--volara-red);
     background: var(--volara-red-light);
+    color: var(--volara-red);
 }
+
 .volara-pagination .active {
-    background: var(--volara-red);
     border-color: var(--volara-red);
+    background: var(--volara-red);
     color: var(--volara-white);
 }
 
-/* ─── Dashboard ─────────────────────────────────────────── */
+/* ─── 18. Dashboard ─────────────────────────────────────── */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -897,125 +1737,968 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 2rem;
 }
 
-/* ─── Novedades Cards ───────────────────────────────────── */
-.news-card {
-    background: var(--volara-white);
-    border: 1px solid var(--volara-border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    transition: box-shadow var(--transition);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-.news-card:hover { box-shadow: var(--shadow-md); }
-.news-card-body { padding: 1.5rem; flex: 1; }
-.news-card-body h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-.news-card-body p { font-size: 0.9rem; color: var(--volara-gray); margin: 0; }
-.news-card-date {
-    font-size: 0.75rem;
-    color: var(--volara-gray);
-    margin-bottom: 0.75rem;
-}
-
-/* ─── Empty State ───────────────────────────────────────── */
-.empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--volara-gray);
-}
-.empty-state-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.4;
-}
-
-/* ─── Responsive ────────────────────────────────────────── */
-@media (max-width: 991.98px) {
+/* ─── 19. Responsive: tablets y pantallas medianas ──────── */
+@media (max-width: 1199.98px) {
     .volara-navbar .navbar-collapse {
-        background: var(--volara-white);
+        max-height: calc(100vh - var(--navbar-h) - 1rem);
+        margin-top: 0.65rem;
         padding: 1rem;
-        border-top: 1px solid var(--volara-border);
-        margin-top: 0.5rem;
-        border-radius: var(--radius-md);
+        overflow-y: auto;
+        border: 1px solid var(--volara-border);
+        border-radius: var(--radius-lg);
+        background: var(--volara-white);
         box-shadow: var(--shadow-md);
     }
-    .volara-navbar .navbar-nav { gap: 0.25rem; }
-    .volara-navbar .nav-link { width: 100%; }
-    .volara-navbar .navbar-nav.ms-auto { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--volara-border); }
-    .volara-navbar .btn-volara-sm { display: inline-flex; width: 100%; justify-content: center; margin-top: 0.25rem; }
-    .user-menu .dropdown-menu { margin-top: 0.25rem; box-shadow: none !important; }
-    .flight-detail-layout,
-    .seat-selection-layout { grid-template-columns: 1fr; }
-    .flight-summary-card { position: static; }
-    .flight-route { gap: 1rem; }
-    .flight-airport .code { font-size: 1.4rem; }
-    .flight-price { margin-left: 0; margin-top: 1rem; text-align: left; }
+
+    .volara-navbar .navbar-nav {
+        gap: 0.25rem;
+    }
+
+    .volara-navbar .navbar-nav .nav-link {
+        display: flex;
+        width: 100%;
+        justify-content: flex-start;
+        padding: 0.7rem 0.85rem;
+        white-space: normal;
+    }
+
+    .volara-navbar .navbar-nav.ms-auto {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--volara-border);
+    }
+
+    .volara-navbar .dropdown-menu {
+        position: static;
+        width: 100%;
+        margin: 0.3rem 0 0.65rem;
+        border: 0;
+        background: var(--volara-gray-light);
+        box-shadow: none;
+    }
+
+    .volara-navbar .btn-volara-sm {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        margin-top: 0.25rem;
+    }
 }
 
+@media (max-width: 991.98px) {
+    .hero {
+        min-height: auto;
+        padding: 4rem 0;
+        background-position: center;
+    }
+
+    .hero::before {
+        background: rgba(10, 14, 19, 0.72);
+    }
+
+    .hero-showcase {
+        min-height: 300px;
+        max-width: 500px;
+        margin: 1.5rem auto 0;
+    }
+
+    .flight-detail-layout,
+    .seat-selection-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flight-summary-card {
+        position: static;
+    }
+
+    .flight-route {
+        gap: 1rem;
+    }
+
+    .flight-airport .code {
+        font-size: 1.45rem;
+    }
+}
+
+/* ─── 20. Responsive: móviles ──────────────────────────── */
 @media (max-width: 767.98px) {
+    :root {
+        --navbar-h: 72px;
+    }
+
     .volara-navbar .navbar-brand img {
         width: 48px;
         height: 48px;
     }
-    .hero { padding: 2.5rem 0 3rem; }
-    .search-box { padding: 1.25rem; border-radius: var(--radius-lg); }
-    .search-fields { grid-template-columns: 1fr; }
-    .section { padding: 2.5rem 0; }
 
-    .volara-table-responsive {
-        display: block;
-        overflow-x: auto;
+    .hero {
+        padding: 3.25rem 0;
     }
 
-    .flight-card { padding: 1.25rem; }
-    .flight-meta { flex-direction: column; align-items: flex-start; }
+    .hero-title {
+        font-size: clamp(2rem, 8vw, 3rem);
+        letter-spacing: -0.035em;
+    }
 
-    .flight-detail-card { padding: 1.25rem; }
-    .flight-detail-route strong { font-size: 2rem; }
-    .flight-detail-route { gap: 0.5rem; }
-    .seat-cabin-panel { padding: 1rem 0.5rem; }
-    .seat-airplane { padding-inline: 0.25rem; overflow-x: auto; }
-    .seat-map-modern .seat { width: 34px; height: 34px; font-size: 0.6rem; }
-    .seat-column-labels { grid-template-columns: repeat(6, 34px); gap: 0.5rem; }
-    .seat-map-modern .seat-row { gap: 0.5rem; }
-    .seat-map-modern .seat-aisle { width: 0.5rem; }
-    .reservation-success { padding: 1.5rem; }
-    .reservation-card { padding: 1.25rem; }
-    .reservation-card-top { flex-direction: column; }
-    .reservation-card-meta { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
-    .reservation-card-meta strong { margin-left: 0; }
-    .reservation-card-actions { justify-content: flex-start; flex-wrap: wrap; }
+    .hero-subtitle {
+        margin-bottom: 1.75rem;
+        font-size: 1rem;
+    }
 
-    .footer-bottom { flex-direction: column; text-align: center; }
+    .hero .d-flex.gap-3 {
+        gap: 0.75rem !important;
+    }
+
+    .hero .d-flex.gap-3 .btn {
+        flex: 1 1 100%;
+    }
+
+    .hero-showcase {
+        min-height: 260px;
+        transform: scale(0.94);
+        transform-origin: top center;
+    }
+
+    .phone-card-left {
+        left: 1%;
+        width: 190px;
+    }
+
+    .phone-card-center {
+        left: 29%;
+        width: 195px;
+    }
+
+    .phone-card-right {
+        right: 0;
+        width: 145px;
+    }
+
+    .section {
+        padding: 3rem 0;
+    }
+
+    .section-subtitle {
+        margin-bottom: 1.75rem;
+    }
+
+    .volara-card {
+        padding: 1.25rem;
+    }
+
+    .search-box {
+        padding: 1.25rem;
+        border-radius: var(--radius-lg);
+    }
+
+    .search-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .search-fields .search-btn-wrap {
+        padding-top: 0;
+    }
+
+    .flight-card {
+        padding: 1.25rem;
+    }
+
+    .flight-meta {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .flight-price {
+        margin-left: 0;
+        text-align: left;
+    }
+
+    .flight-detail-card {
+        padding: 1.25rem;
+    }
+
+    .flight-detail-route {
+        gap: 0.5rem;
+    }
+
+    .flight-detail-route strong {
+        font-size: 2rem;
+    }
+
+    .seat-cabin-panel {
+        padding: 1rem 0.5rem;
+    }
+
+    .seat-airplane {
+        padding-right: 0.25rem;
+        padding-left: 0.25rem;
+    }
+
+    .seat-map-modern .seat {
+        width: 34px;
+        height: 34px;
+        font-size: 0.6rem;
+    }
+
+    .seat-column-labels {
+        grid-template-columns: repeat(6, 34px);
+        gap: 0.5rem;
+    }
+
+    .seat-map-modern .seat-aisle {
+        width: 0.5rem;
+    }
+
+    .reservation-success {
+        padding: 1.5rem;
+    }
+
+    .reservation-card {
+        padding: 1.25rem;
+    }
+
+    .reservation-card-top {
+        flex-direction: column;
+    }
+
+    .reservation-card-meta {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .reservation-card-meta strong {
+        margin-left: 0;
+    }
+
+    .reservation-card-actions {
+        justify-content: flex-start;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* ─── 21. Responsive: móviles pequeños ──────────────────── */
+@media (max-width: 575.98px) {
+    .container {
+        --bs-gutter-x: 1.25rem;
+    }
+
+    .hero .container > .row {
+        row-gap: 1.5rem !important;
+    }
+
+    .hero-title {
+        font-size: clamp(1.9rem, 8.5vw, 2.6rem);
+    }
+
+    .btn-volara-lg {
+        width: 100%;
+        padding: 0.8rem 1rem;
+    }
+
+    .flight-route {
+        gap: 0.45rem;
+    }
+
+    .flight-airport {
+        min-width: 58px;
+    }
+
+    .flight-airport .code {
+        font-size: 1.25rem;
+    }
+
+    .flight-detail-route {
+        gap: 0.35rem;
+    }
+
+    .flight-detail-route strong {
+        font-size: 1.65rem;
+    }
+
+    .flight-detail-info,
+    .seat-summary-details,
+    .reservation-details {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .footer-bottom {
+        gap: 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* ─── 22. Preferencias de movimiento ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =====================================================
+   FOOTER VOLARA — DISEÑO CORREGIDO
+   ===================================================== */
+
+.volara-footer {
+    position: relative;
+    margin-top: auto;
+    padding: 3.5rem 0 0;
+    background: linear-gradient(135deg, #151D25 0%, #0A0E13 100%);
+    border-top: 3px solid var(--volara-red);
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+.volara-footer .container {
+    position: relative;
+}
+
+.volara-footer .row {
+    row-gap: 2rem;
+}
+
+.volara-footer .footer-brand {
+    padding-right: 2rem;
+}
+
+.volara-footer .footer-brand > a {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+}
+
+.volara-footer .footer-heading {
+    margin: 0 0 1.2rem;
+    color: #FFFFFF;
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1.5;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.volara-footer .footer-brand .footer-heading {
+    margin-bottom: 0;
+    font-size: 1.45rem;
+    letter-spacing: 0.12em;
+}
+
+.volara-footer .footer-brand p {
+    max-width: 310px;
+    margin: 0 0 0.75rem;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.875rem;
+    line-height: 1.8;
+}
+
+.volara-footer .footer-brand p:last-child {
+    margin-bottom: 0;
+}
+
+.volara-footer a {
+    color: rgba(255, 255, 255, 0.72);
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.volara-footer a:hover {
+    color: #FFFFFF;
+}
+
+.volara-footer .footer-brand a:hover .footer-heading {
+    color: #FF7378;
+}
+
+.volara-footer .footer-links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.volara-footer .footer-links li {
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
+}
+
+.volara-footer .footer-links a {
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.volara-footer .footer-links a:hover {
+    color: #FFFFFF;
+    transform: translateX(3px);
+}
+
+.volara-footer .footer-links span {
+    color: rgba(255, 255, 255, 0.9);
+    overflow-wrap: anywhere;
+}
+
+.volara-footer .footer-brand p a {
+    color: #FFFFFF;
+    overflow-wrap: anywhere;
+}
+
+.volara-footer .footer-brand p a:hover {
+    color: #FF7378;
+}
+
+.volara-footer .footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.78rem;
+    line-height: 1.6;
+}
+
+.volara-footer .footer-bottom span {
+    overflow-wrap: anywhere;
+}
+
+/* Evita que los enlaces se peguen al borde en tablets */
+@media (max-width: 991.98px) {
+    .volara-footer {
+        padding-top: 2.75rem;
+    }
+
+    .volara-footer .footer-brand {
+        padding-right: 0.75rem;
+    }
+
+    .volara-footer .footer-heading {
+        margin-bottom: 0.85rem;
+    }
+
+    .volara-footer .footer-bottom {
+        margin-top: 2.25rem;
+    }
+}
+
+/* Adaptación para celulares */
+@media (max-width: 575.98px) {
+    .volara-footer {
+        padding-top: 2.25rem;
+    }
+
+    .volara-footer .row {
+        row-gap: 1.75rem;
+    }
+
+    .volara-footer .footer-brand {
+        padding-right: 0.75rem;
+    }
+
+    .volara-footer .footer-brand p {
+        max-width: 100%;
+    }
+
+    .volara-footer .footer-heading {
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+
+    .volara-footer .footer-links {
+        gap: 0.65rem;
+    }
+
+    .volara-footer .footer-links a {
+        font-size: 0.82rem;
+    }
+
+    .volara-footer .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-top: 2rem;
+        padding: 1.25rem 0;
+        gap: 0.5rem;
+    }
+}
+/* ─── Menú Descubre: estado seleccionado ─────────────── */
+
+.volara-navbar .dropdown-menu .dropdown-item.active {
+    color: var(--volara-red);
+    background-color: var(--volara-red-light);
+    font-weight: 600;
+}
+
+/* Al pasar el cursor o navegar con el teclado */
+.volara-navbar .dropdown-menu .dropdown-item:hover,
+.volara-navbar .dropdown-menu .dropdown-item:focus {
+    color: var(--volara-red);
+    background-color: var(--volara-red-light);
+}
+
+/* Al hacer clic */
+.volara-navbar .dropdown-menu .dropdown-item:active {
+    color: var(--volara-white);
+    background-color: var(--volara-red);
+}
+
+/* Evitar el azul en el enlace activo de Descubre */
+.volara-navbar .nav-link.dropdown-toggle.active {
+    color: var(--volara-red);
+    background-color: var(--volara-red-light);
+}
+
+/* =========================================
+   ESTRUCTURA GENERAL Y FOOTER
+   ========================================= */
+
+html {
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-x: clip;
+}
+
+/* El contenido principal ocupa el espacio disponible */
+main#contenido-principal,
+main {
+    flex: 1 0 auto;
+    width: 100%;
+    min-width: 0;
+}
+
+/* El footer permanece debajo del contenido */
+.volara-footer {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    max-width: 100%;
+    flex-shrink: 0;
+    clear: both;
+    margin-top: auto;
+    z-index: 1;
+    background: var(--volara-dark, #151D25);
+    color: #ffffff;
+}
+
+/* Evita que el contenido interno se desborde */
+.volara-footer *,
+.volara-navbar * {
+    box-sizing: border-box;
+}
+
+.volara-footer .container {
+    width: 100%;
+    max-width: 1320px;
+    margin-inline: auto;
+}
+
+/* Logo */
+.volara-footer-brand {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+}
+
+.volara-footer-logo {
+    display: block;
+    width: auto;
+    max-width: 190px;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Textos */
+.volara-footer-title {
+    margin: 0 0 16px;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.volara-footer-description {
+    max-width: 360px;
+    color: #cbd0d6;
+    font-size: 0.94rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+/* Enlaces */
+.volara-footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.volara-footer-links a,
+.volara-footer-bottom a {
+    color: #d5d9de;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    transition: color 0.2s ease;
+}
+
+.volara-footer-links a:hover,
+.volara-footer-bottom a:hover {
+    color: var(--volara-red, #E51B23);
+}
+
+/* Franja inferior */
+.volara-footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 20px 0;
+    border-top: 1px solid rgb(255 255 255 / 14%);
+    color: #cbd0d6;
+    font-size: 0.875rem;
+}
+
+.volara-footer-bottom p {
+    margin: 0;
+}
+
+/* Menú */
+.volara-navbar {
+    position: relative;
+    z-index: 1000;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Elementos del menú desplegable */
+.volara-navbar .dropdown-menu {
+    z-index: 1050;
+    max-width: calc(100vw - 24px);
+}
+
+/* Diseño para celulares */
+@media (max-width: 575.98px) {
+    .volara-footer .row {
+        --bs-gutter-x: 1.25rem;
+    }
+
+    .volara-footer-bottom {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .volara-footer-logo {
+        max-width: 165px;
+    }
+}
+
+/* =========================================
+   FIX FOOTER: AYUDA Y CONTACTO
+   ========================================= */
+
+main.volara-public-page {
+    display: flow-root;
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    flex: 0 0 auto;
+    clear: both;
+    overflow: visible;
+    padding-bottom: 2rem;
+}
+
+main.volara-public-page > .page-header,
+main.volara-public-page > .volara-public-section {
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    clear: both;
+}
+
+main.volara-public-page > .volara-public-section {
+    display: flow-root;
+    padding: 3rem 0;
+}
+
+main.volara-public-page .row {
+    min-width: 0;
+}
+
+main.volara-public-page .volara-card {
+    position: relative;
+    height: auto;
+    min-height: 0;
+    overflow-wrap: anywhere;
+}
+
+main.volara-public-page .volara-card p:last-child {
+    margin-bottom: 0;
+}
+
+/* El footer no debe flotar ni tapar el contenido de estas páginas */
+main.volara-public-page ~ footer.volara-footer {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: none;
+    float: none;
+    clear: both;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    flex-shrink: 0;
+    margin-top: 0;
+    z-index: auto;
+}
+
+@media (max-width: 767.98px) {
+    main.volara-public-page > .volara-public-section {
+        padding: 2rem 0;
+    }
+
+    main.volara-public-page {
+        padding-bottom: 1rem;
+    }
+}
+
+/* =========================================
+   PERFIL Y RESERVAS DEL PASAJERO
+   ========================================= */
+
+.volara-pasajero-page {
+    width: 100%;
+    min-width: 0;
+}
+
+.volara-pasajero-page > .volara-public-section {
+    padding: clamp(2rem, 4vw, 3.5rem) 0;
+}
+
+.reservation-summary {
+    padding: 1.5rem;
+    border-radius: 16px;
+    height: 100%;
+    min-width: 0;
+}
+
+.reservation-summary-details p {
+    display: flex;
+    align-items: baseline;
+    gap: 0.15rem;
+    margin-bottom: 0.85rem;
+    overflow-wrap: anywhere;
+}
+
+.reservation-summary-details p i {
+    color: var(--volara-red, #E51B23);
+    flex-shrink: 0;
+}
+
+.reservation-summary-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    border-top: 1px solid var(--volara-border, #DDE2E7);
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+}
+
+.reservation-summary-price strong {
+    color: var(--volara-dark, #151D25);
+    font-size: 1.2rem;
+}
+
+.profile-page-card {
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border-radius: 18px;
+    min-width: 0;
+}
+
+.profile-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+    border-radius: 50%;
+    background: var(--volara-red-light, #FDEAEB);
+    color: var(--volara-red, #E51B23);
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.profile-page-card .volara-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.profile-page-card .volara-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+}
+
+.profile-page-card input[readonly] {
+    background: var(--volara-light-gray, #F4F6F8);
+    cursor: not-allowed;
 }
 
 @media (max-width: 575.98px) {
-    .hero-title { font-size: 1.75rem; }
-    .seat { width: 34px; height: 34px; font-size: 0.6rem; }
+    .reservation-summary {
+        padding: 1.15rem;
+    }
+
+    .reservation-summary-price {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }
 
-/* ─── Accessibility ─────────────────────────────────────── */
-:focus-visible {
-    outline: 2px solid var(--volara-red);
-    outline-offset: 2px;
+/* =========================================================
+   VOLARA - Paginación compacta para resultados de vuelos
+   ========================================================= */
+
+.volara-pagination-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 0.5rem;
 }
 
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
+.volara-pagination {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.volara-pagination .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
     padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0,0,0,0);
-    white-space: nowrap;
-    border: 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
+/* Botones y números */
+.volara-pagination .page-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0.35rem 0.55rem;
+
+    border: 1px solid #DDE2E7;
+    border-radius: 8px !important;
+
+    background-color: #FFFFFF;
+    color: #374151;
+
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.2;
+
+    box-shadow: none;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+/* Hover */
+.volara-pagination .page-link:hover {
+    z-index: 1;
+    border-color: #E51B23;
+    background-color: #FDEAEB;
+    color: #C9141C;
+}
+
+/* Página seleccionada */
+.volara-pagination .page-item.active .page-link {
+    z-index: 2;
+    border-color: #E51B23;
+    background-color: #E51B23;
+    color: #FFFFFF;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(229, 27, 35, 0.18);
+}
+
+/* Foco accesible con teclado */
+.volara-pagination .page-link:focus-visible {
+    z-index: 3;
+    outline: 3px solid rgba(229, 27, 35, 0.25);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+/* Anterior y siguiente deshabilitados */
+.volara-pagination .page-item.disabled .page-link {
+    border-color: #E5E7EB;
+    background-color: #F4F6F8;
+    color: #9CA3AF;
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+/* Evitar que los enlaces cambien de color por Bootstrap */
+.volara-pagination .page-link:active {
+    background-color: #FDEAEB;
+    color: #C9141C;
+}
+
+/* Pantallas pequeñas */
+@media (max-width: 576px) {
+    .volara-pagination .pagination {
+        gap: 0.25rem;
+    }
+
+    .volara-pagination .page-link {
+        min-width: 30px;
+        min-height: 30px;
+        padding: 0.3rem 0.45rem;
+        border-radius: 7px !important;
+        font-size: 0.78rem;
     }
 }

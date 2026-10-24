@@ -1,388 +1,702 @@
+
 <?php
-
 require_once __DIR__ . '/../Includes/functions.php';
-require_once __DIR__ . '/../Includes/mailer.php';
+require_once __DIR__ . '/../Includes/functionsF2.php';
+// require_once __DIR__ . '/../Includes/mailer.php';
 
-$conexion = conectarDB();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
-$sqlAerolineas = "
-    SELECT codAerolinea, nombre
-    FROM aerolineas
-    ORDER BY nombre
-";
+$titulo = 'Crear cuenta';
+$pageDescription = 'Registrate en VOLARA para acceder a sus servicios.';
 
-$resultadoAerolineas = $conexion->query($sqlAerolineas);
-
-$aerolineas = $resultadoAerolineas->fetchAll(PDO::FETCH_ASSOC);
+$baseUrl = rtrim(BASE_URL, '/');
 
 $errores = [];
+$aerolineas = [];
+$registroCompletado = false;
+$mensajeExito = '';
+$tipoMensaje = 'success';
 
 $nombre = '';
 $apellido = '';
 $mail = '';
 $telefono = '';
-$tipoUsuario = '';
+$tipoUsuario = 'usuario';
 $codAerolinea = '';
-$mensajeExito = '';
+$clave = '';
+$confirmarClave = '';
+
+if (empty($_SESSION['csrf_registro'])) {
+    $_SESSION['csrf_registro'] = bin2hex(random_bytes(32));
+}
+
+$csrfToken = $_SESSION['csrf_registro'];
+
+// Cargar aerolíneas para el selector.
+$conexion = null;
+
+try {
+    $conexion = conectarDB();
+
+    $sqlAerolineas = "
+        SELECT codAerolinea, nombre
+        FROM aerolineas
+        ORDER BY nombre
+    ";
+
+    $aerolineas = $conexion
+        ->query($sqlAerolineas)
+        ->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log('Error cargando aerolíneas VOLARA: ' . $e->getMessage());
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $errores = [];
 
-    $codAerolinea = $_POST['codAerolinea'] ?? '';
     $nombre = trim($_POST['nombre'] ?? '');
     $apellido = trim($_POST['apellido'] ?? '');
     $mail = trim($_POST['mail'] ?? '');
     $telefono = trim($_POST['telefono'] ?? '');
+
     $clave = $_POST['clave'] ?? '';
     $confirmarClave = $_POST['confirmarClave'] ?? '';
-    $tipoUsuario = $_POST['tipoUsuario'] ?? '';
 
+    $tipoUsuario = $_POST['tipoUsuario'] ?? 'usuario';
+    $codAerolinea = trim((string) ($_POST['codAerolinea'] ?? ''));
+
+    // Protección CSRF.
+    if (
+        !isset($_POST['csrf_token']) ||
+        !hash_equals($csrfToken, (string) $_POST['csrf_token'])
+    ) {
+        $errores[] = 'El formulario venció. Recargá la página e intentá nuevamente.';
+    }
+
+    // Validación de los datos personales.
     if ($nombre === '') {
-    $errores[] = 'El nombre es obligatorio.';
-}
+        $errores[] = 'El nombre es obligatorio.';
+    } elseif (mb_strlen($nombre) < 2) {
+        $errores[] = 'El nombre debe contener al menos 2 caracteres.';
+    }
 
-if ($apellido === '') {
-    $errores[] = 'El apellido es obligatorio.';
-}
+    if ($apellido === '') {
+        $errores[] = 'El apellido es obligatorio.';
+    } elseif (mb_strlen($apellido) < 2) {
+        $errores[] = 'El apellido debe contener al menos 2 caracteres.';
+    }
 
-if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
-    $errores[] = 'El email no es válido.';
-}
+    if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
+        $errores[] = 'Ingresá un email válido.';
+    }
 
-if ($clave === '') {
-    $errores[] = 'La contraseña es obligatoria.';
-}
+    if (strlen($mail) > 254) {
+        $errores[] = 'El email es demasiado largo.';
+    }
 
-if ($clave !== $confirmarClave) {
-    $errores[] = 'Las contraseñas no coinciden.';
-}
+    if (strlen($telefono) > 30) {
+        $errores[] = 'El teléfono no puede superar los 30 caracteres.';
+    }
 
-if (!in_array($tipoUsuario, ['usuario', 'ceo aerolínea'], true)) {
-    $errores[] = 'El tipo de usuario no es válido.';
-}
+    // Validación de contraseña.
+    if (strlen($clave) < 8) {
+        $errores[] = 'La contraseña debe tener al menos 8 caracteres.';
+    }
 
-if ($tipoUsuario === 'ceo aerolínea') {
+    if ($clave !== $confirmarClave) {
+        $errores[] = 'Las contraseñas no coinciden.';
+    }
 
-    if ($codAerolinea === '') {
-        $errores[] = 'Debés seleccionar una aerolínea.';
-    } else {
+    // Validación del tipo de cuenta.
+    if (!in_array($tipoUsuario, ['usuario', 'ceo aerolínea'], true)) {
+        $errores[] = 'Seleccioná un tipo de cuenta válido.';
+    }
 
-            $sql = "
-                SELECT codAerolinea
-                FROM aerolineas
-                WHERE codAerolinea = :codAerolinea
-            ";
+    // La aerolínea solo es obligatoria para el CEO.
+    if ($tipoUsuario !== 'ceo aerolínea') {
+        $codAerolinea = '';
+    } elseif ($codAerolinea === '') {
+        $errores[] = 'Debés seleccionar la aerolínea que representás.';
+    }
 
-            $consulta = $conexion->prepare($sql);
+    // Si la conexión inicial falló, intentar conectarse nuevamente.
+    if (!$conexion) {
+        try {
+            $conexion = conectarDB();
+        } catch (PDOException $e) {
+            error_log('Error de conexión al registrar VOLARA: ' . $e->getMessage());
+            $errores[] = 'No se pudo conectar con la base de datos. Intentá nuevamente.';
+        }
+    }
 
-            $consulta->execute([
-                'codAerolinea' => $codAerolinea
-            ]);
+    if (empty($errores) && $conexion) {
+        try {
+            // Comprobar si el email ya existe.
+            $consulta = $conexion->prepare("
+                SELECT codUsuario
+                FROM usuarios
+                WHERE mail = :mail
+                LIMIT 1
+            ");
 
-            $aerolineaExiste = $consulta->fetch(PDO::FETCH_ASSOC);
+            $consulta->execute(['mail' => $mail]);
 
-            if (!$aerolineaExiste) {
-                $errores[] = 'La aerolínea seleccionada no existe.';
+            if ($consulta->fetch(PDO::FETCH_ASSOC)) {
+                $errores[] = 'Ya existe una cuenta registrada con ese email.';
             }
+
+            // Comprobar la aerolínea seleccionada.
+            if (
+                empty($errores) &&
+                $tipoUsuario === 'ceo aerolínea'
+            ) {
+                $consulta = $conexion->prepare("
+                    SELECT codAerolinea
+                    FROM aerolineas
+                    WHERE codAerolinea = :codAerolinea
+                    LIMIT 1
+                ");
+
+                $consulta->execute([
+                    'codAerolinea' => $codAerolinea
+                ]);
+
+                if (!$consulta->fetch(PDO::FETCH_ASSOC)) {
+                    $errores[] = 'La aerolínea seleccionada no existe.';
+                }
+            }
+
+            if (empty($errores)) {
+                $claveHash = password_hash($clave, PASSWORD_DEFAULT);
+
+                if ($tipoUsuario === 'usuario') {
+                    $estadoUsuario = 'pendiente de validación';
+                    $tokenValidacion = bin2hex(random_bytes(32));
+                } else {
+                    $estadoUsuario = 'pendiente de autorización';
+                    $tokenValidacion = null;
+                }
+
+                $sql = "
+                    INSERT INTO usuarios (
+                        nombre,
+                        apellido,
+                        mail,
+                        clave,
+                        telefono,
+                        tipoUsuario,
+                        codAerolinea,
+                        estadoUsuario,
+                        tokenValidacion
+                    ) VALUES (
+                        :nombre,
+                        :apellido,
+                        :mail,
+                        :clave,
+                        :telefono,
+                        :tipoUsuario,
+                        :codAerolinea,
+                        :estadoUsuario,
+                        :tokenValidacion
+                    )
+                ";
+
+                $consulta = $conexion->prepare($sql);
+
+                $consulta->execute([
+                    'nombre' => $nombre,
+                    'apellido' => $apellido,
+                    'mail' => $mail,
+                    'clave' => $claveHash,
+                    'telefono' => $telefono !== '' ? $telefono : null,
+                    'tipoUsuario' => $tipoUsuario,
+                    'codAerolinea' => $tipoUsuario === 'ceo aerolínea'
+                        ? $codAerolinea
+                        : null,
+                    'estadoUsuario' => $estadoUsuario,
+                    'tokenValidacion' => $tokenValidacion
+                ]);
+
+                $registroCompletado = true;
+
+                if ($tipoUsuario === 'usuario') {
+                    $enlaceValidacion = $baseUrl
+                        . '/Auth/validarCuenta.php?token='
+                        . rawurlencode($tokenValidacion);
+
+                    $nombreSeguro = htmlspecialchars(
+                        $nombre,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    );
+
+                    $enlaceSeguro = htmlspecialchars(
+                        $enlaceValidacion,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    );
+
+                    $cuerpo = "
+                        <h2>Bienvenido a VOLARA</h2>
+                        <p>Hola {$nombreSeguro}, gracias por registrarte.</p>
+                        <p>Para activar tu cuenta, ingresá en el siguiente enlace:</p>
+                        <p>
+                            <a href=\"{$enlaceSeguro}\">
+                                Validar mi cuenta
+                            </a>
+                        </p>
+                    ";
+
+                    $mailEnviado = false;
+
+                    try {
+                        $mailEnviado = enviarMail(
+                            $mail,
+                            'Validá tu cuenta de VOLARA',
+                            $cuerpo
+                        );
+                    } catch (Throwable $e) {
+                        error_log('Error enviando activación VOLARA: ' . $e->getMessage());
+                    }
+
+                    if ($mailEnviado) {
+                        $mensajeExito =
+                            'Tu cuenta se creó correctamente. Revisá tu correo y seguí el enlace para activarla.';
+                    } else {
+                        $tipoMensaje = 'warning';
+                        $mensajeExito =
+                            'Tu cuenta se creó, pero no pudimos enviar el correo de validación. Revisá la configuración del servidor de correo antes de continuar.';
+                    }
+                } else {
+                    $mensajeExito =
+                        'Tu solicitud de CEO se registró correctamente. Un administrador debe autorizar tu cuenta antes de que puedas iniciar sesión.';
+                }
+
+                // No conservar datos sensibles ni permitir reutilizar el token del formulario.
+                $clave = '';
+                $confirmarClave = '';
+
+                $_SESSION['csrf_registro'] = bin2hex(random_bytes(32));
+                $csrfToken = $_SESSION['csrf_registro'];
+            }
+        } catch (PDOException $e) {
+            error_log('Error de registro VOLARA: ' . $e->getMessage());
+
+            $errores[] = 'No se pudo completar el registro. Verificá los datos e intentá nuevamente.';
         }
-    } else {
-            $codAerolinea = null;
-}
-
-if (empty($errores)) {
-
-    $conexion = conectarDB();
-
-    $sql = "
-        SELECT codUsuario
-        FROM usuarios
-        WHERE mail = :mail
-    ";
-
-    $consulta = $conexion->prepare($sql);
-
-    $consulta->execute([
-        'mail' => $mail
-    ]);
-
-    $usuarioExistente = $consulta->fetch(PDO::FETCH_ASSOC);
-
-    if ($usuarioExistente) {
-        $errores[] = 'Ya existe una cuenta registrada con ese email.';
     }
 }
 
-if (empty($errores)) {
-
-    $claveHash = password_hash($clave, PASSWORD_DEFAULT);
-
-    if ($tipoUsuario === 'usuario') {
-
-    $estadoUsuario = 'pendiente de validación';
-
-    $tokenValidacion = bin2hex(random_bytes(32));
-
-    } else {
-
-        $estadoUsuario = 'pendiente de autorización';
-
-        $tokenValidacion = null;
-
-    }
-
-}
-
-if (empty($errores)) {
-
-    $sql = "
-        INSERT INTO usuarios
-        (
-            nombre,
-            apellido,
-            mail,
-            clave,
-            telefono,
-            tipoUsuario,
-            codAerolinea,
-            estadoUsuario,
-            tokenValidacion
-        )
-        VALUES
-        (
-            :nombre,
-            :apellido,
-            :mail,
-            :clave,
-            :telefono,
-            :tipoUsuario,
-            :codAerolinea,
-            :estadoUsuario,
-            :tokenValidacion
-        )
-    ";
-
-    $consulta = $conexion->prepare($sql);
-
-    $consulta->execute([
-        'nombre' => $nombre,
-        'apellido' => $apellido,
-        'mail' => $mail,
-        'clave' => $claveHash,
-        'telefono' => $telefono !== '' ? $telefono : null,
-        'tipoUsuario' => $tipoUsuario,
-        'codAerolinea' => $codAerolinea,
-        'estadoUsuario' => $estadoUsuario,
-        'tokenValidacion' => $tokenValidacion
-    ]);
-
-    if ($tipoUsuario === 'usuario') {
-
-        $enlaceValidacion =
-            BASE_URL
-            . '/Auth/validarCuenta.php?token='
-            . urlencode($tokenValidacion);
-
-        $cuerpo = "
-            <h2>Bienvenido a Volara</h2>
-
-            <p>
-                Hola " . htmlspecialchars($nombre) . ",
-                gracias por registrarte en Volara.
-            </p>
-
-            <p>
-                Para activar tu cuenta, hacé clic en el siguiente enlace:
-            </p>
-
-            <p>
-                <a href=\"$enlaceValidacion\">
-                    Validar mi cuenta
-                </a>
-            </p>
-        ";
-
-        $mailEnviado = enviarMail(
-            $mail,
-            'Validá tu cuenta de Volara',
-            $cuerpo
-        );
-
-        if ($mailEnviado) {
-
-            $mensajeExito =
-                'Registro realizado correctamente. Revisá tu correo para activar tu cuenta.';
-
-        } else {
-
-            $mensajeExito =
-                'La cuenta fue creada, pero no pudimos enviar el correo de validación.';
-        }
-
-    } else {
-
-        $mensajeExito =
-            'Registro realizado correctamente. Tu cuenta está pendiente de autorización.';
-    }
-    
-}
-
-echo '<pre>';
-print_r($errores);
-echo '</pre>';
-echo '<pre>';
-var_dump([
-    'nombre' => $nombre,
-    'apellido' => $apellido,
-    'mail' => $mail,
-    'telefono' => $telefono,
-    'tipoUsuario' => $tipoUsuario,
-    'codAerolinea' => $codAerolinea,
-    'estadoUsuario' => $estadoUsuario ?? null,
-    'tokenValidacion' => $tokenValidacion ?? null
-]);
-echo '</pre>';
-}
-
+require __DIR__ . '/../Includes/header.php';
+require __DIR__ . '/../Includes/navbar.php';
 ?>
-<?php if ($mensajeExito !== ''): ?>
 
-    <p>
-        <?= htmlspecialchars($mensajeExito) ?>
-    </p>
+<main
+    id="contenido-principal"
+    class="volara-public-page volara-auth-page"
+    tabindex="-1"
+>
+    <section class="page-header">
+        <div class="container">
+            <h1>Crear cuenta</h1>
+            <p class="text-muted mb-3">
+                Unite a VOLARA y prepará tu próximo viaje.
+            </p>
 
-<?php endif; ?>
-<?php if (!empty($errores)): ?>
+            <nav aria-label="Ruta de navegación">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="<?= $baseUrl ?>/Pages/Publico/index.php">
+                            Inicio
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        Registrarse
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </section>
 
-    <ul>
+    <section class="volara-public-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-9 col-lg-7 col-xl-6">
 
-        <?php foreach ($errores as $error): ?>
+                    <div class="volara-card volara-auth-card">
 
-            <li>
-                <?= htmlspecialchars($error) ?>
-            </li>
+                        <?php if ($registroCompletado): ?>
 
-        <?php endforeach; ?>
+                            <div class="volara-auth-icon">
+                                <i class="bi bi-check2-circle"></i>
+                            </div>
 
-    </ul>
+                            <div class="text-center">
+                                <h2 class="h4 mb-3">
+                                    ¡Gracias por registrarte!
+                                </h2>
 
-<?php endif; ?>
+                                <div
+                                    class="alert alert-<?= htmlspecialchars($tipoMensaje, ENT_QUOTES, 'UTF-8') ?>"
+                                    role="status"
+                                    aria-live="polite"
+                                >
+                                    <?= htmlspecialchars(
+                                        $mensajeExito,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </div>
 
-<form method="post">
+                                <a
+                                    href="<?= $baseUrl ?>/Pages/Publico/login.php"
+                                    class="btn btn-volara btn-volara-lg w-100 mt-3"
+                                >
+                                    Ir a iniciar sesión
+                                </a>
 
-    <div>
-        <label for="nombre">Nombre</label>
-        <input
-            type="text"
-            id="nombre"
-            name="nombre"
-            required
-        >
-    </div>
+                                <a
+                                    href="<?= $baseUrl ?>/Pages/Publico/index.php"
+                                    class="btn btn-volara-outline w-100 mt-2"
+                                >
+                                    Volver al inicio
+                                </a>
+                            </div>
 
-    <div>
-        <label for="apellido">Apellido</label>
-        <input
-            type="text"
-            id="apellido"
-            name="apellido"
-            required
-        >
-    </div>
+                        <?php else: ?>
 
-    <div>
-        <label for="mail">Email</label>
-        <input
-            type="email"
-            id="mail"
-            name="mail"
-            required
-        >
-    </div>
+                            <div class="volara-auth-icon">
+                                <i class="bi bi-person-plus"></i>
+                            </div>
 
-    <div>
-        <label for="telefono">Teléfono</label>
-        <input
-            type="text"
-            id="telefono"
-            name="telefono"
-        >
-    </div>
+                            <div class="text-center mb-4">
+                                <h2 class="h4 mb-2">
+                                    Creá tu cuenta
+                                </h2>
+                                <p class="text-muted mb-0">
+                                    Completá tus datos para comenzar.
+                                </p>
+                            </div>
 
-    <div>
-        <label for="clave">Contraseña</label>
-        <input
-            type="password"
-            id="clave"
-            name="clave"
-            required
-        >
-    </div>
+                            <?php if (!empty($errores)): ?>
+                                <div
+                                    class="alert alert-danger"
+                                    role="alert"
+                                    aria-live="polite"
+                                >
+                                    <ul class="mb-0 ps-3">
+                                        <?php foreach ($errores as $error): ?>
+                                            <li>
+                                                <?= htmlspecialchars(
+                                                    $error,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </div>
+                            <?php endif; ?>
 
-    <div>
-        <label for="confirmarClave">Confirmar contraseña</label>
-        <input
-            type="password"
-            id="confirmarClave"
-            name="confirmarClave"
-            required
-        >
-    </div>
+                            <form method="POST" action="" autocomplete="on">
+                                <input
+                                    type="hidden"
+                                    name="csrf_token"
+                                    value="<?= htmlspecialchars(
+                                        $csrfToken,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>"
+                                >
 
-    <div >
-        <label for="tipoUsuario">Tipo de cuenta</label>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <label class="volara-label" for="nombre">
+                                            Nombre *
+                                        </label>
 
-        <select id="tipoUsuario" name="tipoUsuario" required>
-            <option value="">Seleccionar</option>
-            <option value="usuario">Usuario</option>
-            <option value="ceo aerolínea">CEO de aerolínea</option>
-        </select>
-    </div>
+                                        <input
+                                            type="text"
+                                            class="volara-input"
+                                            id="nombre"
+                                            name="nombre"
+                                            value="<?= htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8') ?>"
+                                            placeholder="Tu nombre"
+                                            autocomplete="given-name"
+                                            minlength="2"
+                                            maxlength="100"
+                                            required
+                                        >
+                                    </div>
 
-    <div id="grupoAerolinea" hidden>
-        <label for="codAerolinea">Aerolínea</label>
+                                    <div class="col-12 col-md-6">
+                                        <label class="volara-label" for="apellido">
+                                            Apellido *
+                                        </label>
 
-        <select id="codAerolinea" name="codAerolinea">
+                                        <input
+                                            type="text"
+                                            class="volara-input"
+                                            id="apellido"
+                                            name="apellido"
+                                            value="<?= htmlspecialchars($apellido, ENT_QUOTES, 'UTF-8') ?>"
+                                            placeholder="Tu apellido"
+                                            autocomplete="family-name"
+                                            minlength="2"
+                                            maxlength="100"
+                                            required
+                                        >
+                                    </div>
 
-            <option value="">Seleccionar aerolínea</option>
+                                    <div class="col-12">
+                                        <label class="volara-label" for="mail">
+                                            Email *
+                                        </label>
 
-            <?php foreach ($aerolineas as $aerolinea): ?>
+                                        <input
+                                            type="email"
+                                            class="volara-input"
+                                            id="mail"
+                                            name="mail"
+                                            value="<?= htmlspecialchars($mail, ENT_QUOTES, 'UTF-8') ?>"
+                                            placeholder="tu@email.com"
+                                            autocomplete="email"
+                                            maxlength="254"
+                                            required
+                                        >
+                                    </div>
 
-                <option value="<?= $aerolinea['codAerolinea'] ?>">
-                    <?= htmlspecialchars($aerolinea['nombre']) ?>
-                </option>
+                                    <div class="col-12">
+                                        <label class="volara-label" for="telefono">
+                                            Teléfono
+                                        </label>
 
-            <?php endforeach; ?>
+                                        <input
+                                            type="tel"
+                                            class="volara-input"
+                                            id="telefono"
+                                            name="telefono"
+                                            value="<?= htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8') ?>"
+                                            placeholder="Tu número de teléfono"
+                                            autocomplete="tel"
+                                            maxlength="30"
+                                        >
+                                    </div>
 
-        </select>
-    </div>
+                                    <div class="col-12">
+                                        <label class="volara-label" for="tipoUsuario">
+                                            Tipo de cuenta *
+                                        </label>
 
-    <script>
+                                        <select
+                                            class="volara-select"
+                                            id="tipoUsuario"
+                                            name="tipoUsuario"
+                                            required
+                                        >
+                                            <option
+                                                value="usuario"
+                                                <?= $tipoUsuario === 'usuario' ? 'selected' : '' ?>
+                                            >
+                                                Pasajero
+                                            </option>
 
-        const tipoUsuario = document.getElementById('tipoUsuario');
-        const grupoAerolinea = document.getElementById('grupoAerolinea');
-        const codAerolinea = document.getElementById('codAerolinea');
+                                            <option
+                                                value="ceo aerolínea"
+                                                <?= $tipoUsuario === 'ceo aerolínea' ? 'selected' : '' ?>
+                                            >
+                                                CEO de aerolínea
+                                            </option>
+                                        </select>
 
-        tipoUsuario.addEventListener('change', function () {
+                                        <small class="text-muted d-block mt-2">
+                                            Las cuentas de CEO requieren autorización administrativa.
+                                        </small>
+                                    </div>
 
-            if (tipoUsuario.value === 'ceo aerolínea') {
+                                    <div
+                                        class="col-12"
+                                        id="grupoAerolinea"
+                                        <?= $tipoUsuario === 'ceo aerolínea' ? '' : 'hidden' ?>
+                                    >
+                                        <label class="volara-label" for="codAerolinea">
+                                            Aerolínea *
+                                        </label>
 
-                grupoAerolinea.hidden = false;
-                codAerolinea.required = true;
+                                        <select
+                                            class="volara-select"
+                                            id="codAerolinea"
+                                            name="codAerolinea"
+                                            <?= $tipoUsuario === 'ceo aerolínea' ? 'required' : '' ?>
+                                        >
+                                            <option value="">
+                                                Seleccioná una aerolínea
+                                            </option>
 
-            } else {
+                                            <?php foreach ($aerolineas as $aerolinea): ?>
+                                                <option
+                                                    value="<?= htmlspecialchars(
+                                                        (string) $aerolinea['codAerolinea'],
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
+                                                    <?= (string) $codAerolinea === (string) $aerolinea['codAerolinea'] ? 'selected' : '' ?>
+                                                >
+                                                    <?= htmlspecialchars(
+                                                        $aerolinea['nombre'],
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
 
-                grupoAerolinea.hidden = true;
-                codAerolinea.required = false;
-                codAerolinea.value = '';
+                                    <div class="col-12">
+                                        <label class="volara-label" for="clave">
+                                            Contraseña *
+                                        </label>
 
+                                        <div class="input-group volara-auth-password">
+                                            <input
+                                                type="password"
+                                                class="form-control volara-input"
+                                                id="clave"
+                                                name="clave"
+                                                placeholder="Mínimo 8 caracteres"
+                                                minlength="8"
+                                                autocomplete="new-password"
+                                                required
+                                            >
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-outline-secondary"
+                                                data-toggle-password="clave"
+                                                aria-label="Mostrar contraseña"
+                                                aria-pressed="false"
+                                            >
+                                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="volara-label" for="confirmarClave">
+                                            Confirmar contraseña *
+                                        </label>
+
+                                        <div class="input-group volara-auth-password">
+                                            <input
+                                                type="password"
+                                                class="form-control volara-input"
+                                                id="confirmarClave"
+                                                name="confirmarClave"
+                                                placeholder="Repetí tu contraseña"
+                                                minlength="8"
+                                                autocomplete="new-password"
+                                                required
+                                            >
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-outline-secondary"
+                                                data-toggle-password="confirmarClave"
+                                                aria-label="Mostrar contraseña"
+                                                aria-pressed="false"
+                                            >
+                                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <button
+                                            type="submit"
+                                            class="btn btn-volara btn-volara-lg w-100 mt-2"
+                                        >
+                                            <i class="bi bi-person-check me-2"></i>
+                                            Crear cuenta
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            <br
+
+                            <div class="volara-auth-divider">
+                                <span>¿Ya tenés una cuenta?</span>
+                            </div>
+
+                            <a
+                                href="<?= $baseUrl ?>/Auth/login.php"
+                                class="btn btn-volara-outline w-100"
+                            >
+                                Iniciar sesión
+                            </a>
+
+                        <?php endif; ?>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+(function () {
+    const tipoUsuario = document.getElementById('tipoUsuario');
+    const grupoAerolinea = document.getElementById('grupoAerolinea');
+    const codAerolinea = document.getElementById('codAerolinea');
+
+    function actualizarAerolinea() {
+        if (!tipoUsuario || !grupoAerolinea || !codAerolinea) {
+            return;
+        }
+
+        const esCeo = tipoUsuario.value === 'ceo aerolínea';
+
+        grupoAerolinea.hidden = !esCeo;
+        codAerolinea.required = esCeo;
+
+        if (!esCeo) {
+            codAerolinea.value = '';
+        }
+    }
+
+    if (tipoUsuario) {
+        tipoUsuario.addEventListener('change', actualizarAerolinea);
+        actualizarAerolinea();
+    }
+
+    document.querySelectorAll('[data-toggle-password]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(button.dataset.togglePassword);
+
+            if (!input) {
+                return;
             }
 
+            const mostrar = input.type === 'password';
+            input.type = mostrar ? 'text' : 'password';
+
+            button.setAttribute('aria-pressed', String(mostrar));
+            button.setAttribute(
+                'aria-label',
+                mostrar ? 'Ocultar contraseña' : 'Mostrar contraseña'
+            );
+
+            const icono = button.querySelector('i');
+
+            if (icono) {
+                icono.classList.toggle('bi-eye', !mostrar);
+                icono.classList.toggle('bi-eye-slash', mostrar);
+            }
         });
+    });
+})();
+</script>
 
-    </script>
-
-    <button type="submit">
-        Registrarse
-    </button>
-
-</form>
-
+<?php require __DIR__ . '/../Includes/footer.php'; ?>

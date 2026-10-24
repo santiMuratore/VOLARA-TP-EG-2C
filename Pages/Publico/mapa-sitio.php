@@ -1,116 +1,382 @@
 <?php
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
-// Título utilizado por el encabezado compartido.
-$titulo = 'Mapa de sitio';
+/*
+|--------------------------------------------------------------------------
+| Configuración de la página
+|--------------------------------------------------------------------------
+*/
 
-// Obtiene los enlaces públicos.
-$rutas = obtenerRutasSitio();
+$titulo = 'Mapa del sitio';
+$pageDescription = 'Explorá las secciones disponibles de VOLARA.';
 
-// Incluye el encabezado común de Volara.
+$baseUrl = rtrim(BASE_URL, '/');
+$raizProyecto = dirname(__DIR__, 2);
+
+/*
+|--------------------------------------------------------------------------
+| Usuario actual
+|--------------------------------------------------------------------------
+*/
+
+$estaLogueado = !empty($_SESSION['codUsuario']);
+
+$usuario = [];
+
+if ($estaLogueado && function_exists('usuarioActual')) {
+    $usuarioActual = usuarioActual();
+
+    if (is_array($usuarioActual)) {
+        $usuario = $usuarioActual;
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Normalización del rol
+|--------------------------------------------------------------------------
+*/
+
+$rol = trim((string) (
+    $usuario['rol']
+    ?? $usuario['tipoUsuario']
+    ?? $_SESSION['tipoUsuario']
+    ?? ''
+));
+
+$rol = function_exists('mb_strtolower')
+    ? mb_strtolower($rol, 'UTF-8')
+    : strtolower($rol);
+
+$rolNormalizado = strtr($rol, [
+    'á' => 'a',
+    'é' => 'e',
+    'í' => 'i',
+    'ó' => 'o',
+    'ú' => 'u',
+    'ü' => 'u'
+]);
+
+$esAdmin = in_array(
+    $rolNormalizado,
+    ['admin', 'administrador'],
+    true
+);
+
+$esCeo = in_array(
+    $rolNormalizado,
+    ['ceo', 'ceo aerolinea', 'ceo de aerolinea'],
+    true
+);
+
+$esPasajero = in_array(
+    $rolNormalizado,
+    ['usuario', 'pasajero', 'cliente'],
+    true
+);
+
+/*
+|--------------------------------------------------------------------------
+| Mapa de páginas públicas
+|--------------------------------------------------------------------------
+*/
+
+$mapa = [
+    'Público' => [
+        'Inicio' => 'Pages/Publico/index.php',
+        'Buscar vuelos' => 'Pages/Publico/vuelos.php',
+        'Aerolíneas' => 'Pages/Publico/aerolineas.php',
+        'Promociones' => 'Pages/Publico/promociones.php',
+        'Novedades' => 'Pages/Publico/novedades.php',
+        'Centro de ayuda' => 'Pages/Publico/ayuda.php',
+        'Contacto' => 'Pages/Publico/contacto.php',
+        'Mapa del sitio' => 'Pages/Publico/mapa-sitio.php',
+    ],
+];
+
+/*
+|--------------------------------------------------------------------------
+| Secciones para visitantes
+|--------------------------------------------------------------------------
+*/
+
+if (!$estaLogueado) {
+    $mapa['Cuenta'] = [
+        'Iniciar sesión' => 'Pages/Publico/login.php',
+        'Registrarse' => 'Pages/Publico/registro.php',
+    ];
+}
+
+/*
+|--------------------------------------------------------------------------
+| Secciones del pasajero
+|--------------------------------------------------------------------------
+*/
+
+if ($estaLogueado && $esPasajero) {
+    $mapa['Pasajero'] = [
+        'Mis reservas' => 'Pages/Pasajero/mis-reservas.php',
+        'Historial' => 'Pages/Pasajero/historial.php',
+        'Mi perfil' => 'Pages/Pasajero/perfil.php',
+    ];
+}
+
+/*
+|--------------------------------------------------------------------------
+| Secciones del CEO
+|--------------------------------------------------------------------------
+*/
+
+if ($estaLogueado && $esCeo) {
+    $mapa['CEO'] = [
+        'Inicio del CEO' => 'Pages/CEO/index.php',
+        'Gestionar vuelos' => 'Pages/CEO/vuelos.php',
+        'Promociones' => 'Pages/CEO/promociones.php',
+        'Reportes' => 'Pages/CEO/reportes.php',
+    ];
+}
+
+/*
+|--------------------------------------------------------------------------
+| Secciones del administrador
+|--------------------------------------------------------------------------
+*/
+
+if ($estaLogueado && $esAdmin) {
+    $mapa['Administración'] = [
+        'Gestionar aerolíneas' => 'Pages/Admin/aerolineas/index.php',
+        'Gestionar novedades' => 'Pages/Admin/novedades/index.php',
+        'Gestionar promociones' => 'Pages/Admin/promociones/index.php',
+        'Reportes' => 'Pages/Admin/reportes.php',
+    ];
+}
+
+/*
+|--------------------------------------------------------------------------
+| Mostrar solamente archivos existentes
+|--------------------------------------------------------------------------
+|
+| Se comprueba la ruta física dentro del proyecto para no mostrar
+| enlaces a páginas que todavía no fueron creadas.
+|
+*/
+
+foreach ($mapa as $seccion => $paginas) {
+    foreach ($paginas as $nombre => $ruta) {
+        $rutaRelativa = str_replace(
+            '/',
+            DIRECTORY_SEPARATOR,
+            $ruta
+        );
+
+        $rutaFisica = $raizProyecto
+            . DIRECTORY_SEPARATOR
+            . $rutaRelativa;
+
+        if (!is_file($rutaFisica)) {
+            unset($mapa[$seccion][$nombre]);
+        }
+    }
+
+    if (empty($mapa[$seccion])) {
+        unset($mapa[$seccion]);
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Encabezado y navegación compartidos
+|--------------------------------------------------------------------------
+*/
+
 require __DIR__ . '/../../Includes/header.php';
+require __DIR__ . '/../../Includes/navbar.php';
+
 ?>
 
-<main class="py-5">
-    <div class="container">
+<main id="contenido-principal" tabindex="-1">
 
-        <!-- Encabezado de la página -->
-        <div class="text-center mb-5">
-            <span class="badge text-bg-danger mb-3">
-                <i class="bi bi-diagram-3 me-1"></i>
-                Navegación
-            </span>
+    <!-- Encabezado de la página -->
+    <section class="page-header">
+        <div class="container">
 
-            <h1 class="section-title">Mapa de sitio</h1>
+            <h1>Mapa del sitio</h1>
 
-            <p class="section-subtitle">
-                Explorá las principales secciones de Volara
-                y accedé directamente a cada una.
+            <p class="text-muted mb-3">
+                Todas las secciones de VOLARA organizadas en un solo lugar.
             </p>
+
+            <nav aria-label="Ruta de navegación">
+                <ol class="breadcrumb">
+
+                    <li class="breadcrumb-item">
+                        <a
+                            href="<?= htmlspecialchars(
+                                $baseUrl . '/Pages/Publico/index.php',
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
+                        >
+                            Inicio
+                        </a>
+                    </li>
+
+                    <li
+                        class="breadcrumb-item active"
+                        aria-current="page"
+                    >
+                        Mapa del sitio
+                    </li>
+
+                </ol>
+            </nav>
+
         </div>
+    </section>
 
-        <!-- Listado de secciones -->
-        <div class="row justify-content-center">
-            <div class="col-lg-9">
+    <!-- Contenido del mapa -->
+    <section class="section">
+        <div class="container">
 
-                <div class="volara-card">
-                    <div class="p-4 p-md-5">
+            <?php if (!empty($mapa)): ?>
 
-                        <h2 class="h4 mb-4">
-                            <i class="bi bi-signpost-2 me-2 text-danger"></i>
-                            Secciones disponibles
-                        </h2>
+                <div class="row g-4">
 
-                        <?php if (!empty($rutas)): ?>
+                    <?php foreach ($mapa as $seccion => $paginas): ?>
 
-                            <div class="list-group list-group-flush">
+                        <div class="col-md-6 col-lg-4">
 
-                                <?php foreach ($rutas as $ruta): ?>
+                            <div class="volara-card h-100">
 
-                                    <a
-                                        href="<?= htmlspecialchars(
-                                            $ruta['url'],
+                                <h2 class="h5 mb-4">
+
+                                    <?php
+                                    switch ($seccion) {
+                                        case 'Público':
+                                            $iconoSeccion = 'bi-globe';
+                                            break;
+
+                                        case 'Cuenta':
+                                            $iconoSeccion = 'bi-person-circle';
+                                            break;
+
+                                        case 'Pasajero':
+                                            $iconoSeccion = 'bi-ticket-perforated';
+                                            break;
+
+                                        case 'CEO':
+                                            $iconoSeccion = 'bi-speedometer2';
+                                            break;
+
+                                        case 'Administración':
+                                            $iconoSeccion = 'bi-gear';
+                                            break;
+
+                                        default:
+                                            $iconoSeccion = 'bi-folder';
+                                            break;
+                                    }
+                                    ?>
+
+                                    <i
+                                        class="bi <?= htmlspecialchars(
+                                            $iconoSeccion,
                                             ENT_QUOTES,
                                             'UTF-8'
-                                        ) ?>"
-                                        class="list-group-item list-group-item-action
-                                               d-flex justify-content-between
-                                               align-items-center py-3"
-                                    >
+                                        ) ?> me-2 text-danger"
+                                        aria-hidden="true"
+                                    ></i>
 
-                                        <span>
-                                            <i class="bi bi-link-45deg
-                                                      text-danger me-2"></i>
+                                    <?= htmlspecialchars(
+                                        $seccion,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
 
-                                            <?= htmlspecialchars(
-                                                $ruta['enlace'],
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>
-                                        </span>
+                                </h2>
 
-                                        <i class="bi bi-arrow-up-right"></i>
+                                <ul class="list-unstyled mb-0">
 
-                                    </a>
+                                    <?php foreach ($paginas as $nombre => $ruta): ?>
 
-                                <?php endforeach; ?>
+                                        <?php
+                                        $urlPagina = $baseUrl . '/'
+                                            . ltrim($ruta, '/');
+                                        ?>
+
+                                        <li class="mb-3">
+
+                                            <a
+                                                href="<?= htmlspecialchars(
+                                                    $urlPagina,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>"
+                                                class="d-flex align-items-center justify-content-between gap-2"
+                                            >
+                                                <span>
+                                                    <i
+                                                        class="bi bi-chevron-right me-2 text-muted"
+                                                        aria-hidden="true"
+                                                    ></i>
+
+                                                    <?= htmlspecialchars(
+                                                        $nombre,
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>
+                                                </span>
+
+                                                <i
+                                                    class="bi bi-arrow-up-right text-muted"
+                                                    aria-hidden="true"
+                                                ></i>
+                                            </a>
+
+                                        </li>
+
+                                    <?php endforeach; ?>
+
+                                </ul>
 
                             </div>
 
-                        <?php else: ?>
+                        </div>
 
-                            <div class="alert alert-info mb-0" role="status">
-                                No hay secciones disponibles para mostrar.
-                            </div>
+                    <?php endforeach; ?>
 
-                        <?php endif; ?>
-
-                    </div>
                 </div>
 
-                <!-- Información adicional -->
-                <div class="text-center mt-4">
-                    <p class="text-muted small">
-                        Volara · Sistema de reservas de vuelos
+            <?php else: ?>
+
+                <div class="volara-card-flat text-center">
+
+                    <i
+                        class="bi bi-info-circle fs-2 text-muted"
+                        aria-hidden="true"
+                    ></i>
+
+                    <h2 class="h5 mt-3">
+                        No hay secciones disponibles
+                    </h2>
+
+                    <p class="mb-0">
+                        No se encontraron páginas para mostrar.
                     </p>
 
-                    <a
-                        href="<?= BASE_URL ?>/Pages/Publico/index.php"
-                        class="btn btn-volara"
-                    >
-                        <i class="bi bi-house-door me-2"></i>
-                        Volver al inicio
-                    </a>
                 </div>
 
-            </div>
-        </div>
+            <?php endif; ?>
 
-    </div>
+        </div>
+    </section>
+
 </main>
 
 <?php require __DIR__ . '/../../Includes/footer.php'; ?>
-
-</body>
-</html>

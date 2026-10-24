@@ -40,7 +40,7 @@ function csrfValido(?string $token): bool
 /**
  * Calcula los datos necesarios para paginar resultados.
  */
-function paginar(int $totalRegistros, int $porPagina = 10, int $paginaActual = 1): array
+function paginar(int $totalRegistros, int $porPagina = 4, int $paginaActual = 1): array
 {
     $porPagina = max(1, $porPagina);
     $totalRegistros = max(0, $totalRegistros);
