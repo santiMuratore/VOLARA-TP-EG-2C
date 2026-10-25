@@ -225,21 +225,6 @@ if (empty($errores)) {
     
 }
 
-echo '<pre>';
-print_r($errores);
-echo '</pre>';
-echo '<pre>';
-var_dump([
-    'nombre' => $nombre,
-    'apellido' => $apellido,
-    'mail' => $mail,
-    'telefono' => $telefono,
-    'tipoUsuario' => $tipoUsuario,
-    'codAerolinea' => $codAerolinea,
-    'estadoUsuario' => $estadoUsuario ?? null,
-    'tokenValidacion' => $tokenValidacion ?? null
-]);
-echo '</pre>';
 }
 
 ?>
