@@ -115,6 +115,16 @@
 
     $nombresClase = ['economica' => 'Económica', 'premium' => 'Premium', 'business' => 'Business'];
 
+    // Confirmación de baja: ?eliminar=<codVuelo> muestra la tarjeta de confirmación (sin JavaScript)
+    $vueloAEliminar = false;
+    $codConfirmar = filter_input(INPUT_GET, 'eliminar', FILTER_VALIDATE_INT) ?: 0;
+    if ($codConfirmar > 0) {
+        $consulta = $conexion->prepare("SELECT codVuelo, codigoVuelo, origen, destino FROM vuelos
+                                        WHERE codVuelo = :codVuelo AND codAerolinea = :cod AND activo = 1");
+        $consulta->execute(['codVuelo' => $codConfirmar, 'cod' => $codAerolineaActual]);
+        $vueloAEliminar = $consulta->fetch(PDO::FETCH_ASSOC);
+    }
+
     require_once __DIR__ . '/../../Includes/header.php';
     require_once __DIR__ . '/../../Includes/navbar.php';
 ?>
@@ -220,6 +230,26 @@
                     <h2 class="h4">Vuelos de mi aerolínea</h2>
                     <p class="section-subtitle mb-3"><?= $totalVuelos ?> <?= $totalVuelos === 1 ? 'registro' : 'registros' ?></p>
 
+                    <?php if ($vueloAEliminar): ?>
+                        <div class="volara-card-flat text-center mb-3">
+                            <div class="empty-state-icon" style="opacity: 1; color: var(--volara-red); margin-bottom: 0.5rem;">
+                                <i class="bi bi-trash"></i>
+                            </div>
+                            <h3 class="h5">Eliminar vuelo</h3>
+                            <p class="mb-3">
+                                ¿Seguro que querés eliminar el vuelo <strong><?= htmlspecialchars($vueloAEliminar['codigoVuelo']) ?></strong>
+                                (<?= htmlspecialchars($vueloAEliminar['origen']) ?> → <?= htmlspecialchars($vueloAEliminar['destino']) ?>)?
+                            </p>
+                            <form action="eliminarVuelo.php" method="post" class="d-flex gap-2 justify-content-center m-0">
+                                <input type="hidden" name="codVuelo" value="<?= (int) $vueloAEliminar['codVuelo'] ?>">
+                                <input type="hidden" name="pagina" value="<?= (int) $pagina ?>">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
+                                <a href="?pagina=<?= (int) $pagina ?>" class="btn-volara-outline btn-volara-sm">Cancelar</a>
+                                <button type="submit" class="btn-volara btn-volara-sm">Eliminar</button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+
                     <?php if (empty($vuelos)): ?>
                         <div class="empty-state">
                             <div class="empty-state-icon"><i class="bi bi-airplane"></i></div>
@@ -261,13 +291,8 @@
                                             <td>
                                                 <div class="table-actions">
                                                     <a href="modificarVuelo.php?id=<?= (int) $vuelo['codVuelo'] ?>" class="table-action-btn" aria-label="Editar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>" title="Editar"><i class="bi bi-pencil"></i></a>
-                                                    <button type="button" class="table-action-btn danger"
-                                                            data-bs-toggle="modal" data-bs-target="#modalEliminar"
-                                                            data-cod-vuelo="<?= (int) $vuelo['codVuelo'] ?>"
-                                                            data-codigo="<?= htmlspecialchars($vuelo['codigoVuelo']) ?>"
-                                                            aria-label="Eliminar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>" title="Eliminar">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
+                                                    <a href="?pagina=<?= (int) $pagina ?>&eliminar=<?= (int) $vuelo['codVuelo'] ?>" class="table-action-btn danger"
+                                                       aria-label="Eliminar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>" title="Eliminar"><i class="bi bi-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -301,39 +326,6 @@
 
         </div>
     </div>
-
-    <!-- Confirmación para eliminar un vuelo -->
-    <div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarTitulo" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content volara-card text-center">
-                <div class="empty-state-icon" style="opacity: 1; color: var(--volara-red); margin-bottom: 0.5rem;">
-                    <i class="bi bi-trash"></i>
-                </div>
-                <h2 class="h5" id="modalEliminarTitulo">Eliminar vuelo</h2>
-                <p class="section-subtitle mb-3" style="margin-bottom: 1rem;">
-                    ¿Seguro que querés eliminar el vuelo <strong id="modalEliminarCodigo"></strong>?
-                </p>
-
-                <form action="eliminarVuelo.php" method="post" class="d-flex gap-2 justify-content-center m-0">
-                    <input type="hidden" name="codVuelo" id="modalEliminarCodVuelo" value="">
-                    <input type="hidden" name="pagina" value="<?= (int) $pagina ?>">
-                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
-                    <button type="button" class="btn-volara-outline btn-volara-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn-volara btn-volara-sm">Eliminar</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Completa el modal con el vuelo del botón que se tocó
-        document.addEventListener('show.bs.modal', function (evento) {
-            if (evento.target.id !== 'modalEliminar') { return; }
-            var boton = evento.relatedTarget;
-            document.getElementById('modalEliminarCodigo').textContent = boton.getAttribute('data-codigo');
-            document.getElementById('modalEliminarCodVuelo').value = boton.getAttribute('data-cod-vuelo');
-        });
-    </script>
 </main>
 <?php
     require_once __DIR__ . '/../../Includes/footer.php';
