@@ -2702,3 +2702,19 @@ main.volara-public-page ~ footer.volara-footer {
         font-size: 0.78rem;
     }
 }
+
+/* ─── Impresión (reportes) ──────────────────────────────── */
+@media print {
+    /* Solo se imprime el contenido principal: sin navbar, footer ni nada fuera de <main> */
+    body > *:not(main) { display: none !important; }
+
+    .volara-card { box-shadow: none; }
+    .volara-table tr { break-inside: avoid; }
+
+    /* Sin barra de desplazamiento horizontal al imprimir */
+    .volara-table-responsive { overflow: visible !important; }
+    .volara-table { width: 100%; }
+
+    /* Cada reporte en su propia hoja */
+    .hoja-impresion { break-after: page; page-break-after: always; }
+}
