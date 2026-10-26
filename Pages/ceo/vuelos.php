@@ -5,7 +5,10 @@
     $titulo = "Vuelos";
 
     $errores = [];
-    $exito = '';
+
+    // Mensaje que dejó eliminarVuelo.php (se muestra una sola vez)
+    $flash = $_SESSION['flash_vuelos'] ?? null;
+    unset($_SESSION['flash_vuelos']);
     $clases = ['economica', 'premium', 'business'];
 
     if(isset($_POST["enviar"])){
@@ -74,8 +77,10 @@
                                     'precio' => $precio,
                                     'asientos' => $cantidad,
                                     'clase' => $clase]);
-                $exito = "Vuelo $codigoVuelo creado correctamente.";
-                $_POST = [];   // vacía el formulario
+                // Post/Redirect/Get: se redirige para que F5 no vuelva a enviar el formulario
+                $_SESSION['flash_vuelos'] = ['tipo' => 'success', 'texto' => "Vuelo $codigoVuelo creado correctamente."];
+                header('Location: vuelos.php');
+                exit;
             } catch (PDOException $e) {
                 $errores['general'] = 'No se pudo guardar el vuelo.';
             }
@@ -87,7 +92,7 @@
     $porPagina = 5;
 
     // Total de vuelos, para calcular cuántas páginas hay
-    $consulta = $conexion->prepare("SELECT COUNT(*) FROM vuelos WHERE codAerolinea = :cod");
+    $consulta = $conexion->prepare("SELECT COUNT(*) FROM vuelos WHERE codAerolinea = :cod AND activo = 1");
     $consulta->execute(['cod' => $codAerolineaActual]);
     $totalVuelos = (int) $consulta->fetchColumn();
     $totalPaginas = max(1, (int) ceil($totalVuelos / $porPagina));
@@ -99,7 +104,7 @@
 
     $consulta = $conexion->prepare("SELECT codVuelo, codigoVuelo, origen, destino, fecha, hora, precio, asientosTotal, asientosDisponibles, clase
                                     FROM vuelos
-                                    WHERE codAerolinea = :cod
+                                    WHERE codAerolinea = :cod AND activo = 1
                                     ORDER BY fecha, hora
                                     LIMIT :limite OFFSET :desde");
     $consulta->bindValue(':cod', $codAerolineaActual);
@@ -121,20 +126,20 @@
                 <div class="volara-card">
                     <h2 class="h4">Nuevo Vuelo</h2>
 
-                    <?php if ($exito !== ''): ?>
-                        <div class="volara-alert alert-success"><?= htmlspecialchars($exito) ?></div>
+                    <?php if ($flash): ?>
+                        <div class="volara-alert alert-<?= $flash['tipo'] === 'success' ? 'success' : 'danger' ?>"><?= htmlspecialchars($flash['texto']) ?></div>
                     <?php endif; ?>
                     <?php if (isset($errores['general'])): ?>
                         <div class="volara-alert alert-danger"><?= htmlspecialchars($errores['general']) ?></div>
                     <?php endif; ?>
 
-                    <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]) ?>" method="post" novalidate>
+                    <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]) ?>" method="post">
 
                         <!-- Fila 1: origen y destino -->
                         <div class="row">
                             <div class="col-md-6 form-group">
                                 <label class="volara-label" for="origen">Origen *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'origen') ?>" type="text" id="origen" name="origen"
+                                <input class="volara-input <?= claseInvalida($errores, 'origen') ?>" type="text" id="origen" name="origen" maxlength="100"
                                        value="<?= htmlspecialchars($_POST['origen'] ?? '') ?>" required>
                                 <?php if (isset($errores['origen'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['origen']) ?></div>
@@ -143,7 +148,7 @@
 
                             <div class="col-md-6 form-group">
                                 <label class="volara-label" for="destino">Destino *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'destino') ?>" type="text" id="destino" name="destino"
+                                <input class="volara-input <?= claseInvalida($errores, 'destino') ?>" type="text" id="destino" name="destino" maxlength="100"
                                        value="<?= htmlspecialchars($_POST['destino'] ?? '') ?>" required>
                                 <?php if (isset($errores['destino'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['destino']) ?></div>
@@ -155,7 +160,7 @@
                         <div class="row">
                             <div class="col-md-6 form-group">
                                 <label class="volara-label" for="fecha">Fecha *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'fecha') ?>" type="date" id="fecha" name="fecha"
+                                <input class="volara-input <?= claseInvalida($errores, 'fecha') ?>" type="date" id="fecha" name="fecha" min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
                                        value="<?= htmlspecialchars($_POST['fecha'] ?? '') ?>" required>
                                 <?php if (isset($errores['fecha'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['fecha']) ?></div>
@@ -188,7 +193,7 @@
 
                             <div class="col-md-4 form-group">
                                 <label class="volara-label" for="precio">Precio *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" step="0.5"
+                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" min="0.01" step="0.01"
                                        value="<?= htmlspecialchars($_POST['precio'] ?? '') ?>" required>
                                 <?php if (isset($errores['precio'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['precio']) ?></div>
@@ -197,7 +202,7 @@
 
                             <div class="col-md-4 form-group">
                                 <label class="volara-label" for="cantidad">Asientos *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'cantidad') ?>" type="number" id="cantidad" name="cantidad"
+                                <input class="volara-input <?= claseInvalida($errores, 'cantidad') ?>" type="number" id="cantidad" name="cantidad" min="1" step="1"
                                        value="<?= htmlspecialchars($_POST['cantidad'] ?? '') ?>" required>
                                 <?php if (isset($errores['cantidad'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['cantidad']) ?></div>
@@ -255,8 +260,14 @@
                                             <td>$<?= number_format($vuelo['precio'], 2, ',', '.') ?></td>
                                             <td>
                                                 <div class="table-actions">
-                                                    <button type="button" class="table-action-btn" aria-label="Editar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>"><i class="bi bi-pencil"></i></button>
-                                                    <button type="button" class="table-action-btn danger" aria-label="Eliminar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>"><i class="bi bi-trash"></i></button>
+                                                    <a href="modificarVuelo.php?id=<?= (int) $vuelo['codVuelo'] ?>" class="table-action-btn" aria-label="Editar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>" title="Editar"><i class="bi bi-pencil"></i></a>
+                                                    <button type="button" class="table-action-btn danger"
+                                                            data-bs-toggle="modal" data-bs-target="#modalEliminar"
+                                                            data-cod-vuelo="<?= (int) $vuelo['codVuelo'] ?>"
+                                                            data-codigo="<?= htmlspecialchars($vuelo['codigoVuelo']) ?>"
+                                                            aria-label="Eliminar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?>" title="Eliminar">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -290,6 +301,39 @@
 
         </div>
     </div>
+
+    <!-- Confirmación para eliminar un vuelo -->
+    <div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarTitulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content volara-card text-center">
+                <div class="empty-state-icon" style="opacity: 1; color: var(--volara-red); margin-bottom: 0.5rem;">
+                    <i class="bi bi-trash"></i>
+                </div>
+                <h2 class="h5" id="modalEliminarTitulo">Eliminar vuelo</h2>
+                <p class="section-subtitle mb-3" style="margin-bottom: 1rem;">
+                    ¿Seguro que querés eliminar el vuelo <strong id="modalEliminarCodigo"></strong>?
+                </p>
+
+                <form action="eliminarVuelo.php" method="post" class="d-flex gap-2 justify-content-center m-0">
+                    <input type="hidden" name="codVuelo" id="modalEliminarCodVuelo" value="">
+                    <input type="hidden" name="pagina" value="<?= (int) $pagina ?>">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken()) ?>">
+                    <button type="button" class="btn-volara-outline btn-volara-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-volara btn-volara-sm">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Completa el modal con el vuelo del botón que se tocó
+        document.addEventListener('show.bs.modal', function (evento) {
+            if (evento.target.id !== 'modalEliminar') { return; }
+            var boton = evento.relatedTarget;
+            document.getElementById('modalEliminarCodigo').textContent = boton.getAttribute('data-codigo');
+            document.getElementById('modalEliminarCodVuelo').value = boton.getAttribute('data-cod-vuelo');
+        });
+    </script>
 </main>
 <?php
     require_once __DIR__ . '/../../Includes/footer.php';

@@ -4,6 +4,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Zona horaria del sitio: todas las fechas y horas de PHP usan la de Argentina
+date_default_timezone_set('America/Argentina/Buenos_Aires');
+
 function conectarDB(): PDO
 {
     $host = 'localhost';

@@ -115,6 +115,9 @@ CREATE TABLE vuelos (
         'business'
     ) NOT NULL DEFAULT 'economica',
 
+    -- Baja lógica: 1 = vuelo activo, 0 = eliminado por el CEO
+    activo TINYINT(1) NOT NULL DEFAULT 1,
+
     fechaCreacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fechaActualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
