@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
@@ -44,8 +45,17 @@ $error = null;
 try {
     $conexion = conectarDB();
 
-    // Construir los filtros.
-    $condiciones = [];
+    /*
+    |--------------------------------------------------------------------------
+    | Construir los filtros
+    |--------------------------------------------------------------------------
+    |
+    | Mostrar solamente vuelos activos.
+    | Los demás filtros se agregan mediante AND.
+    |--------------------------------------------------------------------------
+    */
+
+    $condiciones = ['v.activo = 1'];
     $parametros = [];
 
     if ($origen !== '') {
@@ -68,9 +78,7 @@ try {
         $parametros['clase'] = $clase;
     }
 
-    $where = $condiciones
-        ? ' WHERE ' . implode(' AND ', $condiciones)
-        : '';
+    $where = ' WHERE ' . implode(' AND ', $condiciones);
 
     $from = "
         FROM vuelos v
@@ -78,33 +86,50 @@ try {
             ON v.codAerolinea = a.codAerolinea
     ";
 
-    // Contar los vuelos que coinciden con los filtros.
-    $sqlCount = "SELECT COUNT(*) AS total " . $from . $where;
+    /*
+    |--------------------------------------------------------------------------
+    | Contar vuelos activos que coinciden con los filtros
+    |--------------------------------------------------------------------------
+    */
+
+    $sqlCount = "
+        SELECT COUNT(*) AS total
+        " . $from . $where;
 
     $stmtCount = $conexion->prepare($sqlCount);
     $stmtCount->execute($parametros);
 
-    $total = (int) $stmtCount->fetch(PDO::FETCH_ASSOC)['total'];
+    $total = (int) $stmtCount->fetchColumn();
 
-    // Calcular la paginación.
+    /*
+    |--------------------------------------------------------------------------
+    | Calcular la paginación
+    |--------------------------------------------------------------------------
+    */
+
     $paginacion = paginar($total, $porPagina, $pagina);
 
     $pagina = $paginacion['paginaActual'];
     $offset = $paginacion['offset'];
 
-    // Consultar los vuelos de la página actual.
+    /*
+    |--------------------------------------------------------------------------
+    | Consultar los vuelos activos de la página actual
+    |--------------------------------------------------------------------------
+    */
+
     $sql = "
         SELECT
-        v.codVuelo,
-        v.codigoVuelo,
-        v.origen,
-        v.destino,
-        v.fecha,
-        v.hora,
-        v.precio,
-        v.asientosDisponibles,
-        v.clase,
-        a.nombre AS nombreAerolinea
+            v.codVuelo,
+            v.codigoVuelo,
+            v.origen,
+            v.destino,
+            v.fecha,
+            v.hora,
+            v.precio,
+            v.asientosDisponibles,
+            v.clase,
+            a.nombre AS nombreAerolinea
         " . $from . $where . "
         ORDER BY v.fecha ASC, v.hora ASC
         LIMIT :limite OFFSET :offset
@@ -125,10 +150,16 @@ try {
 
 } catch (PDOException $e) {
     error_log('Error al consultar vuelos: ' . $e->getMessage());
+
     $error = 'No se pudieron cargar los vuelos. Intentá nuevamente más tarde.';
 }
 
-// Conservar los filtros al cambiar de página.
+/*
+|--------------------------------------------------------------------------
+| Conservar filtros al cambiar de página
+|--------------------------------------------------------------------------
+*/
+
 $filtrosActivos = [];
 
 if ($origen !== '') {
@@ -156,101 +187,102 @@ if (!empty($filtrosActivos)) {
 // Encabezado y navbar compartidos.
 require __DIR__ . '/../../Includes/header.php';
 require __DIR__ . '/../../Includes/navbar.php';
+
 ?>
 
 <style>
-/* VOLARA: paginación compacta para resultados de vuelos */
-.volara-pagination-container {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: .5rem;
-}
+    /* VOLARA: paginación compacta para resultados de vuelos */
+    .volara-pagination-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: .5rem;
+    }
 
-.volara-pagination {
-    max-width: 100%;
-    overflow-x: auto;
-}
+    .volara-pagination {
+        max-width: 100%;
+        overflow-x: auto;
+    }
 
-.volara-pagination .pagination {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: .35rem;
-    margin: 0;
-    padding: 0;
-}
-
-.volara-pagination .page-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 34px;
-    min-height: 34px;
-    padding: .35rem .55rem;
-    border: 1px solid #DDE2E7;
-    border-radius: 8px !important;
-    background-color: #FFFFFF;
-    color: #374151;
-    font-family: inherit;
-    font-size: .84rem;
-    font-weight: 600;
-    line-height: 1.2;
-    box-shadow: none;
-    transition: background-color .2s ease, color .2s ease,
-                border-color .2s ease, transform .2s ease;
-}
-
-.volara-pagination .page-link:hover {
-    z-index: 1;
-    border-color: #E51B23;
-    background-color: #FDEAEB;
-    color: #C9141C;
-}
-
-.volara-pagination .page-item.active {
-    background: transparent;
-    border: none;
-}
-
-.volara-pagination .page-item.active .page-link {
-    z-index: 2;
-    border-color: #E51B23;
-    background-color: #E51B23;
-    color: #FFFFFF;
-    font-weight: 700;
-    box-shadow: 0 2px 6px rgba(229, 27, 35, .18);
-}
-
-.volara-pagination .page-link:focus-visible {
-    z-index: 3;
-    outline: 3px solid rgba(229, 27, 35, .25);
-    outline-offset: 2px;
-    box-shadow: none;
-}
-
-.volara-pagination .page-item.disabled .page-link {
-    border-color: #E5E7EB;
-    background-color: #F4F6F8;
-    color: #9CA3AF;
-    opacity: .8;
-    cursor: not-allowed;
-}
-
-@media (max-width: 576px) {
     .volara-pagination .pagination {
-        gap: .25rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: .35rem;
+        margin: 0;
+        padding: 0;
     }
 
     .volara-pagination .page-link {
-        min-width: 30px;
-        min-height: 30px;
-        padding: .3rem .45rem;
-        border-radius: 7px !important;
-        font-size: .78rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        min-height: 34px;
+        padding: .35rem .55rem;
+        border: 1px solid #DDE2E7;
+        border-radius: 8px !important;
+        background-color: #FFFFFF;
+        color: #374151;
+        font-family: inherit;
+        font-size: .84rem;
+        font-weight: 600;
+        line-height: 1.2;
+        box-shadow: none;
+        transition: background-color .2s ease, color .2s ease,
+            border-color .2s ease, transform .2s ease;
     }
-}
+
+    .volara-pagination .page-link:hover {
+        z-index: 1;
+        border-color: #E51B23;
+        background-color: #FDEAEB;
+        color: #C9141C;
+    }
+
+    .volara-pagination .page-item.active {
+        background: transparent;
+        border: none;
+    }
+
+    .volara-pagination .page-item.active .page-link {
+        z-index: 2;
+        border-color: #E51B23;
+        background-color: #E51B23;
+        color: #FFFFFF;
+        font-weight: 700;
+        box-shadow: 0 2px 6px rgba(229, 27, 35, .18);
+    }
+
+    .volara-pagination .page-link:focus-visible {
+        z-index: 3;
+        outline: 3px solid rgba(229, 27, 35, .25);
+        outline-offset: 2px;
+        box-shadow: none;
+    }
+
+    .volara-pagination .page-item.disabled .page-link {
+        border-color: #E5E7EB;
+        background-color: #F4F6F8;
+        color: #9CA3AF;
+        opacity: .8;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 576px) {
+        .volara-pagination .pagination {
+            gap: .25rem;
+        }
+
+        .volara-pagination .page-link {
+            min-width: 30px;
+            min-height: 30px;
+            padding: .3rem .45rem;
+            border-radius: 7px !important;
+            font-size: .78rem;
+        }
+    }
 </style>
 
 <main id="contenido-principal" tabindex="-1">
@@ -299,8 +331,7 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                 <form
                     action="<?= BASE_URL ?>/Pages/Publico/vuelos.php"
-                    method="GET"
-                >
+                    method="GET">
 
                     <div class="search-fields">
 
@@ -320,8 +351,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>"
-                                autocomplete="off"
-                            >
+                                autocomplete="off">
                         </div>
 
                         <div class="form-group mb-0">
@@ -340,8 +370,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>"
-                                autocomplete="off"
-                            >
+                                autocomplete="off">
                         </div>
 
                         <div class="form-group mb-0">
@@ -358,8 +387,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                                     $fecha,
                                     ENT_QUOTES,
                                     'UTF-8'
-                                ) ?>"
-                            >
+                                ) ?>">
                         </div>
 
                         <div class="form-group mb-0">
@@ -370,40 +398,39 @@ require __DIR__ . '/../../Includes/navbar.php';
                             <select
                                 class="volara-select"
                                 id="clase"
-                                name="clase"
-                            >
+                                name="clase">
+
                                 <option value="">Todas las clases</option>
 
                                 <option
                                     value="economica"
-                                    <?= $clase === 'economica' ? 'selected' : '' ?>
-                                >
+                                    <?= $clase === 'economica' ? 'selected' : '' ?>>
                                     Económica
                                 </option>
 
                                 <option
                                     value="premium"
-                                    <?= $clase === 'premium' ? 'selected' : '' ?>
-                                >
+                                    <?= $clase === 'premium' ? 'selected' : '' ?>>
                                     Premium
                                 </option>
 
                                 <option
                                     value="business"
-                                    <?= $clase === 'business' ? 'selected' : '' ?>
-                                >
+                                    <?= $clase === 'business' ? 'selected' : '' ?>>
                                     Business
                                 </option>
+
                             </select>
                         </div>
 
                         <div class="search-btn-wrap">
                             <button
                                 type="submit"
-                                class="btn btn-volara btn-volara-lg w-100"
-                            >
+                                class="btn btn-volara btn-volara-lg w-100">
+
                                 <i class="bi bi-search" aria-hidden="true"></i>
                                 Buscar vuelos
+
                             </button>
                         </div>
 
@@ -412,10 +439,12 @@ require __DIR__ . '/../../Includes/navbar.php';
                     <div class="mt-3">
                         <a
                             href="<?= BASE_URL ?>/Pages/Publico/vuelos.php"
-                            class="text-muted small"
-                        >
-                            <i class="bi bi-arrow-counterclockwise me-1"
-                               aria-hidden="true"></i>
+                            class="text-muted small">
+
+                            <i
+                                class="bi bi-arrow-counterclockwise me-1"
+                                aria-hidden="true"></i>
+
                             Limpiar filtros
                         </a>
                     </div>
@@ -440,7 +469,9 @@ require __DIR__ . '/../../Includes/navbar.php';
                     <p class="text-muted mb-0">
                         <?php if ($error === null): ?>
                             <?= $total ?>
-                            <?= $total === 1 ? 'vuelo encontrado' : 'vuelos encontrados' ?>
+                            <?= $total === 1
+                                ? 'vuelo encontrado'
+                                : 'vuelos encontrados' ?>
                         <?php else: ?>
                             Resultados no disponibles.
                         <?php endif; ?>
@@ -457,7 +488,9 @@ require __DIR__ . '/../../Includes/navbar.php';
             <?php if ($error !== null): ?>
 
                 <div class="volara-alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+                    <i
+                        class="bi bi-exclamation-circle"
+                        aria-hidden="true"></i>
 
                     <?= htmlspecialchars(
                         $error,
@@ -472,20 +505,18 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                     <i
                         class="bi bi-airplane empty-state-icon"
-                        aria-hidden="true"
-                    ></i>
+                        aria-hidden="true"></i>
 
                     <h3 class="h4">No encontramos vuelos</h3>
 
                     <p class="text-muted">
-                        No hay vuelos que coincidan con los filtros
+                        No hay vuelos activos que coincidan con los filtros
                         seleccionados.
                     </p>
 
                     <a
                         href="<?= BASE_URL ?>/Pages/Publico/vuelos.php"
-                        class="btn btn-volara"
-                    >
+                        class="btn btn-volara">
                         Ver todos los vuelos
                     </a>
 
@@ -498,7 +529,9 @@ require __DIR__ . '/../../Includes/navbar.php';
                     <?php foreach ($vuelos as $v): ?>
 
                         <?php
-                        $claseVuelo = strtolower((string) ($v['clase'] ?? ''));
+                        $claseVuelo = strtolower(
+                            (string) ($v['clase'] ?? '')
+                        );
 
                         $nombresClases = [
                             'economica' => 'Económica',
@@ -584,8 +617,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                                         <div class="plane-icon">
                                             <i
                                                 class="bi bi-airplane"
-                                                aria-hidden="true"
-                                            ></i>
+                                                aria-hidden="true"></i>
                                         </div>
 
                                         <div class="duration">Vuelo</div>
@@ -603,8 +635,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                                         <div class="time">
                                             <i
                                                 class="bi bi-calendar3 me-1"
-                                                aria-hidden="true"
-                                            ></i>
+                                                aria-hidden="true"></i>
 
                                             <?= htmlspecialchars(
                                                 $fechaVuelo,
@@ -621,81 +652,90 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 <!-- Información -->
                                 <div class="flight-meta">
 
-                                <div class="flight-meta-item">
-                                    <i
-                                        class="bi bi-calendar-event me-1"
-                                        aria-hidden="true"
-                                    ></i>
+                                    <div class="flight-meta-item">
+                                        <i
+                                            class="bi bi-calendar-event me-1"
+                                            aria-hidden="true"></i>
 
-                                    <?= htmlspecialchars(
-                                        $fechaVuelo,
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
-                                </div>
-
-                                <div class="flight-price">
-
-                                    <div class="amount">
-                                        <?= '$' . number_format(
-                                            (float) $v['precio'],
-                                            0,
-                                            ',',
-                                            '.'
+                                        <?= htmlspecialchars(
+                                            $fechaVuelo,
+                                            ENT_QUOTES,
+                                            'UTF-8'
                                         ) ?>
                                     </div>
 
-                                    <small class="text-muted">
-                                        Precio registrado
-                                    </small>
+                                    <div class="flight-price">
+
+                                        <div class="amount">
+                                            <?= '$' . number_format(
+                                                (float) $v['precio'],
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) ?>
+                                        </div>
+
+                                        <small class="text-muted">
+                                            Precio registrado
+                                        </small>
+
+                                    </div>
 
                                 </div>
 
-                            </div>
+                                <!-- Acción del vuelo -->
+                                <div class="mt-4 pt-3 border-top">
 
+                                    <?php if (
+                                        (int) $v['asientosDisponibles'] <= 0
+                                    ): ?>
 
-                            <!-- Acción del vuelo -->
-                            <div class="mt-4 pt-3 border-top">
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary w-100"
+                                            disabled>
 
-                                <?php if ((int) $v['asientosDisponibles'] <= 0): ?>
+                                            Sin asientos disponibles
+                                        </button>
 
-                                    <button
-                                        type="button"
-                                        class="btn btn-secondary w-100"
-                                        disabled
-                                    >
-                                        Sin asientos disponibles
-                                    </button>
+                                    <?php elseif (
+                                        isset($_SESSION['codUsuario'])
+                                        && in_array(
+                                            strtolower(trim((string) (
+                                                $_SESSION['tipoUsuario']
+                                                ?? $_SESSION['rol']
+                                                ?? ''
+                                            ))),
+                                            ['usuario', 'pasajero', 'cliente'],
+                                            true
+                                        )
+                                    ): ?>
 
-                                <?php elseif (
-                                    isset($_SESSION['codUsuario'])
-                                    && ($_SESSION['tipoUsuario'] ?? '') === 'usuario'
-                                ): ?>
+                                        <a
+                                            href="<?= BASE_URL ?>/Pages/Pasajero/reservarVuelo.php?codVuelo=<?= (int) $v['codVuelo'] ?>"
+                                            class="btn btn-volara w-100">
 
-                                    <a
-                                        href="<?= BASE_URL ?>/Pages/Pasajero/reservarVuelo.php?codVuelo=<?= (int) $v['codVuelo'] ?>"
-                                        class="btn btn-volara w-100"
-                                    >
-                                        <i
-                                            class="bi bi-ticket-perforated me-2"
-                                            aria-hidden="true"
-                                        ></i>
+                                            <i
+                                                class="bi bi-ticket-perforated me-2"
+                                                aria-hidden="true"></i>
 
-                                        Reservar vuelo
-                                    </a>
+                                            Reservar vuelo
+                                        </a>
 
-                                <?php elseif (!isset($_SESSION['codUsuario'])): ?>
+                                    <?php elseif (
+                                        empty($_SESSION['codUsuario'])
+                                    ): ?>
 
-                                    <a
-                                        href="<?= BASE_URL ?>/Auth/login.php"
-                                        class="btn btn-volara-outline w-100"
-                                    >
-                                        Iniciar sesión para reservar
-                                    </a>
+                                        <a
+                                            href="<?= BASE_URL ?>/Auth/login.php"
+                                            class="btn btn-volara-outline w-100">
 
-                                <?php endif; ?>
+                                            Iniciar sesión para reservar
+                                        </a>
 
-                            </div>
+                                    <?php endif; ?>
+
+                                </div>
 
                             </article>
 
@@ -710,8 +750,8 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                     <nav
                         class="volara-pagination-container mt-4"
-                        aria-label="Páginas de resultados de vuelos"
-                    >
+                        aria-label="Páginas de resultados de vuelos">
+
                         <div class="volara-pagination">
                             <?= generarPaginacionHTML(
                                 $total,
@@ -720,6 +760,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 $urlPaginacion
                             ) ?>
                         </div>
+
                     </nav>
 
                 <?php endif; ?>
@@ -727,7 +768,7 @@ require __DIR__ . '/../../Includes/navbar.php';
             <?php endif; ?>
 
             <!-- Acceso a la cuenta -->
-            <?php if (!isset($_SESSION['codUsuario'])): ?>
+            <?php if (empty($_SESSION['codUsuario'])): ?>
 
                 <div class="volara-card-flat mt-5">
 
@@ -748,12 +789,11 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                         <a
                             href="<?= BASE_URL ?>/Auth/login.php"
-                            class="btn btn-volara"
-                        >
+                            class="btn btn-volara">
+
                             <i
                                 class="bi bi-person-circle me-1"
-                                aria-hidden="true"
-                            ></i>
+                                aria-hidden="true"></i>
 
                             Iniciar sesión
                         </a>

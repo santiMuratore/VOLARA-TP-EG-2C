@@ -271,7 +271,7 @@ if ($registroOk) {
         } else {
 
             $mensajeExito =
-                'La cuenta fue creada, pero no pudimos enviar el correo de validación.';
+                'La cuenta fue creada, pero no pudimos enviar el correo de validación. Podés reenviarlo desde la pantalla de inicio de sesión.';
         }
 
     } else {

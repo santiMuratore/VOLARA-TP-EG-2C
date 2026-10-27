@@ -1,13 +1,18 @@
--- Contraseña de prueba para TODOS los usuarios:
--- Prueba123
+-- ============================================================
+-- SEED: DATOS DE PRUEBA VOLARA
+-- Contraseña para todos los usuarios: Prueba123
 -- ============================================================
 
 USE volara_db;
 
 SET NAMES utf8mb4;
 
--- Hash generado con:
--- password_hash('Prueba123', PASSWORD_DEFAULT)
+
+-- ============================================================
+-- CONTRASEÑA DE PRUEBA
+-- ============================================================
+
+-- Hash generado con password_hash('Prueba123', PASSWORD_DEFAULT)
 SET @clavePrueba = '$2y$12$dRCdvs6gNc0Zm64SxnYMeuThzndJwDRaT8FzQE.e/6Vag2.dINVtS';
 
 
@@ -35,13 +40,20 @@ SET @aerolineaSur = (
 
 -- ============================================================
 -- 2. USUARIOS
--- 1 administrador
--- 2 CEOs (uno por aerolínea)
--- 3 usuarios/pasajeros
+-- 1 administrador, 2 CEOs y 3 usuarios
 -- ============================================================
 
 INSERT INTO usuarios
-    (nombre, apellido, mail, clave, telefono, tipoUsuario, codAerolinea, estadoUsuario)
+    (
+        nombre,
+        apellido,
+        mail,
+        clave,
+        telefono,
+        tipoUsuario,
+        codAerolinea,
+        estadoUsuario
+    )
 VALUES
     (
         'Admin',
@@ -125,7 +137,7 @@ SET @usuarioSofia = (
 
 -- ============================================================
 -- 3. VUELOS
--- 10 vuelos en total
+-- activo = 1: vuelo activo y visible en el listado público
 -- ============================================================
 
 INSERT INTO vuelos
@@ -139,20 +151,24 @@ INSERT INTO vuelos
         precio,
         asientosTotal,
         asientosDisponibles,
-        clase
+        clase,
+        activo
     )
 VALUES
-    ('VLA100', @aerolineaVolara, 'Rosario',        'Buenos Aires',  '2026-11-05', '08:30:00', 120000.00, 180, 179, 'economica'),
-    ('VLA101', @aerolineaVolara, 'Buenos Aires',   'Córdoba',       '2026-11-10', '11:15:00', 150000.00, 180, 180, 'economica'),
-    ('VLA102', @aerolineaVolara, 'Rosario',        'Mendoza',       '2026-11-18', '16:40:00',  95000.00, 150, 149, 'premium'),
-    ('VLA103', @aerolineaVolara, 'Buenos Aires',   'Salta',         '2026-12-02', '07:20:00', 175000.00, 180, 180, 'economica'),
-    ('VLA104', @aerolineaVolara, 'Córdoba',        'Bariloche',     '2026-12-15', '13:50:00', 210000.00, 160, 160, 'business'),
+    ('VLA100', @aerolineaVolara, 'Rosario',       'Buenos Aires', '2026-11-05', '08:30:00', 120000.00, 180, 179, 'economica', 1),
+    ('VLA101', @aerolineaVolara, 'Buenos Aires',  'Córdoba',      '2026-11-10', '11:15:00', 150000.00, 180, 180, 'economica', 1),
+    ('VLA102', @aerolineaVolara, 'Rosario',       'Mendoza',      '2026-11-18', '16:40:00',  95000.00, 150, 149, 'premium',   1),
+    ('VLA103', @aerolineaVolara, 'Buenos Aires',  'Salta',        '2026-12-02', '07:20:00', 175000.00, 180, 180, 'economica', 1),
+    ('VLA104', @aerolineaVolara, 'Córdoba',       'Bariloche',    '2026-12-15', '13:50:00', 210000.00, 160, 160, 'business',  1),
 
-    ('SUR200', @aerolineaSur,    'Buenos Aires',   'Ushuaia',       '2026-11-08', '06:45:00', 110000.00, 140, 139, 'economica'),
-    ('SUR201', @aerolineaSur,    'Rosario',        'Neuquén',       '2026-11-22', '18:10:00', 140000.00, 160, 159, 'premium'),
-    ('SUR202', @aerolineaSur,    'Mendoza',        'Buenos Aires',  '2026-12-07', '10:00:00', 125000.00, 180, 180, 'economica'),
-    ('SUR203', @aerolineaSur,    'Salta',          'Rosario',       '2026-12-20', '20:30:00', 135000.00, 150, 150, 'economica'),
-    ('SUR204', @aerolineaSur,    'Bariloche',      'Córdoba',       '2027-01-12', '09:25:00',  90000.00, 130, 130, 'business');
+    ('SUR200', @aerolineaSur,    'Buenos Aires',  'Ushuaia',      '2026-11-08', '06:45:00', 110000.00, 140, 139, 'economica', 1),
+    ('SUR201', @aerolineaSur,    'Rosario',       'Neuquén',      '2026-11-22', '18:10:00', 140000.00, 160, 159, 'premium',   1),
+    ('SUR202', @aerolineaSur,    'Mendoza',       'Buenos Aires', '2026-12-07', '10:00:00', 125000.00, 180, 180, 'economica', 1),
+    ('SUR203', @aerolineaSur,    'Salta',         'Rosario',      '2026-12-20', '20:30:00', 135000.00, 150, 150, 'economica', 1),
+    ('SUR204', @aerolineaSur,    'Bariloche',     'Córdoba',      '2027-01-12', '09:25:00',  90000.00, 130, 130, 'business',  1);
+
+
+-- Obtener identificadores de vuelos
 
 SET @vueloVLA100 = (
     SELECT codVuelo FROM vuelos WHERE codigoVuelo = 'VLA100'
@@ -220,7 +236,6 @@ SET @promoVolaraAprobada = (
     FROM promociones
     WHERE codAerolinea = @aerolineaVolara
       AND estado = 'aprobada'
-    LIMIT 1
 );
 
 
@@ -253,11 +268,17 @@ VALUES
 
 -- ============================================================
 -- 6. RESERVAS
--- 6 reservas en distintos estados
 --
--- Coherencia con asientosDisponibles:
--- - pendientes y confirmadas ocupan asiento
--- - canceladas ya devolvieron el asiento
+-- El campo asiento almacena el asiento asignado.
+-- Las reservas confirmadas y pendientes ocupan asiento.
+-- Las canceladas conservan el asiento histórico, pero no
+-- deben considerarse ocupadas por el mapa de asientos.
+--
+-- asientosDisponibles ya contempla las reservas activas:
+-- VLA100: 1 asiento ocupado.
+-- VLA102: 1 asiento ocupado.
+-- SUR200: 1 asiento ocupado.
+-- SUR201: 1 asiento ocupado.
 -- ============================================================
 
 INSERT INTO reservas
@@ -267,6 +288,7 @@ INSERT INTO reservas
         codPromocion,
         estadoReserva,
         precioFinal,
+        asiento,
         fechaReserva,
         fechaPago,
         fechaCancelacion
@@ -278,6 +300,7 @@ VALUES
         @promoVolaraAprobada,
         'confirmada',
         102000.00,
+        '12A',
         '2026-10-01 10:30:00',
         '2026-10-01 10:45:00',
         NULL
@@ -288,6 +311,7 @@ VALUES
         NULL,
         'pendiente de pago',
         95000.00,
+        '8C',
         '2026-10-04 14:20:00',
         NULL,
         NULL
@@ -298,6 +322,7 @@ VALUES
         @promoVolaraAprobada,
         'cancelada',
         127500.00,
+        '4B',
         '2026-10-03 09:10:00',
         NULL,
         '2026-10-05 12:00:00'
@@ -308,6 +333,7 @@ VALUES
         NULL,
         'confirmada',
         110000.00,
+        '6D',
         '2026-10-06 16:00:00',
         '2026-10-06 16:12:00',
         NULL
@@ -318,6 +344,7 @@ VALUES
         NULL,
         'pendiente de pago',
         140000.00,
+        '9A',
         '2026-10-08 11:35:00',
         NULL,
         NULL
@@ -328,6 +355,7 @@ VALUES
         NULL,
         'cancelada',
         90000.00,
+        '3C',
         '2026-10-09 18:40:00',
         NULL,
         '2026-10-10 08:15:00'
@@ -336,10 +364,8 @@ VALUES
 
 -- ============================================================
 -- CREDENCIALES DE PRUEBA
+-- Contraseña para todos: Prueba123
 -- ============================================================
---
--- Todos usan la misma contraseña:
---   Prueba123
 --
 -- Administrador:
 --   admin@volara.test
@@ -358,3 +384,7 @@ VALUES
 --
 -- Usuario rechazado:
 --   sofia@volara.test
+--
+-- ============================================================
+-- FIN seed.sql
+-- ============================================================
