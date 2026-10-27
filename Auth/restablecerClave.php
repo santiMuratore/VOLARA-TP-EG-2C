@@ -91,101 +91,242 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 ?>
 
+<?php
+
+$titulo = 'Restablecer contraseña';
+
+require_once __DIR__ . '/../Includes/header.php';
+require_once __DIR__ . '/../Includes/navbar.php';
+
 ?>
 
-<!DOCTYPE html>
+<main class="section section-gray">
 
-<html lang="es">
+    <div class="container">
 
-<head>
+        <div class="row justify-content-center">
 
-    <meta charset="UTF-8">
+            <div class="col-md-8 col-lg-5">
 
-    <title>Restablecer contraseña - Volara</title>
+                <div class="volara-card">
 
-</head>
+                    <?php if ($mensaje !== ''): ?>
 
-<body>
+                        <div class="text-center">
 
-    <h1>Restablecer contraseña</h1>
+                            <div class="mb-3">
 
-    <?php if ($mensaje !== ''): ?>
+                                <i
+                                    class="bi bi-check-circle-fill text-success"
+                                    style="font-size: 3rem;"
+                                    aria-hidden="true"
+                                ></i>
 
-        <p>
-            <?= htmlspecialchars($mensaje) ?>
-        </p>
+                            </div>
 
-        <p>
-            <a href="../login.php">
-                Iniciar sesión
-            </a>
-        </p>
+                            <span class="eyebrow">
+                                Contraseña actualizada
+                            </span>
 
-    <?php elseif (!$tokenValido): ?>
+                            <h1 class="section-title mt-2 mb-2">
+                                ¡Todo listo!
+                            </h1>
 
-        <p>
-            El enlace de recuperación no es válido o ha vencido.
-        </p>
+                            <p class="text-secondary mb-4">
+                                <?= htmlspecialchars(
+                                    $mensaje,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </p>
 
-    <?php else: ?>
+                            <a
+                                href="<?= BASE_URL ?>/Auth/login.php"
+                                class="btn-volara btn-volara-lg w-100"
+                            >
+                                <i
+                                    class="bi bi-box-arrow-in-right"
+                                    aria-hidden="true"
+                                ></i>
 
-        <?php if ($error !== ''): ?>
+                                Iniciar sesión
+                            </a>
 
-            <p>
-                <?= htmlspecialchars($error) ?>
-            </p>
+                        </div>
 
-        <?php endif; ?>
 
-        <form method="post">
+                    <?php elseif (!$tokenValido): ?>
 
-            <input
-                type="hidden"
-                name="token"
-                value="<?= htmlspecialchars($token) ?>"
-            >
+                        <div class="text-center">
 
-            <div>
+                            <div class="mb-3">
 
-                <label for="clave">
-                    Nueva contraseña
-                </label>
+                                <i
+                                    class="bi bi-exclamation-circle-fill text-danger"
+                                    style="font-size: 3rem;"
+                                    aria-hidden="true"
+                                ></i>
 
-                <input
-                    type="password"
-                    id="clave"
-                    name="clave"
-                    autocomplete="new-password"
-                    required
-                >
+                            </div>
+
+                            <span class="eyebrow">
+                                Recuperación de contraseña
+                            </span>
+
+                            <h1 class="section-title mt-2 mb-3">
+                                Enlace no válido
+                            </h1>
+
+                            <div class="volara-alert alert-danger text-start">
+
+                                <i
+                                    class="bi bi-exclamation-triangle-fill"
+                                    aria-hidden="true"
+                                ></i>
+
+                                <span>
+                                    El enlace de recuperación no es válido
+                                    o ha vencido.
+                                </span>
+
+                            </div>
+
+                            <a
+                                href="<?= BASE_URL ?>/Auth/recuperarClave.php"
+                                class="btn-volara-outline w-100"
+                            >
+                                Solicitar un nuevo enlace
+                            </a>
+
+                        </div>
+
+
+                    <?php else: ?>
+
+                        <div class="text-center mb-4">
+
+                            <span class="eyebrow">
+                                Seguridad de tu cuenta
+                            </span>
+
+                            <h1 class="section-title mt-2 mb-2">
+                                Restablecer contraseña
+                            </h1>
+
+                            <p class="text-secondary mb-0">
+                                Elegí una nueva contraseña para tu cuenta.
+                            </p>
+
+                        </div>
+
+
+                        <?php if ($error !== ''): ?>
+
+                            <div class="volara-alert alert-danger">
+
+                                <i
+                                    class="bi bi-exclamation-circle-fill"
+                                    aria-hidden="true"
+                                ></i>
+
+                                <span>
+                                    <?= htmlspecialchars(
+                                        $error,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </span>
+
+                            </div>
+
+                        <?php endif; ?>
+
+
+                        <form method="post">
+
+                            <input
+                                type="hidden"
+                                name="token"
+                                value="<?= htmlspecialchars(
+                                    $token,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>"
+                            >
+
+
+                            <div class="form-group">
+
+                                <label
+                                    for="clave"
+                                    class="volara-label"
+                                >
+                                    Nueva contraseña
+                                </label>
+
+                                <input
+                                    type="password"
+                                    id="clave"
+                                    name="clave"
+                                    class="volara-input"
+                                    placeholder="Ingresá tu nueva contraseña"
+                                    autocomplete="new-password"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label
+                                    for="confirmarClave"
+                                    class="volara-label"
+                                >
+                                    Confirmar nueva contraseña
+                                </label>
+
+                                <input
+                                    type="password"
+                                    id="confirmarClave"
+                                    name="confirmarClave"
+                                    class="volara-input"
+                                    placeholder="Repetí tu nueva contraseña"
+                                    autocomplete="new-password"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="btn-volara btn-volara-lg w-100"
+                            >
+
+                                <i
+                                    class="bi bi-key"
+                                    aria-hidden="true"
+                                ></i>
+
+                                Cambiar contraseña
+
+                            </button>
+
+                        </form>
+
+                    <?php endif; ?>
+
+                </div>
 
             </div>
 
+        </div>
 
-            <div>
+    </div>
 
-                <label for="confirmarClave">
-                    Confirmar nueva contraseña
-                </label>
+</main>
 
-                <input
-                    type="password"
-                    id="confirmarClave"
-                    name="confirmarClave"
-                    autocomplete="new-password"
-                    required
-                >
-
-            </div>
-
-            <button type="submit">
-                Cambiar contraseña
-            </button>
-
-        </form>
-
-    <?php endif; ?>
-
-</body>
-
-</html>
+<?php
+require_once __DIR__ . '/../Includes/footer.php';
+?>

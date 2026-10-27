@@ -1,6 +1,10 @@
 
 <?php
+$configLocal = __DIR__ . '/../config/config.local.php';
 
+if (file_exists($configLocal)) {
+    require_once $configLocal;
+}
 // Funciones del módulo Fase 2.
 
 // Garantiza que exista una sesión para las funciones CSRF.

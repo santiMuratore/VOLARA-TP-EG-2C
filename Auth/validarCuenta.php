@@ -55,18 +55,124 @@ if ($token === '') {
 }
 ?>
 
-<?php if ($mensaje !== ''): ?>
+<?php
 
-    <p>
-        <?= htmlspecialchars($mensaje) ?>
-    </p>
+$titulo = 'Validar cuenta';
 
-<?php endif; ?>
+require_once __DIR__ . '/../Includes/header.php';
+require_once __DIR__ . '/../Includes/navbar.php';
 
-<?php if ($error !== ''): ?>
+?>
 
-    <p>
-        <?= htmlspecialchars($error) ?>
-    </p>
+<main class="section section-gray">
 
-<?php endif; ?>
+    <div class="container">
+
+        <div class="row justify-content-center">
+
+            <div class="col-md-8 col-lg-5">
+
+                <div class="volara-card text-center">
+
+                    <?php if ($mensaje !== ''): ?>
+
+                        <div class="mb-4">
+
+                            <i
+                                class="bi bi-check-circle-fill text-success"
+                                style="font-size: 3rem;"
+                                aria-hidden="true"
+                            ></i>
+
+                        </div>
+
+                        <span class="eyebrow">
+                            Cuenta activada
+                        </span>
+
+                        <h1 class="section-title mt-2">
+                            ¡Cuenta validada!
+                        </h1>
+
+                        <p class="text-secondary mb-4">
+                            <?= htmlspecialchars(
+                                $mensaje,
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        </p>
+
+                        <a
+                            href="<?= BASE_URL ?>/Auth/login.php"
+                            class="btn-volara btn-volara-lg w-100"
+                        >
+                            <i
+                                class="bi bi-box-arrow-in-right"
+                                aria-hidden="true"
+                            ></i>
+
+                            Iniciar sesión
+                        </a>
+
+                    <?php endif; ?>
+
+
+                    <?php if ($error !== ''): ?>
+
+                        <div class="mb-4">
+
+                            <i
+                                class="bi bi-exclamation-circle-fill text-danger"
+                                style="font-size: 3rem;"
+                                aria-hidden="true"
+                            ></i>
+
+                        </div>
+
+                        <span class="eyebrow">
+                            Validación de cuenta
+                        </span>
+
+                        <h1 class="section-title mt-2">
+                            No pudimos validar tu cuenta
+                        </h1>
+
+                        <div class="volara-alert alert-danger text-start">
+
+                            <i
+                                class="bi bi-exclamation-triangle-fill"
+                                aria-hidden="true"
+                            ></i>
+
+                            <span>
+                                <?= htmlspecialchars(
+                                    $error,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+
+                        </div>
+
+                        <a
+                            href="<?= BASE_URL ?>/Auth/login.php"
+                            class="btn-volara-outline w-100"
+                        >
+                            Volver al inicio de sesión
+                        </a>
+
+                    <?php endif; ?>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+<?php
+require_once __DIR__ . '/../Includes/footer.php';
+?>

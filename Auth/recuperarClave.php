@@ -92,68 +92,152 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 ?>
 
-<!DOCTYPE html>
+<?php
 
-<html lang="es">
+$titulo = 'Recuperar contraseña';
 
-<head>
+require_once __DIR__ . '/../Includes/header.php';
+require_once __DIR__ . '/../Includes/navbar.php';
 
-    <meta charset="UTF-8">
+?>
 
-    <title>Recuperar contraseña - Volara</title>
+<main class="section section-gray">
 
-</head>
+    <div class="container">
 
-<body>
+        <div class="row justify-content-center">
 
-    <h1>Recuperar contraseña</h1>
+            <div class="col-md-8 col-lg-5">
 
-    <p>
-        Ingresá el correo asociado a tu cuenta.
-    </p>
+                <div class="volara-card">
 
-    <?php if ($mensaje !== ''): ?>
+                    <div class="text-center mb-4">
 
-        <p>
-            <?= htmlspecialchars($mensaje) ?>
-        </p>
+                        <span class="eyebrow">
+                            Seguridad de tu cuenta
+                        </span>
 
-    <?php endif; ?>
+                        <h1 class="section-title mt-2 mb-2">
+                            Recuperar contraseña
+                        </h1>
 
+                        <p class="text-secondary mb-0">
+                            Ingresá el correo asociado a tu cuenta.
+                        </p>
 
-    <?php if ($error !== ''): ?>
-
-        <p>
-            <?= htmlspecialchars($error) ?>
-        </p>
-
-    <?php endif; ?>
+                    </div>
 
 
-    <form method="post">
+                    <?php if ($mensaje !== ''): ?>
 
-        <div>
+                        <div class="volara-alert alert-success">
 
-            <label for="mail">
-                Email
-            </label>
+                            <i
+                                class="bi bi-check-circle-fill"
+                                aria-hidden="true"
+                            ></i>
 
-            <input
-                type="email"
-                id="mail"
-                name="mail"
-                value="<?= htmlspecialchars($mail) ?>"
-                required
-            >
+                            <span>
+                                <?= htmlspecialchars(
+                                    $mensaje,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+
+                        </div>
+
+                    <?php endif; ?>
+
+
+                    <?php if ($error !== ''): ?>
+
+                        <div class="volara-alert alert-danger">
+
+                            <i
+                                class="bi bi-exclamation-circle-fill"
+                                aria-hidden="true"
+                            ></i>
+
+                            <span>
+                                <?= htmlspecialchars(
+                                    $error,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+
+                        </div>
+
+                    <?php endif; ?>
+
+
+                    <form method="post">
+
+                        <div class="form-group">
+
+                            <label
+                                for="mail"
+                                class="volara-label"
+                            >
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="mail"
+                                name="mail"
+                                class="volara-input"
+                                value="<?= htmlspecialchars(
+                                    $mail,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>"
+                                placeholder="nombre@correo.com"
+                                required
+                            >
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            class="btn-volara btn-volara-lg w-100"
+                        >
+
+                            <i
+                                class="bi bi-envelope-arrow-up"
+                                aria-hidden="true"
+                            ></i>
+
+                            Enviar enlace de recuperación
+
+                        </button>
+
+
+                        <p class="text-center mt-4 mb-0">
+
+                            <a
+                                href="<?= BASE_URL ?>/Auth/login.php"
+                                class="fw-semibold"
+                            >
+                                Volver a iniciar sesión
+                            </a>
+
+                        </p>
+
+                    </form>
+
+                </div>
+
+            </div>
 
         </div>
 
-        <button type="submit">
-            Enviar enlace de recuperación
-        </button>
+    </div>
 
-    </form>
+</main>
 
-</body>
-
-</html>
+<?php
+require_once __DIR__ . '/../Includes/footer.php';
+?>

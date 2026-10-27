@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../Includes/functions.php';
+require_once __DIR__ . '/../../Includes/functions.php';
 
 requerirRol('administrador');
 
