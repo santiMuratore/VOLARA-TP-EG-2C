@@ -6,6 +6,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
+require_once __DIR__ . '/../../Includes/funcionPromociones.php';
 
 $baseUrl = rtrim(BASE_URL, '/');
 
@@ -113,9 +114,6 @@ foreach ($asientosRecibidos as $asientoRecibido) {
 }
 
 $asientosSeleccionados = array_values(array_unique($asientosSeleccionados));
-
-$aplicarPromocion = $_SERVER['REQUEST_METHOD'] !== 'POST'
-    || isset($_POST['aplicarPromocion']);
 
 /* --------------------------------------------------------------------------
  * Generar etiquetas de asientos: 6 por fila (A, B, C - pasillo - D, E, F)
@@ -246,25 +244,7 @@ try {
         } elseif ((int) $vuelo['asientosTotal'] <= 0) {
             $error = 'Este vuelo no tiene una capacidad de asientos válida.';
         } else {
-            $sqlPromocion = "
-                SELECT codPromocion, descripcion, descuento
-                FROM promociones
-                WHERE codAerolinea = :codAerolinea
-                  AND LOWER(estado) = 'aprobada'
-                ORDER BY codPromocion DESC
-                LIMIT 1
-            ";
-
-            $consultaPromocion = $conexion->prepare($sqlPromocion);
-            $consultaPromocion->execute([
-                'codAerolinea' => $vuelo['codAerolinea'],
-            ]);
-
-            $promocion = $consultaPromocion->fetch(PDO::FETCH_ASSOC) ?: null;
-
-            if ($promocion === null) {
-                $aplicarPromocion = false;
-            }
+            $promocion = promocionVigente((int) $vuelo['codAerolinea'], (string) $vuelo['destino']);
         }
     }
 } catch (PDOException $e) {
@@ -305,6 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
                 SELECT
                     codVuelo,
                     codAerolinea,
+                    destino,
                     precio,
                     asientosTotal,
                     asientosDisponibles,
@@ -377,48 +358,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
             $precioFinal = (float) $vueloActual['precio'];
             $codPromocion = null;
 
-            if (isset($_POST['aplicarPromocion'])) {
-                $sqlPromocionActual = "
-                    SELECT codPromocion, descuento
-                    FROM promociones
-                    WHERE codAerolinea = :codAerolinea
-                      AND LOWER(estado) = 'aprobada'
-                    ORDER BY codPromocion DESC
-                    LIMIT 1
-                ";
-
-                $consultaPromocionActual = $conexion->prepare(
-                    $sqlPromocionActual
-                );
-
-                $consultaPromocionActual->execute([
-                    'codAerolinea' => $vueloActual['codAerolinea'],
-                ]);
-
-                $promocionActual = $consultaPromocionActual->fetch(
-                    PDO::FETCH_ASSOC
-                );
-
-                if (!$promocionActual) {
-                    throw new DomainException(
-                        'La promoción ya no está disponible. Recargá la página.'
-                    );
-                }
-
-                $descuento = (float) $promocionActual['descuento'];
-
-                if ($descuento < 0 || $descuento > 100) {
-                    throw new DomainException(
-                        'El descuento configurado no es válido.'
-                    );
-                }
-
+            $promocionActual = promocionVigente((int) $vueloActual['codAerolinea'], (string) $vueloActual['destino']);
+            if ($promocionActual) {
                 $codPromocion = (int) $promocionActual['codPromocion'];
-
-                $precioFinal = round(
-                    $precioFinal * (1 - $descuento / 100),
-                    2
-                );
+                $precioFinal = precioConDescuento($precioFinal, $promocionActual);
             }
 
             /*
@@ -578,25 +521,10 @@ $horaVuelo = $vuelo && !empty($vuelo['hora'])
     : '';
 
 $precioBase = $vuelo ? (float) $vuelo['precio'] : 0.0;
-$precioPromocional = $precioBase;
-$descuentoPromocion = 0.0;
-
-if ($promocion) {
-    $descuentoPromocion = (float) $promocion['descuento'];
-
-    $precioPromocional = round(
-        $precioBase * (1 - $descuentoPromocion / 100),
-        2
-    );
-}
+$precioFinal = precioConDescuento($precioBase, $promocion);
 
 $cantidadSeleccionada = count($asientosSeleccionados);
-
-$precioUnitarioMostrado = $aplicarPromocion
-    ? $precioPromocional
-    : $precioBase;
-
-$totalEstimado = $cantidadSeleccionada * $precioUnitarioMostrado;
+$totalEstimado = $cantidadSeleccionada * $precioFinal;
 
 $titulo = 'Elegir asientos';
 
@@ -1175,20 +1103,23 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                         <dt>Reservado por</dt>
                                         <dd><?= htmlspecialchars($nombrePasajero, ENT_QUOTES, 'UTF-8') ?></dd>
                                     </div>
-
                                     <div>
                                         <dt>Asientos elegidos</dt>
                                         <dd><?= $cantidadSeleccionada ?> de 6</dd>
                                     </div>
-
                                     <div>
                                         <dt>Disponibles</dt>
                                         <dd><?= (int) $vuelo['asientosDisponibles'] ?></dd>
                                     </div>
-
                                     <div>
-                                        <dt>Precio por persona</dt>
-                                        <dd>$<?= number_format($precioUnitarioMostrado, 2, ',', '.') ?></dd>
+                                        <dt>Precio original</dt>
+                                        <dd style="white-space: nowrap;">
+                                            <?php if ($promocion): ?>
+                                                <del class="text-muted small">$<?= number_format($precioBase, 2, ',', '.') ?></del>
+                                            <?php else: ?>
+                                                $<?= number_format($precioBase, 2, ',', '.') ?>
+                                            <?php endif; ?>
+                                        </dd>
                                     </div>
                                 </dl>
 
@@ -1196,39 +1127,16 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                     <div class="seat-promo-box">
                                         <div class="fw-bold mb-2">
                                             <i class="bi bi-tag me-1" aria-hidden="true"></i>
-                                            Promoción disponible
+                                            Promoción aplicada
                                         </div>
-
                                         <p class="small mb-2">
                                             <?= htmlspecialchars($promocion['descripcion'], ENT_QUOTES, 'UTF-8') ?>
                                         </p>
-
                                         <p class="small mb-2">
-                                            Descuento:
-                                            <?= number_format($descuentoPromocion, 0, ',', '.') ?>%
+                                            Descuento: <?= number_format($promocion['descuento'], 0, ',', '.') ?>%
                                         </p>
-
-                                        <div class="fw-bold mb-3">
-                                            Precio por persona con promoción:
-                                            $<?= number_format($precioPromocional, 2, ',', '.') ?>
-                                        </div>
-
-                                        <div class="form-check">
-                                            <input
-                                                class="form-check-input"
-                                                type="checkbox"
-                                                id="aplicarPromocion"
-                                                name="aplicarPromocion"
-                                                value="1"
-                                                <?= $aplicarPromocion ? 'checked' : '' ?>
-                                            >
-
-                                            <label
-                                                class="form-check-label"
-                                                for="aplicarPromocion"
-                                            >
-                                                Aplicar esta promoción a cada asiento
-                                            </label>
+                                        <div class="fw-bold mb-3 text-success">
+                                            Precio final: $<?= number_format($precioFinal, 2, ',', '.') ?>
                                         </div>
                                     </div>
                                 <?php endif; ?>
@@ -1236,30 +1144,23 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                 <div class="seat-total-box">
                                     <?php if ($cantidadSeleccionada > 0): ?>
                                         <div class="text-muted small mb-1">
-                                            Total estimado para
-                                            <?= $cantidadSeleccionada ?> asiento(s)
+                                            Total estimado para <?= $cantidadSeleccionada ?> asiento(s)
                                         </div>
-
                                         <div class="total-value">
                                             $<?= number_format($totalEstimado, 2, ',', '.') ?>
                                         </div>
-
                                         <p class="small text-muted mb-0 mt-2">
-                                            Importe estimado. El precio definitivo se
-                                            valida en el servidor al confirmar.
+                                            Importe estimado. El precio definitivo se valida en el servidor al confirmar.
                                         </p>
                                     <?php else: ?>
                                         <div class="text-muted small mb-1">
                                             Precio por persona
                                         </div>
-
                                         <div class="total-value">
-                                            $<?= number_format($precioUnitarioMostrado, 2, ',', '.') ?>
+                                            $<?= number_format($precioFinal, 2, ',', '.') ?>
                                         </div>
-
                                         <p class="small text-muted mb-0 mt-2">
-                                            Seleccioná entre 1 y 6 asientos y presioná
-                                            confirmar. 
+                                            Seleccioná entre 1 y 6 asientos y presioná confirmar. 
                                         </p>
                                     <?php endif; ?>
                                 </div>
