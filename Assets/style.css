@@ -1702,6 +1702,7 @@ p:last-child {
 }
 
 .volara-pagination a,
+.table-action-btn,
 .volara-pagination span {
     display: inline-flex;
     align-items: center;
@@ -1715,6 +1716,7 @@ p:last-child {
     font-size: 0.875rem;
     font-weight: 700;
     transition: all var(--transition);
+    text-decoration: none;
 }
 
 .volara-pagination a:hover {
@@ -1725,11 +1727,18 @@ p:last-child {
 
 .volara-pagination .active {
     border-color: var(--volara-red);
+<<<<<<< HEAD
     background: var(--volara-red);
     color: var(--volara-white);
 }
 
 /* ─── 18. Dashboard ─────────────────────────────────────── */
+=======
+    color: var(--volara-white);    
+}
+.volara-pagination span:not(.active) { opacity: 0.45; }
+/* ─── Dashboard ─────────────────────────────────────────── */
+>>>>>>> 8b8882c (Organización de carpetas)
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -2048,6 +2057,7 @@ p:last-child {
     }
 }
 
+<<<<<<< HEAD
 /* =====================================================
    FOOTER VOLARA — DISEÑO CORREGIDO
    ===================================================== */
@@ -2717,4 +2727,13 @@ main.volara-public-page ~ footer.volara-footer {
 
     /* Cada reporte en su propia hoja */
     .hoja-impresion { break-after: page; page-break-after: always; }
+=======
+.volara-pagination a,
+.table-action-btn { text-decoration: none; }
+.volara-pagination span:not(.active) { opacity: 0.45; }
+
+@media print {
+    .volara-navbar,
+    .volara-footer { display: none !important; }
+>>>>>>> 8b8882c (Organización de carpetas)
 }

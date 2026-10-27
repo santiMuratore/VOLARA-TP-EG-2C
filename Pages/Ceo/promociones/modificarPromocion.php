@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../Includes/functions.php';
+require_once __DIR__ . '/../../../Includes/functions.php';
 requerirRol('ceo aerolínea');
 
 $codPromocion = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -58,29 +58,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $titulo = 'Modificar promoción';
-require_once __DIR__ . '/../Includes/header.php';
+require_once __DIR__ . '/../../../Includes/header.php';
+require_once __DIR__ . '/../../../Includes/navbar.php';
 ?>
 
 <main class="container my-4">
-    <h1>Modificar promoción</h1>
-    <?php foreach ($errores as $error): ?>
-        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-    <?php endforeach; ?>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <h1>Modificar promoción</h1>
 
-    <form method="post">
-        <div class="mb-3">
-            <label for="descripcion" class="form-label">Descripción</label>
-            <input type="text" class="form-control" id="descripcion" name="descripcion"
-                maxlength="255" required value="<?= htmlspecialchars($descripcion) ?>">
+            <?php foreach ($errores as $error): ?>
+                <div class="volara-alert alert-danger" role="alert"><?= htmlspecialchars($error) ?></div>
+            <?php endforeach; ?>
+
+            <form method="post" class="volara-card">
+                <div class="form-group">
+                    <label for="descripcion" class="volara-label">Descripción</label>
+                    <input type="text" class="volara-input" id="descripcion" name="descripcion"
+                           maxlength="255" required value="<?= htmlspecialchars($descripcion) ?>">
+                </div>
+                <div class="form-group">
+                    <label for="descuento" class="volara-label">Descuento (%)</label>
+                    <input type="number" class="volara-input" id="descuento" name="descuento"
+                           min="1" max="100" step="0.01" required value="<?= htmlspecialchars($descuento) ?>">
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="submit" class="btn-volara">Guardar cambios</button>
+                    <a href="promociones.php" class="btn-volara-outline">Volver</a>
+                </div>
+            </form>
         </div>
-        <div class="mb-3">
-            <label for="descuento" class="form-label">Descuento (%)</label>
-            <input type="number" class="form-control" id="descuento" name="descuento"
-                min="1" max="100" step="0.01" required value="<?= htmlspecialchars($descuento) ?>">
-        </div>
-        <button type="submit" class="btn btn-primary">Guardar cambios</button>
-        <a href="promociones.php" class="btn btn-secondary">Volver</a>
-    </form>
+    </div>
 </main>
 
-<?php require_once __DIR__ . '/../Includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../../Includes/footer.php'; ?>

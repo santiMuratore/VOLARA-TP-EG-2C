@@ -48,6 +48,10 @@ function enviarMail(
         return true;
 
     } catch (Exception $e) {
+
+        echo 'Error de PHPMailer: '
+            . htmlspecialchars($mail->ErrorInfo);
+
         return false;
     }
 }
