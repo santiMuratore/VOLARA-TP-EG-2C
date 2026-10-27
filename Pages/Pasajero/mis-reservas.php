@@ -62,7 +62,7 @@ require_once $archivoFuncionesF2;
 $baseUrl = rtrim(BASE_URL, '/');
 
 if (empty($_SESSION['codUsuario'])) {
-    header('Location: ' . $baseUrl . '/Pages/Publico/login.php');
+    header('Location: ' . $baseUrl . '/Auth/login.php');
     exit;
 }
 
@@ -100,15 +100,276 @@ $pageDescription = 'Consultá tus reservas de vuelos en VOLARA.';
 
 $reservas = [];
 $error = '';
+$mensajeExito = '';
 
-/*
-|--------------------------------------------------------------------------
-| Consultar las reservas del usuario
-|--------------------------------------------------------------------------
-*/
+
+// ---------------------------------------------------------
+// Token CSRF para las acciones de reservas
+// ---------------------------------------------------------
+
+if (empty($_SESSION['csrf_reservas'])) {
+    $_SESSION['csrf_reservas'] = bin2hex(random_bytes(32));
+}
+
+$csrfToken = $_SESSION['csrf_reservas'];
+
+
+// ---------------------------------------------------------
+// Mensajes luego de redireccionar
+// ---------------------------------------------------------
+
+$resultado = $_GET['resultado'] ?? '';
+
+if ($resultado === 'confirmada') {
+    $mensajeExito = 'El pago fue confirmado correctamente. Tu reserva quedó confirmada.';
+}
+
+if ($resultado === 'cancelada') {
+    $mensajeExito = 'La reserva fue cancelada correctamente.';
+}
+
+if (($_GET['creada'] ?? '') === '1') {
+    $mensajeExito = 'Tu reserva fue creada correctamente y quedó pendiente de pago.';
+}
+
 
 try {
+
     $conexion = conectarDB();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+        $accion = $_POST['accion'] ?? '';
+        $codReserva = (int) ($_POST['codReserva'] ?? 0);
+        $csrfRecibido = $_POST['csrf_token'] ?? '';
+
+
+        if (
+            !hash_equals(
+                $csrfToken,
+                (string) $csrfRecibido
+            )
+        ) {
+
+            $error = 'El formulario venció. Recargá la página e intentá nuevamente.';
+
+        } elseif ($codReserva <= 0) {
+
+            $error = 'La reserva seleccionada no es válida.';
+
+        } else {
+
+            try {
+
+                $conexion->beginTransaction();
+
+                $sql = "
+                    SELECT
+                        r.codReserva,
+                        r.codVuelo,
+                        r.estadoReserva,
+                        v.fecha,
+                        v.hora
+                    FROM reservas r
+                    INNER JOIN vuelos v
+                        ON v.codVuelo = r.codVuelo
+                    WHERE r.codReserva = :codReserva
+                      AND r.codUsuario = :codUsuario
+                    FOR UPDATE
+                ";
+
+                $consulta = $conexion->prepare($sql);
+
+                $consulta->execute([
+                    'codReserva' => $codReserva,
+                    'codUsuario' => $_SESSION['codUsuario'],
+                ]);
+
+                $reservaActual = $consulta->fetch(PDO::FETCH_ASSOC);
+
+
+                if (!$reservaActual) {
+                    throw new Exception(
+                        'La reserva no existe o no pertenece a tu cuenta.'
+                    );
+                }
+
+
+                $estadoActual = strtolower(
+                    trim((string) $reservaActual['estadoReserva'])
+                );
+
+                if ($accion === 'confirmar') {
+
+                    if ($estadoActual !== 'pendiente de pago') {
+                        throw new Exception(
+                            'Esta reserva ya no está pendiente de pago.'
+                        );
+                    }
+
+
+                    $sql = "
+                        UPDATE reservas
+                        SET
+                            estadoReserva = 'confirmada',
+                            fechaPago = NOW()
+                        WHERE codReserva = :codReserva
+                          AND codUsuario = :codUsuario
+                    ";
+
+                    $consulta = $conexion->prepare($sql);
+
+                    $consulta->execute([
+                        'codReserva' => $codReserva,
+                        'codUsuario' => $_SESSION['codUsuario'],
+                    ]);
+
+
+                    $conexion->commit();
+
+
+                    $_SESSION['csrf_reservas'] =
+                        bin2hex(random_bytes(32));
+
+
+                    header(
+                        'Location: '
+                        . $baseUrl
+                        . '/Pages/Pasajero/mis-reservas.php'
+                        . '?resultado=confirmada'
+                    );
+
+                    exit;
+                }
+
+                elseif ($accion === 'cancelar') {
+
+                    if (
+                        !in_array(
+                            $estadoActual,
+                            ['pendiente de pago', 'confirmada'],
+                            true
+                        )
+                    ) {
+
+                        throw new Exception(
+                            'Esta reserva ya no puede cancelarse.'
+                        );
+                    }
+
+                    $fechaHoraSalida =
+                        $reservaActual['fecha']
+                        . ' '
+                        . $reservaActual['hora'];
+
+                    $salida = strtotime($fechaHoraSalida);
+
+
+                    if ($salida === false) {
+                        throw new Exception(
+                            'No se pudo determinar la fecha de salida del vuelo.'
+                        );
+                    }
+
+                    $segundosRestantes =
+                        $salida - time();
+
+                    $setentaYDosHoras =
+                        72 * 60 * 60;
+
+
+                    if (
+                        $segundosRestantes
+                        < $setentaYDosHoras
+                    ) {
+
+                        throw new Exception(
+                            'La reserva solo puede cancelarse hasta 72 horas antes de la salida del vuelo.'
+                        );
+                    }
+
+                    $sql = "
+                        UPDATE reservas
+                        SET
+                            estadoReserva = 'cancelada',
+                            fechaCancelacion = NOW()
+                        WHERE codReserva = :codReserva
+                          AND codUsuario = :codUsuario
+                    ";
+
+                    $consulta = $conexion->prepare($sql);
+
+                    $consulta->execute([
+                        'codReserva' => $codReserva,
+                        'codUsuario' => $_SESSION['codUsuario'],
+                    ]);
+
+
+                    $sql = "
+                        UPDATE vuelos
+                        SET
+                            asientosDisponibles =
+                                asientosDisponibles + 1
+                        WHERE codVuelo = :codVuelo
+                          AND asientosDisponibles < asientosTotal
+                    ";
+
+                    $consulta = $conexion->prepare($sql);
+
+                    $consulta->execute([
+                        'codVuelo' =>
+                            $reservaActual['codVuelo'],
+                    ]);
+
+
+                    if ($consulta->rowCount() !== 1) {
+                        throw new Exception(
+                            'No se pudo devolver el asiento al vuelo.'
+                        );
+                    }
+
+
+                    $conexion->commit();
+
+
+                    $_SESSION['csrf_reservas'] =
+                        bin2hex(random_bytes(32));
+
+
+                    header(
+                        'Location: '
+                        . $baseUrl
+                        . '/Pages/Pasajero/mis-reservas.php'
+                        . '?resultado=cancelada'
+                    );
+
+                    exit;
+                }
+
+
+                else {
+
+                    throw new Exception(
+                        'La acción solicitada no es válida.'
+                    );
+                }
+
+
+            } catch (Throwable $e) {
+
+                if ($conexion->inTransaction()) {
+                    $conexion->rollBack();
+                }
+
+                error_log(
+                    'Error gestionando reserva VOLARA: '
+                    . $e->getMessage()
+                );
+
+                $error = $e->getMessage();
+            }
+        }
+    }
 
     $sql = "
         SELECT
@@ -138,10 +399,17 @@ try {
     ]);
 
     $reservas = $consulta->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    error_log('Error cargando reservas VOLARA: ' . $e->getMessage());
 
-    $error = 'No se pudieron cargar tus reservas. Intentá nuevamente.';
+
+} catch (PDOException $e) {
+
+    error_log(
+        'Error cargando reservas VOLARA: '
+        . $e->getMessage()
+    );
+
+    $error =
+        'No se pudieron cargar tus reservas. Intentá nuevamente.';
 }
 
 /*
@@ -213,7 +481,29 @@ require $directorioPlantillas . '/navbar.php';
     <!-- Contenido -->
     <section class="volara-public-section">
         <div class="container">
+            <?php if ($mensajeExito !== ''): ?>
 
+                <div
+                    class="volara-alert alert-success"
+                    role="status"
+                >
+
+                    <i
+                        class="bi bi-check-circle-fill"
+                        aria-hidden="true"
+                    ></i>
+
+                    <span>
+                        <?= htmlspecialchars(
+                            $mensajeExito,
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </span>
+
+                </div>
+
+            <?php endif; ?>
             <?php if ($error !== ''): ?>
                 <div class="alert alert-danger" role="alert">
                     <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
@@ -313,6 +603,31 @@ require $directorioPlantillas . '/navbar.php';
                         $precio = is_numeric($reserva['precioFinal'] ?? null)
                             ? (float) $reserva['precioFinal']
                             : null;
+
+                        $puedeCancelar = false;
+                        if (
+                            in_array(
+                                $estadoNormalizado,
+                                ['pendiente de pago', 'confirmada'],
+                                true
+                            )
+                            && !empty($reserva['fecha'])
+                            && !empty($reserva['hora'])
+                        ) {
+
+                            $salida = strtotime(
+                                $reserva['fecha']
+                                . ' '
+                                . $reserva['hora']
+                            );
+
+                            if ($salida !== false) {
+
+                                $puedeCancelar =
+                                    ($salida - time())
+                                    >= (72 * 60 * 60);
+                            }
+                        }
                         ?>
 
                         <div class="col-12 col-lg-6">
@@ -430,6 +745,142 @@ require $directorioPlantillas . '/navbar.php';
                                         <?php endif; ?>
                                     </strong>
                                 </div>
+
+                                <div class="d-flex flex-wrap gap-2 mt-4">
+
+                                <?php if (
+                                    $estadoNormalizado === 'pendiente de pago'
+                                ): ?>
+
+                                    <form method="post">
+
+                                        <input
+                                            type="hidden"
+                                            name="csrf_token"
+                                            value="<?= htmlspecialchars(
+                                                $csrfToken,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>"
+                                        >
+
+                                        <input
+                                            type="hidden"
+                                            name="codReserva"
+                                            value="<?= (int) $reserva['codReserva'] ?>"
+                                        >
+
+                                        <input
+                                            type="hidden"
+                                            name="accion"
+                                            value="confirmar"
+                                        >
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-volara"
+                                        >
+                                            <i
+                                                class="bi bi-credit-card me-1"
+                                                aria-hidden="true"
+                                            ></i>
+
+                                            Confirmar pago
+                                        </button>
+
+                                    </form>
+
+                                <?php endif; ?>
+
+
+                                <?php if ($puedeCancelar): ?>
+
+                                    
+                                    <form
+                                        method="post"
+                                        onsubmit="return confirm(
+                                            '¿Seguro que querés cancelar esta reserva?'
+                                        );"
+                                    >
+
+                                        <input
+                                            type="hidden"
+                                            name="csrf_token"
+                                            value="<?= htmlspecialchars(
+                                                $csrfToken,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>"
+                                        >
+
+                                        <input
+                                            type="hidden"
+                                            name="codReserva"
+                                            value="<?= (int) $reserva['codReserva'] ?>"
+                                        >
+
+                                        <input
+                                            type="hidden"
+                                            name="accion"
+                                            value="cancelar"
+                                        >
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-volara-outline"
+                                        >
+                                            <i
+                                                class="bi bi-x-circle me-1"
+                                                aria-hidden="true"
+                                            ></i>
+
+                                            Cancelar reserva
+                                        </button>
+
+                                    </form>
+
+
+                                <?php elseif (
+                                    in_array(
+                                        $estadoNormalizado,
+                                        ['pendiente de pago', 'confirmada'],
+                                        true
+                                    )
+                                ): ?>
+
+                                    <p class="text-muted small mb-0 align-self-center">
+
+                                        <i
+                                            class="bi bi-info-circle me-1"
+                                            aria-hidden="true"
+                                        ></i>
+
+                                        Ya no puede cancelarse porque faltan
+                                        menos de 72 horas para la salida.
+
+                                    </p>
+
+                                <?php endif; ?>
+
+
+                                <?php if (
+                                    $estadoNormalizado === 'cancelada'
+                                ): ?>
+
+                                    <span class="text-muted small">
+
+                                        <i
+                                            class="bi bi-x-circle me-1"
+                                            aria-hidden="true"
+                                        ></i>
+
+                                        Esta reserva fue cancelada.
+
+                                    </span>
+
+                                <?php endif; ?>
+
+                            </div>
 
                             </article>
 

@@ -95,14 +95,16 @@ try {
     // Consultar los vuelos de la página actual.
     $sql = "
         SELECT
-            v.codigoVuelo,
-            v.origen,
-            v.destino,
-            v.fecha,
-            v.hora,
-            v.precio,
-            v.clase,
-            a.nombre AS nombreAerolinea
+        v.codVuelo,
+        v.codigoVuelo,
+        v.origen,
+        v.destino,
+        v.fecha,
+        v.hora,
+        v.precio,
+        v.asientosDisponibles,
+        v.clase,
+        a.nombre AS nombreAerolinea
         " . $from . $where . "
         ORDER BY v.fecha ASC, v.hora ASC
         LIMIT :limite OFFSET :offset
@@ -205,6 +207,11 @@ require __DIR__ . '/../../Includes/navbar.php';
     border-color: #E51B23;
     background-color: #FDEAEB;
     color: #C9141C;
+}
+
+.volara-pagination .page-item.active {
+    background: transparent;
+    border: none;
 }
 
 .volara-pagination .page-item.active .page-link {
@@ -614,35 +621,81 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 <!-- Información -->
                                 <div class="flight-meta">
 
-                                    <div class="flight-meta-item">
-                                        <i
-                                            class="bi bi-calendar-event me-1"
-                                            aria-hidden="true"
-                                        ></i>
+                                <div class="flight-meta-item">
+                                    <i
+                                        class="bi bi-calendar-event me-1"
+                                        aria-hidden="true"
+                                    ></i>
 
-                                        <?= htmlspecialchars(
-                                            $fechaVuelo,
-                                            ENT_QUOTES,
-                                            'UTF-8'
+                                    <?= htmlspecialchars(
+                                        $fechaVuelo,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </div>
+
+                                <div class="flight-price">
+
+                                    <div class="amount">
+                                        <?= '$' . number_format(
+                                            (float) $v['precio'],
+                                            0,
+                                            ',',
+                                            '.'
                                         ) ?>
                                     </div>
 
-                                    <div class="flight-price">
-                                        <div class="amount">
-                                            <?= '$' . number_format(
-                                                (float) $v['precio'],
-                                                0,
-                                                ',',
-                                                '.'
-                                            ) ?>
-                                        </div>
-
-                                        <small class="text-muted">
-                                            Precio registrado
-                                        </small>
-                                    </div>
+                                    <small class="text-muted">
+                                        Precio registrado
+                                    </small>
 
                                 </div>
+
+                            </div>
+
+
+                            <!-- Acción del vuelo -->
+                            <div class="mt-4 pt-3 border-top">
+
+                                <?php if ((int) $v['asientosDisponibles'] <= 0): ?>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary w-100"
+                                        disabled
+                                    >
+                                        Sin asientos disponibles
+                                    </button>
+
+                                <?php elseif (
+                                    isset($_SESSION['codUsuario'])
+                                    && ($_SESSION['tipoUsuario'] ?? '') === 'usuario'
+                                ): ?>
+
+                                    <a
+                                        href="<?= BASE_URL ?>/Pages/Pasajero/reservarVuelo.php?codVuelo=<?= (int) $v['codVuelo'] ?>"
+                                        class="btn btn-volara w-100"
+                                    >
+                                        <i
+                                            class="bi bi-ticket-perforated me-2"
+                                            aria-hidden="true"
+                                        ></i>
+
+                                        Reservar vuelo
+                                    </a>
+
+                                <?php elseif (!isset($_SESSION['codUsuario'])): ?>
+
+                                    <a
+                                        href="<?= BASE_URL ?>/Auth/login.php"
+                                        class="btn btn-volara-outline w-100"
+                                    >
+                                        Iniciar sesión para reservar
+                                    </a>
+
+                                <?php endif; ?>
+
+                            </div>
 
                             </article>
 
