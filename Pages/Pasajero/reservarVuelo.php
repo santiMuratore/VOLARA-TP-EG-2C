@@ -35,8 +35,8 @@ if (!in_array($rol, ['pasajero', 'usuario', 'cliente'], true)) {
  * Datos iniciales
  * -------------------------------------------------------------------------- */
 
-$titulo = 'Elegir asiento';
-$pageDescription = 'Elegí tu asiento y confirmá tu reserva en VOLARA.';
+$titulo = 'Elegir asientos';
+$pageDescription = 'Elegí de uno a seis asientos y confirmá tu reserva en VOLARA.';
 
 $codVueloRecibido = $_SERVER['REQUEST_METHOD'] === 'POST'
     ? ($_POST['codVuelo'] ?? null)
@@ -79,10 +79,22 @@ $asientosMapa = [];
 $asientosOcupados = [];
 $error = null;
 
-$asientoRecibido = $_POST['asiento'] ?? '';
-$asientoSeleccionado = is_string($asientoRecibido)
-    ? strtoupper(trim($asientoRecibido))
-    : '';
+// El formulario usa checkboxes para permitir más de un asiento.
+$asientosRecibidos = $_POST['asientos'] ?? [];
+if (!is_array($asientosRecibidos)) {
+    $asientosRecibidos = [];
+}
+
+$asientosSeleccionados = [];
+foreach ($asientosRecibidos as $asientoRecibido) {
+    if (is_string($asientoRecibido)) {
+        $etiqueta = strtoupper(trim($asientoRecibido));
+        if ($etiqueta !== '') {
+            $asientosSeleccionados[] = $etiqueta;
+        }
+    }
+}
+$asientosSeleccionados = array_values(array_unique($asientosSeleccionados));
 
 $aplicarPromocion = $_SERVER['REQUEST_METHOD'] !== 'POST'
     || isset($_POST['aplicarPromocion']);
@@ -142,7 +154,7 @@ $obtenerAsientosOcupados = static function (
         if ($etiqueta !== '' && in_array($etiqueta, $etiquetasValidas, true)) {
             $ocupados[$etiqueta] = true;
         } else {
-            // Reservas anteriores al sistema de selección de asientos.
+            // Compatibilidad con reservas antiguas sin asiento informado.
             $reservasSinAsiento++;
         }
     }
@@ -190,6 +202,7 @@ try {
             INNER JOIN aerolineas a
                 ON a.codAerolinea = v.codAerolinea
             WHERE v.codVuelo = :codVuelo
+              AND v.activo = 1
             LIMIT 1
         ";
 
@@ -198,7 +211,7 @@ try {
         $vuelo = $consulta->fetch(PDO::FETCH_ASSOC);
 
         if (!$vuelo) {
-            $error = 'El vuelo seleccionado no existe.';
+            $error = 'El vuelo seleccionado no existe o ya no está disponible.';
         } elseif ((int) $vuelo['asientosTotal'] <= 0) {
             $error = 'Este vuelo no tiene una capacidad de asientos válida.';
         } else {
@@ -228,7 +241,8 @@ try {
 }
 
 /* --------------------------------------------------------------------------
- * Confirmar reserva con asiento seleccionado (sin JavaScript)
+ * Confirmar de 1 a 6 asientos en una única operación
+ * Cada asiento genera una fila en reservas para el mismo usuario y vuelo.
  * -------------------------------------------------------------------------- */
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
@@ -236,16 +250,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
 
     if (!is_string($tokenRecibido) || !hash_equals($csrfToken, $tokenRecibido)) {
         $error = 'El formulario venció. Recargá la página e intentá nuevamente.';
-    } elseif ($asientoSeleccionado === '') {
-        $error = 'Seleccioná un asiento antes de continuar.';
+    } elseif (count($asientosSeleccionados) < 1) {
+        $error = 'Seleccioná al menos un asiento antes de continuar.';
+    } elseif (count($asientosSeleccionados) > 6) {
+        $error = 'Podés reservar como máximo 6 asientos por operación.';
     } else {
         try {
             $conexion->beginTransaction();
 
-            // Bloquear el vuelo para coordinar reservas simultáneas de este flujo.
+            // Bloquear el vuelo: evita que dos operaciones descuenten la misma capacidad.
             $sqlVueloBloqueado = "
                 SELECT codVuelo, codAerolinea, precio,
-                       asientosTotal, asientosDisponibles
+                       asientosTotal, asientosDisponibles, activo
                 FROM vuelos
                 WHERE codVuelo = :codVuelo
                 FOR UPDATE
@@ -255,19 +271,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
             $consulta->execute(['codVuelo' => $codVuelo]);
             $vueloActual = $consulta->fetch(PDO::FETCH_ASSOC);
 
-            if (!$vueloActual) {
-                throw new DomainException('El vuelo ya no existe.');
+            if (!$vueloActual || (int) $vueloActual['activo'] !== 1) {
+                throw new DomainException('El vuelo ya no está disponible para reservar.');
             }
 
-            if ((int) $vueloActual['asientosDisponibles'] <= 0) {
+            $cantidadSolicitada = count($asientosSeleccionados);
+            $disponiblesActuales = (int) $vueloActual['asientosDisponibles'];
+
+            if ($disponiblesActuales <= 0) {
                 throw new DomainException('No quedan asientos disponibles para este vuelo.');
+            }
+
+            if ($cantidadSolicitada > $disponiblesActuales) {
+                throw new DomainException(
+                    'Solo quedan ' . $disponiblesActuales . ' asiento(s) disponible(s). Reducí la cantidad seleccionada.'
+                );
             }
 
             $asientosValidos = $generarAsientos((int) $vueloActual['asientosTotal']);
             $etiquetasValidas = array_column($asientosValidos, 'etiqueta');
 
-            if (!in_array($asientoSeleccionado, $etiquetasValidas, true)) {
-                throw new DomainException('El asiento seleccionado no es válido para este vuelo.');
+            foreach ($asientosSeleccionados as $etiqueta) {
+                if (!in_array($etiqueta, $etiquetasValidas, true)) {
+                    throw new DomainException(
+                        'El asiento ' . $etiqueta . ' no es válido para este vuelo.'
+                    );
+                }
             }
 
             $ocupadosActuales = $obtenerAsientosOcupados(
@@ -276,8 +305,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
                 $asientosValidos
             );
 
-            if (isset($ocupadosActuales[$asientoSeleccionado])) {
-                throw new DomainException('Ese asiento ya fue reservado. Elegí otro asiento.');
+            foreach ($asientosSeleccionados as $etiqueta) {
+                if (isset($ocupadosActuales[$etiqueta])) {
+                    throw new DomainException(
+                        'El asiento ' . $etiqueta . ' ya fue reservado. Elegí otros asientos.'
+                    );
+                }
             }
 
             $precioFinal = (float) $vueloActual['precio'];
@@ -314,17 +347,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
                 $precioFinal = round($precioFinal * (1 - $descuento / 100), 2);
             }
 
+            // Descontar todos los asientos juntos, verificando la capacidad restante.
             $sqlActualizar = "
                 UPDATE vuelos
-                SET asientosDisponibles = asientosDisponibles - 1
+                SET asientosDisponibles = asientosDisponibles - :cantidad
                 WHERE codVuelo = :codVuelo
-                  AND asientosDisponibles > 0
+                  AND activo = 1
+                  AND asientosDisponibles >= :cantidadVerificacion
             ";
             $consultaActualizar = $conexion->prepare($sqlActualizar);
-            $consultaActualizar->execute(['codVuelo' => $codVuelo]);
+            $consultaActualizar->execute([
+                'cantidad' => $cantidadSolicitada,
+                'codVuelo' => $codVuelo,
+                'cantidadVerificacion' => $cantidadSolicitada,
+            ]);
 
             if ($consultaActualizar->rowCount() !== 1) {
-                throw new DomainException('No quedan asientos disponibles para este vuelo.');
+                throw new DomainException(
+                    'La disponibilidad cambió mientras reservabas. Volvé a elegir los asientos.'
+                );
             }
 
             $sqlInsertar = "
@@ -344,21 +385,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
                     :asiento
                 )
             ";
-
             $consultaInsertar = $conexion->prepare($sqlInsertar);
-            $consultaInsertar->execute([
-                'codUsuario' => (int) $_SESSION['codUsuario'],
-                'codVuelo' => $codVuelo,
-                'codPromocion' => $codPromocion,
-                'precioFinal' => $precioFinal,
-                'asiento' => $asientoSeleccionado,
-            ]);
+
+            foreach ($asientosSeleccionados as $etiqueta) {
+                $consultaInsertar->execute([
+                    'codUsuario' => (int) $_SESSION['codUsuario'],
+                    'codVuelo' => $codVuelo,
+                    'codPromocion' => $codPromocion,
+                    'precioFinal' => $precioFinal,
+                    'asiento' => $etiqueta,
+                ]);
+            }
 
             $conexion->commit();
             $_SESSION['csrf_reserva'] = bin2hex(random_bytes(32));
 
             header(
-                'Location: ' . $baseUrl . '/Pages/Pasajero/mis-reservas.php?creada=1'
+                'Location: ' . $baseUrl . '/Pages/Pasajero/mis-reservas.php?creada=1&cantidad=' . $cantidadSolicitada
             );
             exit;
         } catch (DomainException $e) {
@@ -370,7 +413,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
             if ($conexion->inTransaction()) {
                 $conexion->rollBack();
             }
-            error_log('VOLARA: error confirmando reserva: ' . $e->getMessage());
+            error_log('VOLARA: error confirmando reserva múltiple: ' . $e->getMessage());
             $error = 'No se pudo confirmar la reserva. Intentá nuevamente.';
         }
     }
@@ -382,6 +425,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
 
 if ($vuelo && $conexion instanceof PDO) {
     try {
+        // Actualizar la disponibilidad mostrada, incluso si hubo otra reserva concurrente.
+        $consultaDisponibilidad = $conexion->prepare(
+            'SELECT asientosDisponibles FROM vuelos WHERE codVuelo = :codVuelo AND activo = 1'
+        );
+        $consultaDisponibilidad->execute(['codVuelo' => $codVuelo]);
+        $disponibilidadActual = $consultaDisponibilidad->fetchColumn();
+        if ($disponibilidadActual !== false) {
+            $vuelo['asientosDisponibles'] = (int) $disponibilidadActual;
+        }
+
         $asientosMapa = $generarAsientos((int) $vuelo['asientosTotal']);
         $asientosOcupados = $obtenerAsientosOcupados(
             $conexion,
@@ -389,9 +442,13 @@ if ($vuelo && $conexion instanceof PDO) {
             $asientosMapa
         );
 
-        if (isset($asientosOcupados[$asientoSeleccionado])) {
-            $asientoSeleccionado = '';
-        }
+        // Mantener marcados los elegidos que sigan libres.
+        $asientosSeleccionados = array_values(array_filter(
+            $asientosSeleccionados,
+            static function ($etiqueta) use ($asientosOcupados) {
+                return !isset($asientosOcupados[$etiqueta]);
+            }
+        ));
     } catch (PDOException $e) {
         error_log('VOLARA: error cargando mapa de asientos: ' . $e->getMessage());
         $error = 'No se pudo cargar el mapa de asientos.';
@@ -424,24 +481,25 @@ if ($promocion) {
     );
 }
 
-$titulo = 'Elegir asiento';
+$cantidadSeleccionada = count($asientosSeleccionados);
+$precioUnitarioMostrado = $aplicarPromocion ? $precioPromocional : $precioBase;
+$totalEstimado = $cantidadSeleccionada * $precioUnitarioMostrado;
+
+$titulo = 'Elegir asientos';
 require_once __DIR__ . '/../../Includes/header.php';
 require_once __DIR__ . '/../../Includes/navbar.php';
 ?>
 
 <style>
-/* VOLARA: selección de asientos con CSS y HTML, sin JavaScript */
+/* VOLARA: selección de asientos con HTML y CSS, sin JavaScript */
 .seat-selection-page { color: #151D25; }
-
 .seat-selection-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(280px, .8fr);
     gap: 1.5rem;
     align-items: start;
 }
-
-.seat-cabin-panel,
-.seat-trip-summary .volara-card {
+.seat-cabin-panel, .seat-trip-summary .volara-card {
     min-width: 0;
     padding: 1.35rem;
     border: 1px solid #DDE2E7;
@@ -449,7 +507,6 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     background: #FFFFFF;
     box-shadow: 0 4px 18px rgba(21, 29, 37, .04);
 }
-
 .seat-cabin-header {
     display: flex;
     flex-wrap: wrap;
@@ -458,13 +515,7 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     gap: .8rem;
     margin-bottom: 1.25rem;
 }
-
-.seat-cabin-header h2 {
-    margin: .3rem 0 0;
-    font-size: 1.2rem;
-    font-weight: 800;
-}
-
+.seat-cabin-header h2 { margin: .3rem 0 0; font-size: 1.2rem; font-weight: 800; }
 .seat-class-label {
     padding: .4rem .7rem;
     border-radius: 999px;
@@ -473,7 +524,14 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     font-size: .8rem;
     font-weight: 750;
 }
-
+.seat-limit-note {
+    margin: 0 0 1rem;
+    padding: .75rem .9rem;
+    border-radius: 10px;
+    background: #F4F6F8;
+    color: #4B5563;
+    font-size: .9rem;
+}
 .seat-airplane {
     max-width: 460px;
     margin: 0 auto;
@@ -483,7 +541,6 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     border-radius: 18px;
     background: #F8FAFC;
 }
-
 .seat-cockpit {
     display: flex;
     flex-direction: column;
@@ -498,29 +555,17 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     color: #6B7280;
     font-size: .78rem;
 }
-
 .seat-cockpit i { color: #E51B23; font-size: 1.5rem; }
-
 #seatMap { width: max-content; margin: 0 auto; }
-
-.seat-map-header,
-.seat-row {
+.seat-map-header, .seat-row {
     display: grid;
     grid-template-columns: 25px repeat(3, 38px) 18px repeat(3, 38px);
     gap: 5px;
     align-items: center;
     justify-items: center;
 }
-
-.seat-map-header {
-    margin-bottom: .65rem;
-    color: #6B7280;
-    font-size: .75rem;
-    font-weight: 750;
-}
-
+.seat-map-header { margin-bottom: .65rem; color: #6B7280; font-size: .75rem; font-weight: 750; }
 .seat-map-header .cabin-label { grid-column: 1; font-size: .65rem; }
-
 .seat-column-labels {
     grid-column: 2 / -1;
     display: grid;
@@ -529,11 +574,8 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     justify-items: center;
     width: 100%;
 }
-
 .seat-row { margin-bottom: .5rem; }
 .seat-row-number { color: #6B7280; font-size: .75rem; font-weight: 700; }
-
-/* El radio conserva la selección HTML; visualmente se muestra la butaca. */
 .seat-input {
     position: absolute;
     width: 1px;
@@ -545,7 +587,6 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     white-space: nowrap;
     border: 0;
 }
-
 .seat {
     position: relative;
     display: inline-flex;
@@ -567,7 +608,6 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     user-select: none;
     transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
 }
-
 .seat::before {
     position: absolute;
     top: 3px;
@@ -578,25 +618,22 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     background: #C7D0DA;
     content: "";
 }
-
-.seat-input + .seat:hover {
-    transform: translateY(-1px);
-    border-color: #E51B23;
-    border-bottom-color: #C9141C;
-    background: #FDEAEB;
-    color: #C9141C;
-}
-
 .seat-input:checked + .seat {
     border-color: #C9141C;
     border-bottom-color: #9F1017;
     background: #E51B23;
     color: #FFFFFF;
 }
-
 .seat-input:checked + .seat::before { background: #FFFFFF; }
+.seat-input:not(:disabled) + .seat:hover {
+    transform: translateY(-1px);
+    border-color: #E51B23;
+    border-bottom-color: #C9141C;
+    background: #FDEAEB;
+    color: #C9141C;
+}
+.seat-input:checked + .seat:hover { background: #E51B23; color: #FFFFFF; }
 .seat-input:focus-visible + .seat { outline: 3px solid rgba(229, 27, 35, .35); outline-offset: 3px; }
-
 .seat.occupied {
     border-color: #D1D5DB;
     border-bottom-color: #B7C0CA;
@@ -605,64 +642,24 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     cursor: not-allowed;
     transform: none;
 }
-
 .seat.occupied::before { background: #C5CBD3; }
 .seat-aisle { width: 18px; }
-
-.seat-legend {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: .8rem 1.1rem;
-    margin-top: 1.25rem;
-}
-
-.seat-legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    color: #4B5563;
-    font-size: .8rem;
-}
-
-.seat-legend-item .seat {
-    width: 25px;
-    min-width: 25px;
-    height: 23px;
-    padding: 0;
-    border-radius: 6px 6px 4px 4px;
-    cursor: default;
-}
-
+.seat-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: .8rem 1.1rem; margin-top: 1.25rem; }
+.seat-legend-item { display: inline-flex; align-items: center; gap: .4rem; color: #4B5563; font-size: .8rem; }
+.seat-legend-item .seat { width: 25px; min-width: 25px; height: 23px; padding: 0; border-radius: 6px 6px 4px 4px; cursor: default; }
 .seat-legend-item .seat::before { top: 2px; right: 4px; left: 4px; height: 3px; }
-.seat-legend-item .seat.selected { border-color: #C9141C; border-bottom-color: #9F1017; background: #E51B23; }
-
+.seat-legend-item .seat.selected { border-color: #C9141C; border-bottom-color: #9F1017; background: #E51B23; color: #FFFFFF; }
 .seat-summary-details { display: grid; margin: 1.2rem 0; }
-
-.seat-summary-details > div {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: .8rem 0;
-    border-bottom: 1px solid #E9ECEF;
-}
-
+.seat-summary-details > div { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid #E9ECEF; }
 .seat-summary-details dt { color: #6B7280; font-weight: 500; }
 .seat-summary-details dd { margin: 0; text-align: right; font-weight: 750; overflow-wrap: anywhere; }
-
-.seat-promo-box {
-    margin: 1rem 0;
-    padding: 1rem;
-    border: 1px solid #CDE8D5;
-    border-radius: 12px;
-    background: #F4FBF6;
-}
-
+.seat-promo-box { margin: 1rem 0; padding: 1rem; border: 1px solid #CDE8D5; border-radius: 12px; background: #F4FBF6; }
+.seat-total-box { margin: 1rem 0; padding: 1rem; border-radius: 12px; background: #F4F6F8; }
+.seat-total-box .total-value { color: #C9141C; font-size: 1.35rem; font-weight: 850; }
 @media (max-width: 991.98px) {
     .seat-selection-layout { grid-template-columns: minmax(0, 1fr); }
     .seat-airplane { max-width: 420px; }
 }
-
 @media (max-width: 420px) {
     .seat-cabin-panel, .seat-trip-summary .volara-card { padding: .8rem; }
     .seat-airplane { padding: .8rem .4rem; }
@@ -671,7 +668,6 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     .seat { width: 31px; min-width: 31px; height: 31px; font-size: .62rem; }
     .seat-aisle { width: 10px; }
 }
-
 @media (prefers-reduced-motion: reduce) { .seat { transition: none; } }
 </style>
 
@@ -679,8 +675,8 @@ require_once __DIR__ . '/../../Includes/navbar.php';
     <section class="page-header">
         <div class="container">
             <p class="eyebrow mb-2">VOLARA · Reservas</p>
-            <h1>Elegí tu asiento</h1>
-            <p class="text-muted mb-0">Seleccioná un asiento disponible para continuar con tu reserva.</p>
+            <h1>Elegí tus asientos</h1>
+            <p class="text-muted mb-0">Podés reservar de 1 a 6 asientos en una sola operación.</p>
         </div>
     </section>
 
@@ -698,7 +694,7 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                     <i class="bi bi-airplane display-5 text-danger" aria-hidden="true"></i>
                     <h2 class="h4 mt-3">No se puede mostrar este vuelo</h2>
                     <p class="text-muted">Volvé al listado y seleccioná un vuelo disponible.</p>
-                    <a href="<?= $escapar($baseUrl . '/Pages/Publico/vuelos.php') ?>" class="btn btn-volara">Volver a buscar vuelos</a>
+                    <a href="<?= htmlspecialchars($baseUrl . '/Pages/Publico/vuelos.php', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-volara">Volver a buscar vuelos</a>
                 </div>
             <?php elseif (!$asientosMapa): ?>
                 <div class="volara-card text-center">
@@ -718,12 +714,17 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                         <?= htmlspecialchars($vuelo['nombreAerolinea'], ENT_QUOTES, 'UTF-8') ?>
                                         · <?= htmlspecialchars($vuelo['codigoVuelo'], ENT_QUOTES, 'UTF-8') ?>
                                     </span>
-                                    <h2 id="cabin-title">Seleccioná tu ubicación</h2>
+                                    <h2 id="cabin-title">Seleccioná tus asientos</h2>
                                 </div>
                                 <span class="seat-class-label">
                                     <?= htmlspecialchars(ucfirst((string) $vuelo['clase']), ENT_QUOTES, 'UTF-8') ?>
                                 </span>
                             </div>
+
+                            <p class="seat-limit-note">
+                                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+                                Marcá entre 1 y 6 asientos. Cada asiento seleccionado generará una reserva a tu nombre.
+                            </p>
 
                             <div class="seat-airplane" aria-label="Mapa de asientos del avión">
                                 <div class="seat-cockpit">
@@ -750,7 +751,7 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                                 $etiqueta = $asiento['etiqueta'];
                                                 $ocupado = isset($asientosOcupados[$etiqueta])
                                                     || (int) $vuelo['asientosDisponibles'] <= 0;
-                                                $seleccionado = !$ocupado && $asientoSeleccionado === $etiqueta;
+                                                $seleccionado = !$ocupado && in_array($etiqueta, $asientosSeleccionados, true);
                                                 $idAsiento = 'asiento-' . $etiqueta;
                                                 ?>
 
@@ -759,13 +760,13 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                                 <?php endif; ?>
 
                                                 <input
-                                                    type="radio"
+                                                    type="checkbox"
                                                     class="seat-input"
-                                                    name="asiento"
+                                                    name="asientos[]"
                                                     id="<?= htmlspecialchars($idAsiento, ENT_QUOTES, 'UTF-8') ?>"
                                                     value="<?= htmlspecialchars($etiqueta, ENT_QUOTES, 'UTF-8') ?>"
                                                     aria-label="Asiento <?= htmlspecialchars($etiqueta, ENT_QUOTES, 'UTF-8') ?>"
-                                                    <?= $ocupado ? 'disabled' : 'required' ?>
+                                                    <?= $ocupado ? 'disabled' : '' ?>
                                                     <?= $seleccionado ? 'checked' : '' ?>
                                                 >
                                                 <label
@@ -797,13 +798,10 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                 <p class="text-muted mb-3"><?= htmlspecialchars($fechaVuelo, ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($horaVuelo, ENT_QUOTES, 'UTF-8') ?></p>
 
                                 <dl class="seat-summary-details">
-                                    <div><dt>Pasajero</dt><dd><?= htmlspecialchars($nombrePasajero, ENT_QUOTES, 'UTF-8') ?></dd></div>
-                                    <div>
-                                        <dt>Asiento</dt>
-                                        <dd><?= $asientoSeleccionado !== '' ? htmlspecialchars($asientoSeleccionado, ENT_QUOTES, 'UTF-8') : 'Elegilo en el mapa' ?></dd>
-                                    </div>
+                                    <div><dt>Reservado por</dt><dd><?= htmlspecialchars($nombrePasajero, ENT_QUOTES, 'UTF-8') ?></dd></div>
+                                    <div><dt>Asientos elegidos</dt><dd><?= $cantidadSeleccionada ?> de 6</dd></div>
                                     <div><dt>Disponibles</dt><dd><?= (int) $vuelo['asientosDisponibles'] ?></dd></div>
-                                    <div><dt>Precio del vuelo</dt><dd>$<?= number_format($precioBase, 2, ',', '.') ?></dd></div>
+                                    <div><dt>Precio por persona</dt><dd>$<?= number_format($precioUnitarioMostrado, 2, ',', '.') ?></dd></div>
                                 </dl>
 
                                 <?php if ($promocion): ?>
@@ -811,20 +809,32 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                         <div class="fw-bold mb-2"><i class="bi bi-tag me-1" aria-hidden="true"></i>Promoción disponible</div>
                                         <p class="small mb-2"><?= htmlspecialchars($promocion['descripcion'], ENT_QUOTES, 'UTF-8') ?></p>
                                         <p class="small mb-2">Descuento: <?= number_format($descuentoPromocion, 0, ',', '.') ?>%</p>
-                                        <div class="fw-bold mb-3">Precio con promoción: $<?= number_format($precioPromocional, 2, ',', '.') ?></div>
+                                        <div class="fw-bold mb-3">Precio por persona con promoción: $<?= number_format($precioPromocional, 2, ',', '.') ?></div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="aplicarPromocion" name="aplicarPromocion" value="1" <?= $aplicarPromocion ? 'checked' : '' ?>>
-                                            <label class="form-check-label" for="aplicarPromocion">Aplicar esta promoción</label>
+                                            <label class="form-check-label" for="aplicarPromocion">Aplicar esta promoción a cada asiento</label>
                                         </div>
                                     </div>
                                 <?php endif; ?>
 
+                                <div class="seat-total-box">
+                                    <?php if ($cantidadSeleccionada > 0): ?>
+                                        <div class="text-muted small mb-1">Total estimado para <?= $cantidadSeleccionada ?> asiento(s)</div>
+                                        <div class="total-value">$<?= number_format($totalEstimado, 2, ',', '.') ?></div>
+                                        <p class="small text-muted mb-0 mt-2">Importe estimado. El precio definitivo se valida en el servidor al confirmar.</p>
+                                    <?php else: ?>
+                                        <div class="text-muted small mb-1">Precio por persona</div>
+                                        <div class="total-value">$<?= number_format($precioUnitarioMostrado, 2, ',', '.') ?></div>
+                                        <p class="small text-muted mb-0 mt-2">Seleccioná entre 1 y 6 asientos y presioná confirmar. Como esta página no usa JavaScript, la cantidad y el total se validan al enviar el formulario.</p>
+                                    <?php endif; ?>
+                                </div>
+
                                 <button type="submit" class="btn btn-volara w-100">
-                                    Confirmar reserva
+                                    Confirmar <?= $cantidadSeleccionada > 1 ? 'reservas' : 'reserva' ?>
                                     <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
                                 </button>
 
-                                <a href="<?= $escapar($baseUrl . '/Pages/Publico/vuelos.php') ?>" class="btn btn-volara-outline w-100 mt-2">Volver a vuelos</a>
+                                <a href="<?= htmlspecialchars($baseUrl . '/Pages/Publico/vuelos.php', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-volara-outline w-100 mt-2">Volver a vuelos</a>
                             </div>
                         </aside>
                     </div>

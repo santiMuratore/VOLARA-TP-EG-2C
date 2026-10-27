@@ -242,6 +242,10 @@ CREATE TABLE reservas (
 
     precioFinal DECIMAL(10,2) NOT NULL,
 
+    -- Asiento asignado al pasajero, por ejemplo 4C o 12A.
+    -- NULL permite conservar reservas antiguas sin asiento.
+    asiento VARCHAR(5) DEFAULT NULL,
+
     fechaReserva DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fechaPago DATETIME DEFAULT NULL,
     fechaCancelacion DATETIME DEFAULT NULL,
