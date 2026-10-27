@@ -398,18 +398,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
                     codPromocion,
                     estadoReserva,
                     precioFinal,
-                    asiento
+                    asiento,
+                    codCompra
                 ) VALUES (
                     :codUsuario,
                     :codVuelo,
                     :codPromocion,
                     'pendiente de pago',
                     :precioFinal,
-                    :asiento
+                    :asiento,
+                    :codCompra
                 )
             ";
 
             $consultaInsertar = $conexion->prepare($sqlInsertar);
+
+            /*
+             * Todos los asientos de esta compra comparten el mismo codCompra:
+             * se pagan juntos con una única confirmación. Una compra posterior
+             * del mismo vuelo genera otro codCompra y se paga por separado.
+             */
+            $codCompra = bin2hex(random_bytes(8));
 
             foreach ($asientosSeleccionados as $etiqueta) {
                 $consultaInsertar->execute([
@@ -418,6 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
                     'codPromocion' => $codPromocion,
                     'precioFinal' => $precioFinal,
                     'asiento' => $etiqueta,
+                    'codCompra' => $codCompra,
                 ]);
             }
 
