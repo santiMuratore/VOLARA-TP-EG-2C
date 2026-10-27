@@ -238,24 +238,10 @@ if ($registroOk) {
         $nombreSeguro =
             htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8');
 
-        $cuerpo = "
-            <h2>Bienvenido a Volara</h2>
-
-            <p>
-                Hola {$nombreSeguro},
-                gracias por registrarte en Volara.
-            </p>
-
-            <p>
-                Para activar tu cuenta, hacé clic en el siguiente enlace:
-            </p>
-
-            <p>
-                <a href=\"{$enlaceSeguro}\">
-                    Validar mi cuenta
-                </a>
-            </p>
-        ";
+        $cuerpo = plantillaValidacionVolara(
+            $nombre,
+            $enlaceValidacion
+        );
 
         $mailEnviado = enviarMail(
             $mail,
