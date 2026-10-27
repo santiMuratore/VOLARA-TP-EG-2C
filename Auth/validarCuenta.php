@@ -35,7 +35,7 @@ if ($token === '') {
         $error = 'El enlace de validación no existe o ya fue utilizado.';
 
     } else {
-
+        if(isset($_SESSION['codUsuario'])) session_destroy();
         $sql = "
             UPDATE usuarios
             SET
