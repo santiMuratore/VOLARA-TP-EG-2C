@@ -145,33 +145,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Correo
                 // -----------------------------------------
 
-                $cuerpo = "
-                    <h2>Validá tu cuenta de Volara</h2>
-
-                    <p>
-                        Hola {$nombreSeguro}.
-                    </p>
-
-                    <p>
-                        Solicitaste un nuevo enlace para
-                        validar tu cuenta.
-                    </p>
-
-                    <p>
-                        Hacé clic en el siguiente enlace:
-                    </p>
-
-                    <p>
-                        <a href=\"{$enlaceSeguro}\">
-                            Validar mi cuenta
-                        </a>
-                    </p>
-
-                    <p>
-                        Si no solicitaste este correo,
-                        podés ignorarlo.
-                    </p>
-                ";
+                $cuerpo = plantillaValidacionVolara(
+                    $nombre,
+                    $enlaceValidacion
+                );
 
 
                 try {
