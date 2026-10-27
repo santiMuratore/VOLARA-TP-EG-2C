@@ -8,14 +8,54 @@ $conexion = conectarDB();
 $error = '';
 $hoy = date('Y-m-d');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $codPromocion = (int) ($_POST['codPromocion'] ?? 0);
-    $accion = $_POST['accion'] ?? '';
-    $paginaVuelta = max(1, (int) ($_POST['pagina'] ?? 1));
+if (empty($_SESSION['csrf_promociones_admin'])) {
+    $_SESSION['csrf_promociones_admin'] =
+        bin2hex(random_bytes(32));
+}
 
-    if ($codPromocion < 1 || !in_array($accion, ['aprobar', 'denegar'], true)) {
-        $error = 'La solicitud no es válida.';
-    } else {
+$csrfToken =
+    $_SESSION['csrf_promociones_admin'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $codPromocion =
+    (int) ($_POST['codPromocion'] ?? 0);
+
+    $accion =
+        $_POST['accion'] ?? '';
+
+    $paginaVuelta =
+        max(
+            1,
+            (int) ($_POST['pagina'] ?? 1)
+        );
+
+    $csrfRecibido =
+        $_POST['csrf_token'] ?? '';
+
+
+    if (
+        !hash_equals(
+            $csrfToken,
+            (string) $csrfRecibido
+        )
+    ) {
+
+        $error =
+            'La solicitud no es válida. Recargá la página e intentá nuevamente.';
+
+} elseif (
+    $codPromocion < 1 ||
+    !in_array(
+        $accion,
+        ['aprobar', 'denegar'],
+        true
+    )
+) {
+
+    $error =
+        'La solicitud no es válida.';
+
+}  else {
         $nuevoEstado = $accion === 'aprobar' ? 'aprobada' : 'denegada';
         try {
             $conexion->beginTransaction();
@@ -58,7 +98,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $error = 'Esa promoción ya no está pendiente.';
                 } else {
                     $conexion->commit();
-                    header('Location: promocionesPendientes.php?pagina=' . $paginaVuelta);
+
+                    $_SESSION['csrf_promociones_admin'] =
+                        bin2hex(random_bytes(32));
+
+                    header(
+                        'Location: promocionesPendientes.php?pagina='
+                        . $paginaVuelta
+                    );
+
                     exit;
                 }
             }
@@ -148,6 +196,15 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
                             </td>
                             <td>
                                 <form method="post" class="table-actions">
+                                    <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        value="<?= htmlspecialchars(
+                                            $csrfToken,
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
                                     <input type="hidden" name="codPromocion" value="<?= (int) $promocion['codPromocion'] ?>">
                                     <input type="hidden" name="pagina" value="<?= $pagina ?>">
                                     <?php if (!$vencida): ?>

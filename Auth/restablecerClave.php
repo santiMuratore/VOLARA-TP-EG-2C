@@ -40,17 +40,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $clave = $_POST['clave'] ?? '';
     $confirmarClave = $_POST['confirmarClave'] ?? '';
 
-    if (!$tokenValido) {
+    $tokenCsrfRecibido =
+        $_POST['csrf_token'] ?? null;
 
-        $error = 'El enlace de recuperación no es válido o ha vencido.';
+    if (
+        !is_string($tokenCsrfRecibido) ||
+        !csrfValido($tokenCsrfRecibido)
+    ) {
+
+        $error =
+            'La solicitud no es válida. Recargá la página e intentá nuevamente.';
+
+    } elseif (!$tokenValido) {
+
+        $error =
+            'El enlace de recuperación no es válido o ha vencido.';
 
     } elseif ($clave === '') {
 
-        $error = 'La nueva contraseña es obligatoria.';
+        $error =
+            'La nueva contraseña es obligatoria.';
+
+    } elseif (strlen($clave) < 8) {
+
+        $error =
+            'La contraseña debe tener al menos 8 caracteres.';
 
     } elseif ($clave !== $confirmarClave) {
 
-        $error = 'Las contraseñas no coinciden.';
+    $error =
+        'Las contraseñas no coinciden.';
 
     } else {
 
@@ -243,6 +262,15 @@ require_once __DIR__ . '/../Includes/navbar.php';
 
 
                         <form method="post">
+                            <input
+                                type="hidden"
+                                name="csrf_token"
+                                value="<?= htmlspecialchars(
+                                    csrfToken(),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>"
+                            >
 
                             <input
                                 type="hidden"

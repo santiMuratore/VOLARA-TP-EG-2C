@@ -11,7 +11,19 @@
     unset($_SESSION['flash_vuelos']);
     $clases = ['economica', 'premium', 'business'];
 
-    if(isset($_POST["enviar"])){
+    if (isset($_POST["enviar"])) {
+
+        $tokenRecibido =
+            $_POST['csrf_token'] ?? null;
+
+        if (
+            !is_string($tokenRecibido) ||
+            !csrfValido($tokenRecibido)
+        ) {
+            $errores['general'] =
+                'La solicitud no es válida. Recargá la página e intentá nuevamente.';
+        }
+
         $origen = trim($_POST['origen'] ?? '');
         $destino = trim($_POST['destino'] ?? '');
         $fecha = $_POST['fecha'] ?? '';
@@ -144,6 +156,15 @@
                     <?php endif; ?>
 
                     <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]) ?>" method="post">
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="<?= htmlspecialchars(
+                                csrfToken(),
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
+                        >
 
                         <!-- Fila 1: origen y destino -->
                         <div class="row">

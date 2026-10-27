@@ -9,12 +9,26 @@ $conexion = conectarDB();
 $mensaje = '';
 $error = '';
 
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $codUsuario = (int) ($_POST['codUsuario'] ?? 0);
     $accion = $_POST['accion'] ?? '';
+    $csrfRecibido = $_POST['csrf_token'] ?? '';
 
-    if ($codUsuario <= 0) {
+
+    if (
+        !hash_equals(
+            $csrfToken,
+            (string) $csrfRecibido
+        )
+    ) {
+
+        $error =
+            'La solicitud no es válida. Recargá la página e intentá nuevamente.';
+
+    } elseif ($codUsuario <= 0) {
 
         $error = 'El usuario indicado no es válido.';
 
@@ -474,6 +488,16 @@ require __DIR__ . '/../../Includes/navbar.php';
                                                 class="d-flex
                                                        justify-content-end
                                                        flex-wrap gap-2"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="csrf_token"
+                                                value="<?= htmlspecialchars(
+                                                    $csrfToken,
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>"
                                             >
 
                                                 <input

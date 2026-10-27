@@ -6,6 +6,15 @@ requerirRol('ceo aerolínea');
 $codPromocion = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
 $conexion = conectarDB();
+
+if (empty($_SESSION['csrf_eliminar_promocion'])) {
+    $_SESSION['csrf_eliminar_promocion'] =
+        bin2hex(random_bytes(32));
+}
+
+$csrfToken =
+    $_SESSION['csrf_eliminar_promocion'];
+
 $consulta = $conexion->prepare(
     "SELECT codPromocion, descripcion, descuento, destino, fechaDesde, fechaHasta, estado
      FROM promociones
@@ -24,6 +33,22 @@ if (!$promocion) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $csrfRecibido =
+        $_POST['csrf_token'] ?? '';
+
+    if (
+        !hash_equals(
+            $csrfToken,
+            (string) $csrfRecibido
+        )
+    ) {
+        die(
+            'La solicitud no es válida. '
+            . 'Recargá la página e intentá nuevamente.'
+        );
+    }
+
     $consulta = $conexion->prepare(
         "DELETE FROM promociones
          WHERE codPromocion = :codPromocion
@@ -33,6 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'codPromocion' => $codPromocion,
         'codAerolinea' => $_SESSION['codAerolinea'],
     ]);
+
+    $_SESSION['csrf_eliminar_promocion'] =
+        bin2hex(random_bytes(32));
+
     header('Location: promociones.php');
     exit;
 }
@@ -76,7 +105,23 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
             </div>
 
             <form method="post" class="d-flex gap-2 flex-wrap">
-                <button type="submit" class="btn-volara">Sí, eliminar</button>
+
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="<?= htmlspecialchars(
+                    $csrfToken,
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>"
+            >
+
+            <button
+                type="submit"
+                class="btn-volara"
+            >
+                Sí, eliminar
+            </button>
                 <a href="promociones.php" class="btn-volara-outline">Cancelar</a>
             </form>
         </div>

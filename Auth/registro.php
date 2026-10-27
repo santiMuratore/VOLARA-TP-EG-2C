@@ -46,6 +46,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirmarClave = $_POST['confirmarClave'] ?? '';
     $tipoUsuario = $_POST['tipoUsuario'] ?? '';
 
+    $tokenRecibido =
+    $_POST['csrf_token'] ?? null;
+
+    if (
+        !is_string($tokenRecibido) ||
+        !csrfValido($tokenRecibido)
+    ) {
+        $errores[] =
+            'La solicitud no es válida. Recargá la página e intentá nuevamente.';
+    }
+
     if ($nombre === '') {
 
     $errores[] = 'El nombre es obligatorio.';
@@ -377,6 +388,15 @@ require_once __DIR__ . '/../Includes/navbar.php';
 
 
                     <form method="post">
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="<?= htmlspecialchars(
+                                csrfToken(),
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
+                        >
 
                         <div class="row g-3">
 
