@@ -190,8 +190,8 @@ try {
     $errores[] = 'No se pudieron cargar las aerolíneas. Revisá la conexión con la base de datos.';
 }
 
-require_once __DIR__ . '../../../../Includes/header.php';
-require_once __DIR__ . '../../../../Includes/navbar.php';
+require_once __DIR__ . '/../../../Includes/header.php';
+require_once __DIR__ . '/../../../Includes/navbar.php';
 ?>
 
 <main id="contenido-principal" class="py-5" tabindex="-1">

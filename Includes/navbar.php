@@ -655,7 +655,7 @@ $urlPromocionesCeo = $baseUrl
                                 <li>
                                     <a
                                         class="dropdown-item<?= $claseActiva(
-                                            $rutaEsActual('Pages/Ceo/promociones.php')
+                                            $rutaEsActual('Pages/Ceo/promociones/promociones.php')
                                         ) ?>"
                                         href="<?= $escapar($urlPromocionesCeo) ?>">
 

@@ -108,8 +108,8 @@ $mapa = [
 
 if (!$estaLogueado) {
     $mapa['Cuenta'] = [
-        'Iniciar sesión' => 'Pages/Publico/login.php',
-        'Registrarse' => 'Pages/Publico/registro.php',
+        'Iniciar sesión' => 'Auth/login.php',
+        'Registrarse' => 'Auth/registro.php',
     ];
 }
 
@@ -135,10 +135,10 @@ if ($estaLogueado && $esPasajero) {
 
 if ($estaLogueado && $esCeo) {
     $mapa['CEO'] = [
-        'Inicio del CEO' => 'Pages/CEO/index.php',
-        'Gestionar vuelos' => 'Pages/CEO/vuelos.php',
-        'Promociones' => 'Pages/CEO/promociones.php',
-        'Reportes' => 'Pages/CEO/reportes.php',
+        'Inicio del CEO' => 'Pages/Ceo/index.php',
+        'Gestionar vuelos' => 'Pages/Ceo/vuelos.php',
+        'Promociones' => 'Pages/Ceo/promociones/promociones.php',
+        'Reportes' => 'Pages/Ceo/reportes.php',
     ];
 }
 
@@ -152,8 +152,8 @@ if ($estaLogueado && $esAdmin) {
     $mapa['Administración'] = [
         'Gestionar aerolíneas' => 'Pages/Admin/aerolineas/index.php',
         'Gestionar novedades' => 'Pages/Admin/novedades/index.php',
-        'Gestionar promociones' => 'Pages/Admin/promociones/index.php',
-        'Reportes' => 'Pages/Admin/reportes.php',
+        'Gestionar promociones' => 'Pages/Admin/promociones/promocionesPendientes.php',
+        'Reportes' => 'Pages/Admin/reportes/reporteVentas.php',
     ];
 }
 
