@@ -1727,18 +1727,19 @@ p:last-child {
 
 .volara-pagination .active {
     border-color: var(--volara-red);
-<<<<<<< HEAD
     background: var(--volara-red);
     color: var(--volara-white);
 }
 
-/* ─── 18. Dashboard ─────────────────────────────────────── */
-=======
-    color: var(--volara-white);    
+.volara-pagination .active {
+    border-color: var(--volara-red);
+    background: var(--volara-red);
+    color: var(--volara-white);
 }
+
 .volara-pagination span:not(.active) { opacity: 0.45; }
-/* ─── Dashboard ─────────────────────────────────────────── */
->>>>>>> 8b8882c (Organización de carpetas)
+
+/* --- Dashboard -------------------------------- */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -2057,7 +2058,6 @@ p:last-child {
     }
 }
 
-<<<<<<< HEAD
 /* =====================================================
    FOOTER VOLARA — DISEÑO CORREGIDO
    ===================================================== */
@@ -2727,13 +2727,46 @@ main.volara-public-page ~ footer.volara-footer {
 
     /* Cada reporte en su propia hoja */
     .hoja-impresion { break-after: page; page-break-after: always; }
-=======
-.volara-pagination a,
-.table-action-btn { text-decoration: none; }
-.volara-pagination span:not(.active) { opacity: 0.45; }
+}
 
-@media print {
-    .volara-navbar,
-    .volara-footer { display: none !important; }
->>>>>>> 8b8882c (Organización de carpetas)
+
+/* =========================================
+   FIX DEFINITIVO: FOOTER ABAJO EN TODAS LAS VISTAS
+   ========================================= */
+
+/* 1. Forzamos a html y body a ocupar el 100% de la ventana */
+html, body {
+    min-height: 100vh !important;
+}
+
+body {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* 2. El main ocupa todo el espacio sobrante */
+main, 
+main.volara-public-page, 
+#contenido-principal {
+    flex: 1 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* 3. El contenedor interior de la página se estira e independiza */
+main > .container,
+main > .section,
+main > .volara-public-section {
+    flex: 1 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important; /* Centra el formulario verticalmente */
+    padding-top: 3rem !important;
+    padding-bottom: 3rem !important;
+}
+
+/* 4. El footer se queda clavado abajo de todo */
+.volara-footer {
+    margin-top: auto !important;
+    flex-shrink: 0 !important;
 }
