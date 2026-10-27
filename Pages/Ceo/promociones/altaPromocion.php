@@ -21,12 +21,32 @@ $destino = '';
 $fechaDesde = '';
 $fechaHasta = '';
 
+if (empty($_SESSION['csrf_alta_promocion'])) {
+    $_SESSION['csrf_alta_promocion'] =
+        bin2hex(random_bytes(32));
+}
+
+$csrfToken =
+    $_SESSION['csrf_alta_promocion'];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $descripcion = trim($_POST['descripcion'] ?? '');
     $descuento = trim($_POST['descuento'] ?? '');
     $destino = trim($_POST['destino'] ?? '');
     $fechaDesde = trim($_POST['fechaDesde'] ?? '');
     $fechaHasta = trim($_POST['fechaHasta'] ?? '');
+    $csrfRecibido =
+        $_POST['csrf_token'] ?? '';
+
+        if (
+            !hash_equals(
+                $csrfToken,
+                (string) $csrfRecibido
+            )
+        ) {
+            $errores[] =
+                'La solicitud no es válida. Recargá la página e intentá nuevamente.';
+        }
 
     if ($descripcion === '' || strlen($descripcion) > 255) {
         $errores[] = 'La descripción es obligatoria y puede tener hasta 255 caracteres.';
@@ -68,6 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'fechaDesde'   => $fechaDesde !== '' ? $fechaDesde : null,
             'fechaHasta'   => $fechaHasta !== '' ? $fechaHasta : null,
         ]);
+
+        $_SESSION['csrf_alta_promocion'] =
+            bin2hex(random_bytes(32));
         header('Location: promociones.php');
         exit;
     }
@@ -92,6 +115,15 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
             <?php endforeach; ?>
 
             <form method="post" class="volara-card-flat">
+                <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="<?= htmlspecialchars(
+                        $csrfToken,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>"
+                >
                 <div class="form-group">
                     <label for="descripcion" class="volara-label">Descripción</label>
                     <input type="text" class="volara-input" id="descripcion" name="descripcion"
