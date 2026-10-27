@@ -2718,55 +2718,26 @@ main.volara-public-page ~ footer.volara-footer {
     /* Solo se imprime el contenido principal: sin navbar, footer ni nada fuera de <main> */
     body > *:not(main) { display: none !important; }
 
-    .volara-card { box-shadow: none; }
-    .volara-table tr { break-inside: avoid; }
+    /* Aprovechar todo el ancho de la hoja */
+    main .container { max-width: 100%; padding-left: 0; padding-right: 0; }
 
-    /* Sin barra de desplazamiento horizontal al imprimir */
+    .volara-card { box-shadow: none; padding: 0.75rem; }
+    .stat-card { padding: 0.75rem; }
+    .stat-card .stat-value { font-size: 1.4rem; }
+
+    /* Tablas ajustadas al ancho de la tarjeta, sin cortar las palabras */
     .volara-table-responsive { overflow: visible !important; }
-    .volara-table { width: 100%; }
+    .volara-table { width: 100%; table-layout: auto; }
+    .volara-table thead th,
+    .volara-table tbody td {
+        padding: 0.4rem 0.35rem;
+        font-size: 0.75rem;
+        letter-spacing: 0;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+    .volara-table tr { break-inside: avoid; }
 
     /* Cada reporte en su propia hoja */
     .hoja-impresion { break-after: page; page-break-after: always; }
-}
-
-
-/* =========================================
-   FIX DEFINITIVO: FOOTER ABAJO EN TODAS LAS VISTAS
-   ========================================= */
-
-/* 1. Forzamos a html y body a ocupar el 100% de la ventana */
-html, body {
-    min-height: 100vh !important;
-}
-
-body {
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-/* 2. El main ocupa todo el espacio sobrante */
-main, 
-main.volara-public-page, 
-#contenido-principal {
-    flex: 1 0 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-/* 3. El contenedor interior de la página se estira e independiza */
-main > .container,
-main > .section,
-main > .volara-public-section {
-    flex: 1 0 auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important; /* Centra el formulario verticalmente */
-    padding-top: 3rem !important;
-    padding-bottom: 3rem !important;
-}
-
-/* 4. El footer se queda clavado abajo de todo */
-.volara-footer {
-    margin-top: auto !important;
-    flex-shrink: 0 !important;
 }
