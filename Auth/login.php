@@ -5,6 +5,7 @@ require_once __DIR__ . '/../Includes/functionsF2.php';
 
 $error = '';
 $mail = '';
+$cuentaPendienteValidacion = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -41,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($usuario['estadoUsuario'] === 'pendiente de validación') {
 
         $error = 'Debés validar tu cuenta desde el enlace que enviamos a tu correo.';
+         $cuentaPendienteValidacion = true;
 
     } elseif ($usuario['estadoUsuario'] === 'pendiente de autorización') {
 
@@ -108,24 +110,42 @@ require_once __DIR__ . '/../Includes/navbar.php';
                     
                     <?php if ($error !== ''): ?>
 
-                        <div class="volara-alert alert-danger">
+                    <div
+                        class="volara-alert alert-danger align-items-start"
+                    >
 
-                            <i
-                                class="bi bi-exclamation-circle-fill"
-                                aria-hidden="true"
-                            ></i>
+                        <i
+                            class="bi bi-exclamation-circle-fill mt-1"
+                            aria-hidden="true"
+                        ></i>
 
-                            <span>
+                        <div>
+
+                            <div>
                                 <?= htmlspecialchars(
                                     $error,
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
-                            </span>
+                            </div>
 
-                        </div>
 
-                    <?php endif; ?>
+                            <?php if ($cuentaPendienteValidacion): ?>
+
+                                            <a
+                                                href="<?= BASE_URL ?>/Auth/reenviarValidacion.php?mail=<?= rawurlencode($mail) ?>"
+                                                class="fw-semibold d-inline-block mt-2"
+                                            >
+                                                Reenviar correo de validación
+                                            </a>
+
+                                        <?php endif; ?>
+
+                                    </div>
+
+                                </div>
+
+                <?php endif; ?>
 
 
                     <form method="post">
