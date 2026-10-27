@@ -1,167 +1,140 @@
 <?php
+/**
+ * Alta de aerolíneas - VOLARA.
+ * Ubicación: Pages/Admin/aerolineas/crear.php
+ */
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
 require_once __DIR__ . '/../../../Includes/functions.php';
 require_once __DIR__ . '/../../../Includes/functionsF2.php';
 
-// Título de la página
-$titulo = 'Crear Aerolínea';
+$baseUrl = rtrim(BASE_URL, '/');
+$urlListado = $baseUrl . '/Pages/Admin/aerolineas/index.php';
+$escapar = static fn($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 
-// Control de acceso: solo administradores
-requerirRol('administrador');
-
-// Variables iniciales
-$errores = [];
-$mensaje = '';
-$flashTipo = 'info';
-
-// Datos del formulario para conservarlos si hay errores
-$codigoIATAOld = '';
-$nombreOld = '';
-$paisOld = '';
-
-// Mensaje recibido por GET, si existe
-if (isset($_GET['mensaje'])) {
-    $mensaje = (string) $_GET['mensaje'];
-
-    $tipoRecibido = $_GET['tipo'] ?? 'info';
-
-    $flashTipo = in_array(
-        $tipoRecibido,
-        ['success', 'danger', 'warning', 'info'],
-        true
-    ) ? $tipoRecibido : 'info';
+/* --------------------------------------------------------------------------
+ * Autenticación y autorización.
+ * -------------------------------------------------------------------------- */
+$usuarioActual = [];
+if (!empty($_SESSION['codUsuario']) && function_exists('usuarioActual')) {
+    $datosUsuario = usuarioActual();
+    if (is_array($datosUsuario)) {
+        $usuarioActual = $datosUsuario;
+    }
 }
 
-// Procesar formulario antes de generar HTML
+$rol = trim((string) (
+    $usuarioActual['rol']
+    ?? $usuarioActual['tipoUsuario']
+    ?? $_SESSION['tipoUsuario']
+    ?? ''
+));
+$rol = function_exists('mb_strtolower') ? mb_strtolower($rol, 'UTF-8') : strtolower($rol);
+$rol = strtr($rol, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u']);
+
+if (empty($_SESSION['codUsuario'])) {
+    header('Location: ' . $baseUrl . '/Auth/login.php');
+    exit;
+}
+if (!in_array($rol, ['admin', 'administrador'], true)) {
+    header('Location: ' . $baseUrl . '/Pages/Publico/index.php');
+    exit;
+}
+
+$titulo = 'Crear aerolínea';
+$pageDescription = 'Registrá una aerolínea en el sistema VOLARA.';
+$errores = [];
+$codigoIATA = '';
+$nombre = '';
+$pais = '';
+
+/* --------------------------------------------------------------------------
+ * Crear aerolínea.
+ * -------------------------------------------------------------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $tokenRecibido = is_string($_POST['csrf_token'] ?? null) ? $_POST['csrf_token'] : null;
 
-    // Validar token CSRF
-    if (!csrfValido($_POST['csrf_token'] ?? '')) {
-        $flashMsg = 'La sesión del formulario venció. Intentá nuevamente.';
-        $tipoMensaje = 'danger';
+    $codigoIATA = is_string($_POST['codigoIATA'] ?? null) ? trim($_POST['codigoIATA']) : '';
+    $nombre = is_string($_POST['nombre'] ?? null) ? trim($_POST['nombre']) : '';
+    $pais = is_string($_POST['pais'] ?? null) ? trim($_POST['pais']) : '';
 
-        header(
-            'Location: ' . BASE_URL .
-            '/Pages/Admin/aerolineas/index.php?mensaje=' .
-            urlencode($flashMsg) .
-            '&tipo=' .
-            urlencode($tipoMensaje)
-        );
-        exit;
+    if (!csrfValido($tokenRecibido)) {
+        $errores[] = 'La sesión del formulario venció. Recargá la página e intentá nuevamente.';
     }
 
-    // Obtener datos enviados
-    $codigoIATA = trim($_POST['codigoIATA'] ?? '');
-    $nombre = trim($_POST['nombre'] ?? '');
-    $pais = trim($_POST['pais'] ?? '');
-
-    // Conservar los datos para volver a mostrarlos si hay errores
-    $codigoIATAOld = $codigoIATA;
-    $nombreOld = $nombre;
-    $paisOld = $pais;
-
-    // Validar código IATA: exactamente tres letras
     if (!preg_match('/^[A-Za-z]{3}$/', $codigoIATA)) {
-        $errores[] = 'El código IATA debe tener exactamente 3 caracteres alfabéticos.';
+        $errores[] = 'El código IATA debe tener exactamente tres letras, por ejemplo VOL.';
     } else {
         $codigoIATA = strtoupper($codigoIATA);
-        $codigoIATAOld = $codigoIATA;
     }
 
-    // Validar nombre
+    $longitudNombre = function_exists('mb_strlen') ? mb_strlen($nombre, 'UTF-8') : strlen($nombre);
     if ($nombre === '') {
         $errores[] = 'El nombre de la aerolínea es obligatorio.';
-    } elseif (strlen($nombre) > 120) {
-        $errores[] = 'El nombre no puede tener más de 120 caracteres.';
+    } elseif ($longitudNombre > 120) {
+        $errores[] = 'El nombre no puede superar los 120 caracteres.';
     }
 
-    // Validar país
+    $longitudPais = function_exists('mb_strlen') ? mb_strlen($pais, 'UTF-8') : strlen($pais);
     if ($pais === '') {
         $errores[] = 'El país es obligatorio.';
+    } elseif ($longitudPais > 100) {
+        $errores[] = 'El país no puede superar los 100 caracteres.';
     }
 
-    // Revisar duplicados e insertar si todo es válido
-    if (empty($errores)) {
+    if (!$errores) {
         try {
             $conexion = conectarDB();
-
-            // Comprobar que el código IATA y el nombre sean únicos
-            $sqlCheck = "
-                SELECT codigoIATA, nombre
-                FROM aerolineas
-                WHERE codigoIATA = :codigoIATA
-                   OR nombre = :nombre
-            ";
-
-            $checkStmt = $conexion->prepare($sqlCheck);
-
-            $checkStmt->execute([
+            $stmtDuplicados = $conexion->prepare(
+                'SELECT codigoIATA, nombre
+                 FROM aerolineas
+                 WHERE UPPER(codigoIATA) = :codigoIATA
+                    OR LOWER(nombre) = LOWER(:nombre)'
+            );
+            $stmtDuplicados->execute([
                 'codigoIATA' => $codigoIATA,
-                'nombre' => $nombre
+                'nombre' => $nombre,
             ]);
+            $existentes = $stmtDuplicados->fetchAll(PDO::FETCH_ASSOC);
 
-            $aerolineasExistentes = $checkStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            foreach ($aerolineasExistentes as $aerolinea) {
-
-                // Comprobar código IATA duplicado
-                if (
-                    strtoupper((string) $aerolinea['codigoIATA']) === $codigoIATA
-                    && !in_array(
-                        'El código IATA ya está en uso.',
-                        $errores,
-                        true
-                    )
-                ) {
-                    $errores[] = 'El código IATA ya está en uso.';
+            foreach ($existentes as $existente) {
+                if (strtoupper((string) $existente['codigoIATA']) === $codigoIATA) {
+                    $errores[] = 'El código IATA ya está registrado.';
+                    break;
                 }
-
-                // Comprobar nombre duplicado
-                if (
-                    strcasecmp((string) $aerolinea['nombre'], $nombre) === 0
-                    && !in_array(
-                        'El nombre de aerolínea ya está en uso.',
-                        $errores,
-                        true
-                    )
-                ) {
-                    $errores[] = 'El nombre de aerolínea ya está en uso.';
+            }
+            foreach ($existentes as $existente) {
+                if (strcasecmp((string) $existente['nombre'], $nombre) === 0) {
+                    $errores[] = 'Ya existe una aerolínea con ese nombre.';
+                    break;
                 }
             }
 
-            // Insertar únicamente si no hay errores
-            if (empty($errores)) {
-                $sqlInsert = "
-                    INSERT INTO aerolineas (codigoIATA, nombre, pais)
-                    VALUES (:codigoIATA, :nombre, :pais)
-                ";
-
-                $insStmt = $conexion->prepare($sqlInsert);
-
-                $insStmt->execute([
+            if (!$errores) {
+                $stmtInsertar = $conexion->prepare(
+                    'INSERT INTO aerolineas (codigoIATA, nombre, pais)
+                     VALUES (:codigoIATA, :nombre, :pais)'
+                );
+                $stmtInsertar->execute([
                     'codigoIATA' => $codigoIATA,
                     'nombre' => $nombre,
-                    'pais' => $pais
+                    'pais' => $pais,
                 ]);
 
-                // Redirigir al listado después de guardar
-                $flashMsg = 'Aerolínea creada exitosamente.';
-
                 header(
-                    'Location: ' . BASE_URL .
-                    '/Pages/Admin/aerolineas/index.php?mensaje=' .
-                    urlencode($flashMsg) .
-                    '&tipo=success'
+                    'Location: ' . $urlListado
+                    . '?mensaje=' . rawurlencode('Aerolínea creada correctamente.')
+                    . '&tipo=success'
                 );
                 exit;
             }
-
         } catch (PDOException $e) {
-            // Registrar el detalle técnico sin mostrar información sensible
-            error_log('Error al crear aerolínea: ' . $e->getMessage());
-
-            if ($e->getCode() === '23000') {
-                $errores[] = 'El código IATA o el nombre de aerolínea ya está en uso.';
+            error_log('VOLARA - Error al crear aerolínea: ' . $e->getMessage());
+            if ((string) $e->getCode() === '23000') {
+                $errores[] = 'El código IATA o el nombre ya está registrado.';
             } else {
                 $errores[] = 'No se pudo guardar la aerolínea. Intentá nuevamente.';
             }
@@ -169,143 +142,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// IMPORTANTE: incluir el encabezado después de procesar el formulario.
-// Así las redirecciones anteriores pueden ejecutarse correctamente.
-require_once __DIR__ . '/../../Includes/header.php';
+require_once __DIR__ . '/../../../Includes/header.php';
+require_once __DIR__ . '/../../../Includes/navbar.php';
 ?>
 
-<main class="py-5">
-    <div class="container">
-
-        <h1 class="section-title text-center mb-4">
-            Crear Aerolínea
-        </h1>
-
-        <div class="mx-auto" style="max-width: 560px;">
-
-            <?php if ($mensaje !== ''): ?>
-                <div
-                    class="alert alert-<?= htmlspecialchars($flashTipo, ENT_QUOTES, 'UTF-8') ?>"
-                    role="status"
-                >
-                    <?= htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8') ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (!empty($errores)): ?>
-                <div class="alert alert-danger" role="alert">
-                    <p class="fw-bold mb-2">
-                        No se pudo crear la aerolínea:
-                    </p>
-
-                    <ul class="mb-0">
-                        <?php foreach ($errores as $error): ?>
-                            <li>
-                                <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            <?php endif; ?>
-
-            <form
-                method="post"
-                action=""
-                class="volara-card p-4"
-            >
-                <input
-                    type="hidden"
-                    name="csrf_token"
-                    value="<?= htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') ?>"
-                >
-
-                <!-- Código IATA -->
-                <div class="form-group mb-3">
-                    <label for="codigoIATA" class="volara-label">
-                        Código IATA <span class="text-danger">*</span>
-                    </label>
-
-                    <input
-                        type="text"
-                        name="codigoIATA"
-                        id="codigoIATA"
-                        class="volara-input"
-                        maxlength="3"
-                        minlength="3"
-                        pattern="[A-Za-z]{3}"
-                        title="Ingresá exactamente 3 letras."
-                        value="<?= htmlspecialchars($codigoIATAOld, ENT_QUOTES, 'UTF-8') ?>"
-                        autocomplete="off"
-                        autocapitalize="characters"
-                        required
-                    >
-
-                    <small class="form-text text-muted">
-                        Debe tener exactamente 3 letras, por ejemplo: VOL.
-                    </small>
-                </div>
-
-                <!-- Nombre -->
-                <div class="form-group mb-3">
-                    <label for="nombre" class="volara-label">
-                        Nombre <span class="text-danger">*</span>
-                    </label>
-
-                    <input
-                        type="text"
-                        name="nombre"
-                        id="nombre"
-                        class="volara-input"
-                        maxlength="120"
-                        value="<?= htmlspecialchars($nombreOld, ENT_QUOTES, 'UTF-8') ?>"
-                        autocomplete="off"
-                        required
-                    >
-
-                    <small class="form-text text-muted">
-                        Ingresá el nombre de la aerolínea.
-                    </small>
-                </div>
-
-                <!-- País -->
-                <div class="form-group mb-3">
-                    <label for="pais" class="volara-label">
-                        País <span class="text-danger">*</span>
-                    </label>
-
-                    <input
-                        type="text"
-                        name="pais"
-                        id="pais"
-                        class="volara-input"
-                        value="<?= htmlspecialchars($paisOld, ENT_QUOTES, 'UTF-8') ?>"
-                        autocomplete="country-name"
-                        required
-                    >
-
-                    <small class="form-text text-muted">
-                        Ingresá el país de origen de la aerolínea.
-                    </small>
-                </div>
-
-                <!-- Botones -->
-                <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-volara">
-                        <i class="bi bi-check me-2" aria-hidden="true"></i>
-                        Crear
-                    </button>
-
-                    <a
-                        href="<?= BASE_URL ?>/Pages/Admin/aerolineas/index.php"
-                        class="btn btn-volara-outline ms-2"
-                    >
-                        <i class="bi bi-x me-2" aria-hidden="true"></i>
-                        Cancelar
-                    </a>
-                </div>
-
-            </form>
-
+<main id="contenido-principal" class="py-5" tabindex="-1">
+    <section class="page-header">
+        <div class="container">
+            <h1>Crear aerolínea</h1>
+            <p class="text-muted mb-3">Completá los datos para registrar una nueva aerolínea.</p>
+            <nav aria-label="Ruta de navegación">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="<?= $escapar($baseUrl . '/Pages/Admin/index.php') ?>">Panel de administración</a></li>
+                    <li class="breadcrumb-item"><a href="<?= $escapar($urlListado) ?>">Aerolíneas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Crear</li>
+                </ol>
+            </nav>
         </div>
-    </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <div class="mx-auto" style="max-width: 640px;">
+                <?php if ($errores): ?>
+                    <div class="volara-alert alert-danger mb-4" role="alert">
+                        <strong>No se pudo crear la aerolínea:</strong>
+                        <ul class="mb-0 mt-2">
+                            <?php foreach (array_unique($errores) as $error): ?>
+                                <li><?= $escapar($error) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+
+                <div class="volara-card p-4 p-md-5">
+                    <form method="post" action="<?= $escapar($baseUrl . '/Pages/Admin/aerolineas/crear.php') ?>">
+                        <input type="hidden" name="csrf_token" value="<?= $escapar(csrfToken()) ?>">
+
+                        <div class="form-group mb-4">
+                            <label for="codigoIATA" class="volara-label">Código IATA <span class="text-danger">*</span></label>
+                            <input
+                                type="text"
+                                name="codigoIATA"
+                                id="codigoIATA"
+                                class="volara-input"
+                                minlength="3"
+                                maxlength="3"
+                                pattern="[A-Za-z]{3}"
+                                title="Ingresá exactamente tres letras."
+                                value="<?= $escapar($codigoIATA) ?>"
+                                autocapitalize="characters"
+                                autocomplete="off"
+                                required
+                            >
+                            <small class="text-muted">Exactamente tres letras, por ejemplo VOL.</small>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="nombre" class="volara-label">Nombre de la aerolínea <span class="text-danger">*</span></label>
+                            <input
+                                type="text"
+                                name="nombre"
+                                id="nombre"
+                                class="volara-input"
+                                maxlength="120"
+                                value="<?= $escapar($nombre) ?>"
+                                autocomplete="organization"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="pais" class="volara-label">País <span class="text-danger">*</span></label>
+                            <input
+                                type="text"
+                                name="pais"
+                                id="pais"
+                                class="volara-input"
+                                maxlength="100"
+                                value="<?= $escapar($pais) ?>"
+                                autocomplete="country-name"
+                                required
+                            >
+                        </div>
+
+                        <p class="small text-muted">Los campos marcados con <span class="text-danger">*</span> son obligatorios.</p>
+
+                        <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+                            <button type="submit" class="btn btn-volara">
+                                <i class="bi bi-check-lg me-2" aria-hidden="true"></i>Crear aerolínea
+                            </button>
+                            <a href="<?= $escapar($urlListado) ?>" class="btn btn-volara-outline">
+                                <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Volver al listado
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
+
+<?php require_once __DIR__ . '/../../../Includes/footer.php'; ?>

@@ -1,4 +1,3 @@
-
 <?php
 
 /*
@@ -40,9 +39,7 @@ if ($directorioIncludes === null) {
     );
 
     http_response_code(500);
-    exit(
-        'Error de configuración. Verificá la ubicación de los archivos Includes.'
-    );
+    exit('Error de configuración. Verificá la ubicación de los archivos Includes.');
 }
 
 /*
@@ -68,7 +65,7 @@ $baseUrl = rtrim(BASE_URL, '/');
 */
 
 if (empty($_SESSION['codUsuario'])) {
-    header('Location: ' . $baseUrl . '/Pages/Publico/login.php');
+    header('Location: ' . $baseUrl . '/Auth/login.php');
     exit;
 }
 
@@ -94,13 +91,21 @@ $rolUsuario = strtr($rolUsuario, [
     'í' => 'i',
     'ó' => 'o',
     'ú' => 'u',
+    'ü' => 'u',
 ]);
 
-if (!in_array(
-    $rolUsuario,
-    ['usuario', 'pasajero', 'cliente'],
-    true
-)) {
+$rolesPermitidosPerfil = [
+    'admin',
+    'administrador',
+    'ceo',
+    'ceo aerolinea',
+    'ceo de aerolinea',
+    'usuario',
+    'pasajero',
+    'cliente',
+];
+
+if (!in_array($rolUsuario, $rolesPermitidosPerfil, true)) {
     header('Location: ' . $baseUrl . '/Pages/Publico/index.php');
     exit;
 }
@@ -302,7 +307,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
                     ),
                     'codUsuario' => $_SESSION['codUsuario'],
                 ];
-
             } else {
 
                 $sql = "
@@ -372,7 +376,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
             // Mantener actualizados los datos disponibles para la sesión.
             $_SESSION['nombre'] = $nombre;
             $_SESSION['apellido'] = $apellido;
-
         } catch (PDOException $e) {
             error_log('Error actualizando perfil VOLARA: ' . $e->getMessage());
 
@@ -416,8 +419,7 @@ require $archivoNavbar;
 <main
     id="contenido-principal"
     class="volara-public-page volara-pasajero-page"
-    tabindex="-1"
->
+    tabindex="-1">
     <!-- Encabezado de página -->
     <section class="page-header">
         <div class="container">
@@ -433,10 +435,10 @@ require $archivoNavbar;
 
                     <li class="breadcrumb-item">
                         <a href="<?= htmlspecialchars(
-                            $baseUrl . '/Pages/Publico/index.php',
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                        $baseUrl . '/Pages/Publico/index.php',
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>">
                             Inicio
                         </a>
                     </li>
@@ -465,12 +467,10 @@ require $archivoNavbar;
                             <div
                                 class="alert alert-success"
                                 role="status"
-                                aria-live="polite"
-                            >
+                                aria-live="polite">
                                 <i
                                     class="bi bi-check-circle me-2"
-                                    aria-hidden="true"
-                                ></i>
+                                    aria-hidden="true"></i>
 
                                 <?= htmlspecialchars(
                                     $mensajeExito,
@@ -486,8 +486,7 @@ require $archivoNavbar;
                             <div
                                 class="alert alert-danger"
                                 role="alert"
-                                aria-live="polite"
-                            >
+                                aria-live="polite">
                                 <ul class="mb-0 ps-3">
 
                                     <?php foreach ($errores as $error): ?>
@@ -515,14 +514,13 @@ require $archivoNavbar;
                                 <?php
                                 $iniciales = strtoupper(
                                     substr($nombre, 0, 1)
-                                    . substr($apellido, 0, 1)
+                                        . substr($apellido, 0, 1)
                                 );
                                 ?>
 
                                 <span
                                     class="user-avatar profile-avatar"
-                                    aria-hidden="true"
-                                >
+                                    aria-hidden="true">
                                     <?= htmlspecialchars(
                                         $iniciales ?: 'U',
                                         ENT_QUOTES,
@@ -560,11 +558,10 @@ require $archivoNavbar;
                                     type="hidden"
                                     name="csrf_token"
                                     value="<?= htmlspecialchars(
-                                        $csrfToken,
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>"
-                                >
+                                                $csrfToken,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>">
 
                                 <!-- Datos personales -->
                                 <h3 class="h5 mb-3">Datos personales</h3>
@@ -575,8 +572,7 @@ require $archivoNavbar;
 
                                         <label
                                             class="volara-label"
-                                            for="nombre"
-                                        >
+                                            for="nombre">
                                             Nombre *
                                         </label>
 
@@ -586,15 +582,14 @@ require $archivoNavbar;
                                             id="nombre"
                                             name="nombre"
                                             value="<?= htmlspecialchars(
-                                                $nombre,
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>"
+                                                        $nombre,
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
                                             minlength="2"
                                             maxlength="80"
                                             autocomplete="given-name"
-                                            required
-                                        >
+                                            required>
 
                                     </div>
 
@@ -602,8 +597,7 @@ require $archivoNavbar;
 
                                         <label
                                             class="volara-label"
-                                            for="apellido"
-                                        >
+                                            for="apellido">
                                             Apellido *
                                         </label>
 
@@ -613,15 +607,14 @@ require $archivoNavbar;
                                             id="apellido"
                                             name="apellido"
                                             value="<?= htmlspecialchars(
-                                                $apellido,
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>"
+                                                        $apellido,
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
                                             minlength="2"
                                             maxlength="80"
                                             autocomplete="family-name"
-                                            required
-                                        >
+                                            required>
 
                                     </div>
 
@@ -629,8 +622,7 @@ require $archivoNavbar;
 
                                         <label
                                             class="volara-label"
-                                            for="mail"
-                                        >
+                                            for="mail">
                                             Email
                                         </label>
 
@@ -639,13 +631,12 @@ require $archivoNavbar;
                                             class="volara-input"
                                             id="mail"
                                             value="<?= htmlspecialchars(
-                                                (string) $perfil['mail'],
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>"
+                                                        (string) $perfil['mail'],
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
                                             autocomplete="email"
-                                            readonly
-                                        >
+                                            readonly>
 
                                         <small class="text-muted d-block mt-1">
                                             El correo de acceso no se modifica desde esta pantalla.
@@ -657,8 +648,7 @@ require $archivoNavbar;
 
                                         <label
                                             class="volara-label"
-                                            for="telefono"
-                                        >
+                                            for="telefono">
                                             Teléfono
                                         </label>
 
@@ -668,14 +658,13 @@ require $archivoNavbar;
                                             id="telefono"
                                             name="telefono"
                                             value="<?= htmlspecialchars(
-                                                $telefono,
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>"
+                                                        $telefono,
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
                                             maxlength="30"
                                             autocomplete="tel"
-                                            placeholder="Tu número de teléfono"
-                                        >
+                                            placeholder="Tu número de teléfono">
 
                                     </div>
 
@@ -696,8 +685,7 @@ require $archivoNavbar;
 
                                         <label
                                             class="volara-label"
-                                            for="claveActual"
-                                        >
+                                            for="claveActual">
                                             Contraseña actual
                                         </label>
 
@@ -706,8 +694,7 @@ require $archivoNavbar;
                                             class="volara-input"
                                             id="claveActual"
                                             name="claveActual"
-                                            autocomplete="current-password"
-                                        >
+                                            autocomplete="current-password">
 
                                     </div>
 
@@ -715,8 +702,7 @@ require $archivoNavbar;
 
                                         <label
                                             class="volara-label"
-                                            for="claveNueva"
-                                        >
+                                            for="claveNueva">
                                             Nueva contraseña
                                         </label>
 
@@ -726,8 +712,7 @@ require $archivoNavbar;
                                             id="claveNueva"
                                             name="claveNueva"
                                             minlength="8"
-                                            autocomplete="new-password"
-                                        >
+                                            autocomplete="new-password">
 
                                         <small class="text-muted d-block mt-1">
                                             Debe tener al menos 8 caracteres.
@@ -739,8 +724,7 @@ require $archivoNavbar;
 
                                         <label
                                             class="volara-label"
-                                            for="confirmarClave"
-                                        >
+                                            for="confirmarClave">
                                             Confirmar contraseña
                                         </label>
 
@@ -750,40 +734,36 @@ require $archivoNavbar;
                                             id="confirmarClave"
                                             name="confirmarClave"
                                             minlength="8"
-                                            autocomplete="new-password"
-                                        >
+                                            autocomplete="new-password">
 
                                     </div>
 
                                 </div>
 
-                                <!-- Acciones -->
+
                                 <div class="d-flex flex-wrap gap-2 mt-4">
 
                                     <button
                                         type="submit"
-                                        class="btn btn-volara"
-                                    >
-                                        <i
-                                            class="bi bi-check-lg me-1"
-                                            aria-hidden="true"
-                                        ></i>
-
+                                        class="btn btn-volara">
+                                        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>
                                         Guardar cambios
                                     </button>
 
-                                    <a
-                                        href="<?= htmlspecialchars(
-                                            $baseUrl . '/Pages/Pasajero/mis-reservas.php',
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>"
-                                        class="btn btn-volara-outline"
-                                    >
-                                        Ver mis reservas
-                                    </a>
+                                    <?php if (in_array($rolUsuario, ['usuario', 'pasajero', 'cliente'], true)): ?>
+                                        <a
+                                            href="<?= htmlspecialchars(
+                                                        $baseUrl . '/Pages/Pasajero/mis-reservas.php',
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
+                                            class="btn btn-volara-outline">
+                                            Ver mis reservas
+                                        </a>
+                                    <?php endif; ?>
 
                                 </div>
+
 
                             </form>
 

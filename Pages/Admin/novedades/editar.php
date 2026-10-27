@@ -1,179 +1,224 @@
 <?php
+/** Editar novedad de VOLARA. Ubicación: Pages/Admin/novedades/editar.php */
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 require_once __DIR__ . '/../../../Includes/functions.php';
 require_once __DIR__ . '/../../../Includes/functionsF2.php';
 
-// Control de acceso: solo administradores
-requerirRol('administrador');
+$baseUrl = rtrim(BASE_URL, '/');
+$urlListado = $baseUrl . '/Pages/Admin/novedades/index.php';
+$escapar = static function ($valor): string {
+    return htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
+};
 
-$titulo = 'Editar Novedad';
-$errores = [];
-$mensaje = '';
-
-// Datos del formulario
-$codNovedadOld = 0;
-$tituloOld = '';
-$textoOld = '';
-$fechaPubOld = '';
-$fechaExpOld = '';
-
-// Obtener datos de la novedad a editar
-if (isset($_GET['cod']) && is_numeric($_GET['cod'])) {
-    $codNovedadOld = (int)$_GET['cod'];
-    $conexion = conectarDB();
-    $sql = "SELECT titulo, texto, fechaPublicacion, fechaExpiracion FROM novedades WHERE codNovedad = :codNovedad";
-    $stmt = $conexion->prepare($sql);
-    $stmt->bindValue(':codNovedad', $codNovedadOld, PDO::PARAM_INT);
-    $stmt->execute();
-    $novedad = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($novedad) {
-        $tituloOld = $novedad['titulo'];
-        $textoOld = $novedad['texto'];
-        $fechaPubOld = $novedad['fechaPublicacion'];
-        $fechaExpOld = $novedad['fechaExpiracion'];
-    } else {
-        // Novedad no encontrada
-        header("Location: " . BASE_URL . "/Pages/Admin/novedades/index.php");
-        exit;
+/* Control de acceso */
+$datosUsuario = [];
+if (function_exists('usuarioActual')) {
+    $usuarioConsultado = usuarioActual();
+    if (is_array($usuarioConsultado)) {
+        $datosUsuario = $usuarioConsultado;
     }
-} else {
-    // ID inválido
-    header("Location: " . BASE_URL . "/Pages/Admin/novedades/index.php");
+}
+$rol = trim((string) (
+    $datosUsuario['rol'] ?? $datosUsuario['tipoUsuario'] ?? $_SESSION['tipoUsuario'] ?? ''
+));
+$rol = function_exists('mb_strtolower') ? mb_strtolower($rol, 'UTF-8') : strtolower($rol);
+$rol = strtr($rol, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u']);
+
+if (empty($_SESSION['codUsuario'])) {
+    header('Location: ' . $baseUrl . '/Auth/login.php');
+    exit;
+}
+if (!in_array($rol, ['admin', 'administrador'], true)) {
+    header('Location: ' . $baseUrl . '/Pages/Publico/index.php');
     exit;
 }
 
-// Flash message
-if (isset($_GET['mensaje'])) {
-    $mensaje = $_GET['mensaje'];
-} else {
-    $flashTipo = 'info';
+$titulo = 'Editar novedad';
+$pageDescription = 'Modificá el contenido y las fechas de una novedad de VOLARA.';
+$errores = [];
+
+$idNovedad = filter_var(
+    $_GET['cod'] ?? $_POST['codNovedad'] ?? null,
+    FILTER_VALIDATE_INT,
+    ['options' => ['min_range' => 1]]
+);
+
+if ($idNovedad === false || $idNovedad === null) {
+    header('Location: ' . $urlListado . '?mensaje=' . rawurlencode('La novedad indicada no es válida.') . '&tipo=warning');
+    exit;
+}
+$idNovedad = (int) $idNovedad;
+
+$tituloNovedad = '';
+$texto = '';
+$fechaPublicacion = '';
+$fechaExpiracion = '';
+
+$validarFecha = static function (string $fecha): bool {
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+        return false;
+    }
+    $objetoFecha = DateTime::createFromFormat('!Y-m-d', $fecha);
+    $erroresFecha = DateTime::getLastErrors();
+    return $objetoFecha !== false
+        && $objetoFecha->format('Y-m-d') === $fecha
+        && ($erroresFecha === false || ($erroresFecha['warning_count'] === 0 && $erroresFecha['error_count'] === 0));
+};
+
+try {
+    $conexion = conectarDB();
+    $stmtNovedad = $conexion->prepare(
+        'SELECT codNovedad, titulo, texto, fechaPublicacion, fechaExpiracion
+         FROM novedades WHERE codNovedad = :codNovedad'
+    );
+    $stmtNovedad->bindValue(':codNovedad', $idNovedad, PDO::PARAM_INT);
+    $stmtNovedad->execute();
+    $novedadExistente = $stmtNovedad->fetch(PDO::FETCH_ASSOC);
+
+    if (!$novedadExistente) {
+        header('Location: ' . $urlListado . '?mensaje=' . rawurlencode('La novedad no existe o fue eliminada.') . '&tipo=warning');
+        exit;
+    }
+} catch (PDOException $e) {
+    error_log('VOLARA novedades: error al buscar novedad para editar: ' . $e->getMessage());
+    http_response_code(500);
+    exit('No se pudo cargar la novedad. Intentá nuevamente más tarde.');
 }
 
-// Procesar actualización
+/* Cargar datos originales para GET y conservar datos enviados para POST. */
+$tituloNovedad = (string) $novedadExistente['titulo'];
+$texto = (string) $novedadExistente['texto'];
+$fechaPublicacion = (string) $novedadExistente['fechaPublicacion'];
+$fechaExpiracion = (string) $novedadExistente['fechaExpiracion'];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $titulo = trim($_POST['titulo'] ?? '');
-    $texto = trim($_POST['texto'] ?? '');
-    $fechaPub = trim($_POST['fechaPublicacion'] ?? '');
-    $fechaExp = trim($_POST['fechaExpiracion'] ?? '');
-
-    $errores = [];
-
-    // Validación: Título
-    if (empty($titulo)) {
-        $errores[] = 'El título es obligatorio';
-    } elseif (strlen($titulo) > 200) {
-        $errores[] = 'El título no puede tener más de 200 caracteres';
+    $token = $_POST['csrf_token'] ?? null;
+    if (!is_string($token) || !csrfValido($token)) {
+        $errores[] = 'La sesión del formulario venció. Recargá la página e intentá nuevamente.';
     }
 
-    // Validación: Texto
-    if (empty($texto)) {
-        $errores[] = 'El texto es obligatorio';
+    $tituloNovedad = trim((string) ($_POST['titulo'] ?? ''));
+    $texto = trim((string) ($_POST['texto'] ?? ''));
+    $fechaPublicacion = trim((string) ($_POST['fechaPublicacion'] ?? ''));
+    $fechaExpiracion = trim((string) ($_POST['fechaExpiracion'] ?? ''));
+
+    $longitudTitulo = function_exists('mb_strlen') ? mb_strlen($tituloNovedad, 'UTF-8') : strlen($tituloNovedad);
+    if ($longitudTitulo < 3 || $longitudTitulo > 200) {
+        $errores[] = 'El título debe tener entre 3 y 200 caracteres.';
+    }
+    if ($texto === '') {
+        $errores[] = 'El texto de la novedad es obligatorio.';
+    } elseif (strlen($texto) > 60000) {
+        $errores[] = 'El texto es demasiado largo. Reducí su extensión e intentá nuevamente.';
+    }
+    if (!$validarFecha($fechaPublicacion)) {
+        $errores[] = 'La fecha de publicación no es válida.';
+    }
+    if (!$validarFecha($fechaExpiracion)) {
+        $errores[] = 'La fecha de expiración no es válida.';
+    } elseif ($validarFecha($fechaPublicacion) && $fechaExpiracion <= $fechaPublicacion) {
+        $errores[] = 'La fecha de expiración debe ser posterior a la de publicación.';
     }
 
-    // Validación: Fechas con DateTime::createFromFormat
-    $hoy = date('Y-m-d');
+    if (!$errores) {
+        try {
+            $stmtUpdate = $conexion->prepare(
+                'UPDATE novedades
+                 SET titulo = :titulo,
+                     texto = :texto,
+                     fechaPublicacion = :fechaPublicacion,
+                     fechaExpiracion = :fechaExpiracion
+                 WHERE codNovedad = :codNovedad'
+            );
+            $stmtUpdate->execute([
+                'titulo' => $tituloNovedad,
+                'texto' => $texto,
+                'fechaPublicacion' => $fechaPublicacion,
+                'fechaExpiracion' => $fechaExpiracion,
+                'codNovedad' => $idNovedad,
+            ]);
 
-    // Fecha de publicación
-    if (!empty($fechaPub)) {
-        $datePub = DateTime::createFromFormat('Y-m-d', $fechaPub);
-        if (!$datePub || $datePub->format('Y-m-d') !== $fechaPub) {
-            $errores[] = 'Formato de fecha de publicación inválido';
-        }
-    } else {
-        $errores[] = 'La fecha de publicación es obligatoria';
-    }
-
-    // Fecha de expiración
-    if (!empty($fechaExp)) {
-        $dateExp = DateTime::createFromFormat('Y-m-d', $fechaExp);
-        if (!$dateExp || $dateExp->format('Y-m-d') !== $fechaExp) {
-            $errores[] = 'Formato de fecha de expiración inválido';
-        }
-        // Validar que expiración sea posterior a publicación
-        if (!empty($fechaPub) && $datePub && $dateExp) {
-            if ($dateExp <= $datePub) {
-                $errores[] = 'La fecha de expiración debe ser posterior a la fecha de publicación';
-            }
-        }
-    } else {
-        $errores[] = 'La fecha de expiración es obligatoria';
-    }
-
-    // Si no hay errores, actualizar
-    if (empty($errores)) {
-        $conexion = conectarDB();
-        $sqlUpdate = "UPDATE novedades SET titulo = :titulo, texto = :texto, fechaPublicacion = :fechaPub, fechaExpiracion = :fechaExp WHERE codNovedad = :codNovedad";
-        $upStmt = $conexion->prepare($sqlUpdate);
-        $result = $upStmt->execute(['titulo' => $titulo, 'texto' => $texto, 'fechaPub' => $fechaPub, 'fechaExp' => $fechaExp, 'codNovedad' => $codNovedadOld]);
-
-        if ($result) {
-            $flashMsg = 'Novedad actualizada exitosamente';
-            header("Location: " . BASE_URL . "/Pages/Admin/novedades/index.php?mensaje=" . urlencode($flashMsg) . "&tipo=success");
+            $mensajeOk = 'Novedad actualizada correctamente.';
+            header('Location: ' . $urlListado . '?mensaje=' . rawurlencode($mensajeOk) . '&tipo=success');
             exit;
+        } catch (PDOException $e) {
+            error_log('VOLARA novedades: error al actualizar: ' . $e->getMessage());
+            $errores[] = 'No se pudo actualizar la novedad. Intentá nuevamente.';
         }
-        $errores[] = 'Error al actualizar la novedad';
     }
 }
+
+require_once __DIR__ . '/../../../Includes/header.php';
+require_once __DIR__ . '/../../../Includes/navbar.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($titulo) ?> | Volara</title>
-</head>
-<body>
-<main class="py-5">
-    <div class="container">
-        <h1 class="section-title text-center mb-4">Editar Novedad</h1>
+<main id="contenido-principal" class="management-page" tabindex="-1">
+    <section class="page-header">
+        <div class="container">
+            <h1>Editar novedad</h1>
+            <p class="text-muted mb-3">Actualizá el título, el contenido y la vigencia de la novedad.</p>
+            <nav aria-label="Ruta de navegación">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= $escapar($baseUrl . '/Pages/Admin/index.php') ?>">Panel de administración</a></li>
+                    <li class="breadcrumb-item"><a href="<?= $escapar($urlListado) ?>">Novedades</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Editar</li>
+                </ol>
+            </nav>
+        </div>
+    </section>
 
-        <form method="post" action="" class="volara-card p-4 max-w-md">
-            <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
-            <input type="hidden" name="codNovedad" value="<?= $codNovedadOld ?>">
+    <section class="section">
+        <div class="container">
+            <div class="mx-auto" style="max-width: 760px;">
+                <?php if ($errores): ?>
+                    <div class="volara-alert alert-danger mb-4" role="alert">
+                        <strong>Revisá estos datos:</strong>
+                        <ul class="mb-0 mt-2">
+                            <?php foreach ($errores as $error): ?><li><?= $escapar($error) ?></li><?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
 
-            <div class="form-group mb-3">
-                <label for="titulo" class="volara-label">Título <span class="text-danger">*</span></label>
-                <input type="text" name="titulo" id="titulo" class="volara-input" maxlength="200" required
-                    value="<?= htmlspecialchars($tituloOld) ?>"
-                    autocomplete="off">
-                <small class="form-error">Título obligatorio, máximo 200 caracteres</small>
+                <form method="POST" action="<?= $escapar($baseUrl . '/Pages/Admin/novedades/editar.php?cod=' . $idNovedad) ?>" class="volara-card p-4" data-validate>
+                    <input type="hidden" name="csrf_token" value="<?= $escapar(csrfToken()) ?>">
+                    <input type="hidden" name="codNovedad" value="<?= $idNovedad ?>">
+
+                    <div class="form-group mb-3">
+                        <label for="titulo" class="volara-label">Título <span class="text-danger">*</span></label>
+                        <input type="text" id="titulo" name="titulo" class="volara-input" minlength="3" maxlength="200" required value="<?= $escapar($tituloNovedad) ?>" autocomplete="off">
+                        <small class="text-muted">Entre 3 y 200 caracteres.</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="texto" class="volara-label">Texto de la novedad <span class="text-danger">*</span></label>
+                        <textarea id="texto" name="texto" class="volara-input" rows="7" maxlength="60000" required><?= $escapar($texto) ?></textarea>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="fechaPublicacion" class="volara-label">Fecha de publicación <span class="text-danger">*</span></label>
+                            <input type="date" id="fechaPublicacion" name="fechaPublicacion" class="volara-input" value="<?= $escapar($fechaPublicacion) ?>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fechaExpiracion" class="volara-label">Fecha de expiración <span class="text-danger">*</span></label>
+                            <input type="date" id="fechaExpiracion" name="fechaExpiracion" class="volara-input" value="<?= $escapar($fechaExpiracion) ?>" required>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4">
+                        <a href="<?= $escapar($urlListado) ?>" class="btn btn-volara-outline">Cancelar</a>
+                        <button type="submit" class="btn btn-volara">
+                            <i class="bi bi-check-lg me-2" aria-hidden="true"></i>Guardar cambios
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <div class="form-group mb-3">
-                <label for="texto" class="volara-label">Texto <span class="text-danger">*</span></label>
-                <textarea name="texto" id="texto" class="volara-input" rows="3" maxlength="65535" required
-                    autocomplete="off"><?= htmlspecialchars($textoOld) ?></textarea>
-                <small class="form-error">Texto obligatorio</small>
-            </div>
-
-            <div class="row g-3 mb-3">
-                <div class="col-6">
-                    <label for="fechaPublicacion" class="volara-label">Fecha de Publicación <span class="text-danger">*</span></label>
-                    <input type="date" name="fechaPublicacion" id="fechaPublicacion" class="volara-input" required
-                        value="<?= htmlspecialchars($fechaPubOld) ?>">
-                    <small class="form-error">Formato: YYYY-MM-DD</small>
-                </div>
-                <div class="col-6">
-                    <label for="fechaExpiracion" class="volara-label">Fecha de Expiración <span class="text-danger">*</span></label>
-                    <input type="date" name="fechaExpiracion" id="fechaExpiracion" class="volara-input" required
-                        value="<?= htmlspecialchars($fechaExpOld) ?>">
-                    <small class="form-error">Debe ser posterior a la fecha de publicación</small>
-                </div>
-            </div>
-
-            <div class="text-center mt-4">
-                <button type="submit" class="btn btn-volara">
-                    <i class="bi bi-check me-2"></i> Actualizar
-                </button>
-                <a href="<?= BASE_URL ?>/Pages/Admin/novedades/index.php" class="btn btn-volara-outline ms-2">
-                    <i class="bi bi-x me-2"></i> Cancelar
-                </a>
-            </div>
-        </form>
-    </div>
+        </div>
+    </section>
 </main>
 
-
-</body>
-</html>
+<?php require_once __DIR__ . '/../../../Includes/footer.php'; ?>

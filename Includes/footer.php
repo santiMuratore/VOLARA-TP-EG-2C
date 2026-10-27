@@ -1,4 +1,3 @@
-
 <?php
 /*
  * Cargar la configuración solamente si todavía no está disponible.
@@ -68,8 +67,7 @@ $esPasajeroFooter = in_array(
                 <a
                     href="<?= htmlspecialchars($baseUrl . '/Pages/Publico/index.php', ENT_QUOTES, 'UTF-8') ?>"
                     class="text-white text-decoration-none d-inline-block mb-3"
-                    aria-label="VOLARA - Inicio"
-                >
+                    aria-label="VOLARA - Inicio">
                     <h2 class="volara-footer-brand-title mb-0" style="color: white;">
                         VOLARA
                     </h2>
@@ -165,14 +163,16 @@ $esPasajeroFooter = in_array(
 
                 <ul class="volara-footer-links">
 
-                    <?php if ($sesionActiva && $esPasajeroFooter): ?>
+                    <?php if ($sesionActiva): ?>
 
-                        <li>
-                            <a href="<?= $baseUrl ?>/Pages/Pasajero/mis-reservas.php">
-                                <i class="bi bi-ticket-perforated me-2" aria-hidden="true"></i>
-                                Mis reservas
-                            </a>
-                        </li>
+                        <?php if ($esPasajeroFooter): ?>
+                            <li>
+                                <a href="<?= $baseUrl ?>/Pages/Pasajero/mis-reservas.php">
+                                    <i class="bi bi-ticket-perforated me-2" aria-hidden="true"></i>
+                                    Mis reservas
+                                </a>
+                            </li>
+                        <?php endif; ?>
 
                         <li>
                             <a href="<?= $baseUrl ?>/Pages/Pasajero/perfil.php">
@@ -181,13 +181,13 @@ $esPasajeroFooter = in_array(
                             </a>
                         </li>
 
-                    <?php elseif ($sesionActiva): ?>
-
-                        <li>
-                            <span>
-                                Accedé a las opciones de gestión desde el menú superior.
-                            </span>
-                        </li>
+                        <?php if (!$esPasajeroFooter): ?>
+                            <li>
+                                <span>
+                                    Encontrá tus opciones de gestión en el menú superior.
+                                </span>
+                            </li>
+                        <?php endif; ?>
 
                     <?php else: ?>
 
@@ -215,6 +215,7 @@ $esPasajeroFooter = in_array(
 
                 </ul>
 
+
                 <p class="volara-footer-description mt-3 mb-0">
                     Tu próximo destino comienza acá.
                 </p>
@@ -237,4 +238,5 @@ $esPasajeroFooter = in_array(
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
+
 </html>

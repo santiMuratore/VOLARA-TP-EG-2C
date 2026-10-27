@@ -1,4 +1,3 @@
-
 <?php
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -10,7 +9,7 @@ require_once __DIR__ . '/functionsF2.php';
 
 /*
 |--------------------------------------------------------------------------
-| Configuración y URLs
+| Configuración y URLs públicas
 |--------------------------------------------------------------------------
 */
 
@@ -31,6 +30,12 @@ $urlCerrarSesion = $baseUrl . '/Auth/logout.php';
 
 $urlMisReservas  = $baseUrl . '/Pages/Pasajero/mis-reservas.php';
 $urlMiPerfil     = $baseUrl . '/Pages/Pasajero/perfil.php';
+
+/*
+|--------------------------------------------------------------------------
+| Función para escapar valores HTML
+|--------------------------------------------------------------------------
+*/
 
 $escapar = static function ($valor): string {
     return htmlspecialchars(
@@ -63,12 +68,16 @@ if ($estaLogueado && function_exists('usuarioActual')) {
 |--------------------------------------------------------------------------
 */
 
-$rolUsuario = trim((string) (
-    $usuario['rol']
-    ?? $usuario['tipoUsuario']
-    ?? $_SESSION['tipoUsuario']
-    ?? ''
-));
+$rolUsuario = trim((string) ($usuario['rol'] ?? ''));
+
+if ($rolUsuario === '') {
+    $rolUsuario = trim((string) (
+        $usuario['tipoUsuario']
+        ?? $_SESSION['tipoUsuario']
+        ?? $_SESSION['rol']
+        ?? ''
+    ));
+}
 
 $rolUsuario = function_exists('mb_strtolower')
     ? mb_strtolower($rolUsuario, 'UTF-8')
@@ -80,7 +89,7 @@ $rolNormalizado = strtr($rolUsuario, [
     'í' => 'i',
     'ó' => 'o',
     'ú' => 'u',
-    'ü' => 'u'
+    'ü' => 'u',
 ]);
 
 $esAdmin = in_array(
@@ -103,7 +112,7 @@ $esPasajero = in_array(
 
 /*
 |--------------------------------------------------------------------------
-| Nombre e iniciales
+| Nombre e iniciales del usuario
 |--------------------------------------------------------------------------
 */
 
@@ -131,9 +140,11 @@ $segundaInicial = function_exists('mb_substr')
     ? mb_substr($apellidoUsuario, 0, 1, 'UTF-8')
     : substr($apellidoUsuario, 0, 1);
 
-$iniciales = strtoupper(
-    $primeraInicial . $segundaInicial
-);
+$iniciales = $primeraInicial . $segundaInicial;
+
+$iniciales = function_exists('mb_strtoupper')
+    ? mb_strtoupper($iniciales, 'UTF-8')
+    : strtoupper($iniciales);
 
 if ($iniciales === '') {
     $iniciales = 'U';
@@ -194,46 +205,83 @@ $claseActiva = static function (bool $condicion): string {
     return $condicion ? ' active' : '';
 };
 
+/**
+ * Determina si la ruta indicada corresponde a la página actual.
+ */
+$rutaEsActual = static function (string $ruta) use ($rutaNormalizada): bool {
+    $sufijo = '/' . strtolower(
+        str_replace('\\', '/', ltrim($ruta, '/'))
+    );
+
+    return str_ends_with($rutaNormalizada, $sufijo);
+};
+
 /*
 |--------------------------------------------------------------------------
-| Comprobar páginas de gestión
+| URLs de gestión del administrador
+|--------------------------------------------------------------------------
+|
+| Rutas correspondientes a la estructura actual del proyecto.
+|
+*/
+
+$urlGestionAerolineas = $baseUrl
+    . '/Pages/Admin/aerolineas/index.php';
+
+$urlGestionNovedades = $baseUrl
+    . '/Pages/Admin/novedades/index.php';
+
+$urlPromocionesAdmin = $baseUrl
+    . '/Pages/Admin/promocionesPendientes.php';
+
+$urlAutorizacionCeo = $baseUrl
+    . '/Pages/Admin/autorizacionCeos.php';
+
+$urlReporteUsuariosAdmin = $baseUrl
+    . '/Pages/Admin/reporteUsuarios.php';
+
+$urlReporteVentasAdmin = $baseUrl
+    . '/Pages/Admin/reporteVentas.php';
+
+$urlReporteVuelosAdmin = $baseUrl
+    . '/Pages/Admin/reporteVuelos.php';
+
+/*
+|--------------------------------------------------------------------------
+| URLs de gestión del CEO
 |--------------------------------------------------------------------------
 */
 
-$tieneVuelosCeo = is_file(
-    __DIR__ . '/../Pages/CEO/vuelos.php'
-);
+$urlGestionVuelosCeo = $baseUrl
+    . '/Pages/Ceo/vuelos.php';
 
-$tieneGestionAerolineas = is_file(
-    __DIR__ . '/../Pages/Admin/aerolineas/index.php'
-);
+$urlReportesCeo = $baseUrl
+    . '/Pages/Ceo/reportes.php';
 
-$tieneGestionNovedades = is_file(
-    __DIR__ . '/../Pages/Admin/novedades/index.php'
-);
+$urlPromocionesCeo = $baseUrl
+    . '/Pages/Ceo/promociones.php';
 
 ?>
 
 <nav
     class="navbar navbar-expand-xl volara-navbar"
-    aria-label="Navegación principal"
->
+    aria-label="Navegación principal">
+
     <div class="container">
 
         <!-- Logo de VOLARA -->
         <a
             class="navbar-brand"
             href="<?= $escapar($urlInicio) ?>"
-            aria-label="VOLARA - Inicio"
-        >
+            aria-label="VOLARA - Inicio">
+
             <img
                 src="<?= $escapar(
                     $baseUrl . '/Assets/Imagenes/Volara-Sistema_de_aerolineas.png'
                 ) ?>"
                 alt="Logo de VOLARA"
                 width="54"
-                height="54"
-            >
+                height="54">
         </a>
 
         <!-- Botón responsive -->
@@ -244,15 +292,17 @@ $tieneGestionNovedades = is_file(
             data-bs-target="#volaraNav"
             aria-controls="volaraNav"
             aria-expanded="false"
-            aria-label="Abrir o cerrar el menú"
-        >
+            aria-label="Abrir o cerrar el menú">
+
             <i class="bi bi-list fs-3" aria-hidden="true"></i>
         </button>
 
-        <!-- Menú principal -->
         <div class="collapse navbar-collapse" id="volaraNav">
 
-            <!-- Navegación pública -->
+            <!-- ======================================================
+                 NAVEGACIÓN PÚBLICA
+                 ====================================================== -->
+
             <ul class="navbar-nav me-auto mb-2 mb-xl-0">
 
                 <!-- Inicio -->
@@ -264,8 +314,8 @@ $tieneGestionNovedades = is_file(
                         href="<?= $escapar($urlInicio) ?>"
                         <?= $paginaActual === 'index.php' && $esPaginaPublica
                             ? 'aria-current="page"'
-                            : '' ?>
-                    >
+                            : '' ?>>
+
                         <i class="bi bi-house-door me-1" aria-hidden="true"></i>
                         Inicio
                     </a>
@@ -280,8 +330,8 @@ $tieneGestionNovedades = is_file(
                         href="<?= $escapar($urlVuelos) ?>"
                         <?= $paginaActual === 'vuelos.php' && $esPaginaPublica
                             ? 'aria-current="page"'
-                            : '' ?>
-                    >
+                            : '' ?>>
+
                         <i class="bi bi-search me-1" aria-hidden="true"></i>
                         Buscar vuelos
                     </a>
@@ -296,8 +346,8 @@ $tieneGestionNovedades = is_file(
                         href="<?= $escapar($urlAerolineas) ?>"
                         <?= $paginaActual === 'aerolineas.php' && $esPaginaPublica
                             ? 'aria-current="page"'
-                            : '' ?>
-                    >
+                            : '' ?>>
+
                         <i class="bi bi-airplane me-1" aria-hidden="true"></i>
                         Aerolíneas
                     </a>
@@ -309,7 +359,7 @@ $tieneGestionNovedades = is_file(
                     'promociones.php',
                     'novedades.php',
                     'ayuda.php',
-                    'contacto.php'
+                    'contacto.php',
                 ];
 
                 $descubreActivo = $esPaginaPublica
@@ -317,13 +367,14 @@ $tieneGestionNovedades = is_file(
                 ?>
 
                 <li class="nav-item dropdown">
+
                     <a
                         class="nav-link dropdown-toggle<?= $claseActiva($descubreActivo) ?>"
                         href="#"
                         role="button"
                         data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                    >
+                        aria-expanded="false">
+
                         <i class="bi bi-compass me-1" aria-hidden="true"></i>
                         Descubrí
                     </a>
@@ -335,8 +386,8 @@ $tieneGestionNovedades = is_file(
                                 class="dropdown-item<?= $claseActiva(
                                     $paginaActual === 'promociones.php' && $esPaginaPublica
                                 ) ?>"
-                                href="<?= $escapar($urlPromociones) ?>"
-                            >
+                                href="<?= $escapar($urlPromociones) ?>">
+
                                 <i class="bi bi-tag me-2" aria-hidden="true"></i>
                                 Promociones
                             </a>
@@ -347,8 +398,8 @@ $tieneGestionNovedades = is_file(
                                 class="dropdown-item<?= $claseActiva(
                                     $paginaActual === 'novedades.php' && $esPaginaPublica
                                 ) ?>"
-                                href="<?= $escapar($urlNovedades) ?>"
-                            >
+                                href="<?= $escapar($urlNovedades) ?>">
+
                                 <i class="bi bi-newspaper me-2" aria-hidden="true"></i>
                                 Novedades
                             </a>
@@ -363,8 +414,8 @@ $tieneGestionNovedades = is_file(
                                 class="dropdown-item<?= $claseActiva(
                                     $paginaActual === 'ayuda.php' && $esPaginaPublica
                                 ) ?>"
-                                href="<?= $escapar($urlAyuda) ?>"
-                            >
+                                href="<?= $escapar($urlAyuda) ?>">
+
                                 <i class="bi bi-question-circle me-2" aria-hidden="true"></i>
                                 Centro de ayuda
                             </a>
@@ -375,8 +426,8 @@ $tieneGestionNovedades = is_file(
                                 class="dropdown-item<?= $claseActiva(
                                     $paginaActual === 'contacto.php' && $esPaginaPublica
                                 ) ?>"
-                                href="<?= $escapar($urlContacto) ?>"
-                            >
+                                href="<?= $escapar($urlContacto) ?>">
+
                                 <i class="bi bi-envelope me-2" aria-hidden="true"></i>
                                 Contacto
                             </a>
@@ -394,8 +445,8 @@ $tieneGestionNovedades = is_file(
                         href="<?= $escapar($urlMapa) ?>"
                         <?= $paginaActual === 'mapa-sitio.php'
                             ? 'aria-current="page"'
-                            : '' ?>
-                    >
+                            : '' ?>>
+
                         <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>
                         Mapa del sitio
                     </a>
@@ -403,84 +454,226 @@ $tieneGestionNovedades = is_file(
 
             </ul>
 
-            <!-- Cuenta y accesos según el rol -->
+            <!-- ======================================================
+                 CUENTA Y ACCESOS SEGÚN ROL
+                 ====================================================== -->
+
             <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-1">
 
                 <?php if ($estaLogueado): ?>
 
-                    <!-- Opciones del administrador -->
+                    <!-- ==================================================
+                         ADMINISTRADOR
+                         ================================================== -->
+
                     <?php if ($esAdmin): ?>
 
                         <li class="nav-item dropdown">
+
                             <a
                                 class="nav-link dropdown-toggle<?= $claseActiva($esPaginaAdmin) ?>"
                                 href="#"
                                 role="button"
                                 data-bs-toggle="dropdown"
-                                aria-expanded="false"
-                            >
+                                aria-expanded="false">
+
                                 <i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>
                                 Administración
                             </a>
 
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm">
 
-                                <?php if ($tieneGestionAerolineas): ?>
-                                    <li>
-                                        <a
-                                            class="dropdown-item"
-                                            href="<?= $escapar(
-                                                $baseUrl . '/Pages/Admin/aerolineas/index.php'
-                                            ) ?>"
-                                        >
-                                            <i class="bi bi-airplane me-2" aria-hidden="true"></i>
-                                            Gestionar aerolíneas
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
+                                <!-- Gestionar aerolíneas -->
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual(
+                                                'Pages/Admin/aerolineas/index.php'
+                                            )
+                                        ) ?>"
+                                        href="<?= $escapar($urlGestionAerolineas) ?>">
 
-                                <?php if ($tieneGestionNovedades): ?>
-                                    <li>
-                                        <a
-                                            class="dropdown-item"
-                                            href="<?= $escapar(
-                                                $baseUrl . '/Pages/Admin/novedades/index.php'
-                                            ) ?>"
-                                        >
-                                            <i class="bi bi-newspaper me-2" aria-hidden="true"></i>
-                                            Gestionar novedades
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
+                                        <i class="bi bi-airplane me-2" aria-hidden="true"></i>
+                                        Gestionar aerolíneas
+                                    </a>
+                                </li>
+
+                                <!-- Gestionar novedades -->
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual(
+                                                'Pages/Admin/novedades/index.php'
+                                            )
+                                        ) ?>"
+                                        href="<?= $escapar($urlGestionNovedades) ?>">
+
+                                        <i class="bi bi-newspaper me-2" aria-hidden="true"></i>
+                                        Gestionar novedades
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                <!-- Promociones pendientes -->
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual(
+                                                'Pages/Admin/promocionesPendientes.php'
+                                            )
+                                        ) ?>"
+                                        href="<?= $escapar($urlPromocionesAdmin) ?>">
+
+                                        <i class="bi bi-megaphone me-2" aria-hidden="true"></i>
+                                        Promociones pendientes
+                                    </a>
+                                </li>
+
+                                <!-- Autorizar CEO -->
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual(
+                                                'Pages/Admin/autorizacionCeos.php'
+                                            )
+                                        ) ?>"
+                                        href="<?= $escapar($urlAutorizacionCeo) ?>">
+
+                                        <i class="bi bi-person-check me-2" aria-hidden="true"></i>
+                                        Autorizar cuentas CEO
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                <!-- Reportes -->
+                                <li>
+                                    <h6 class="dropdown-header">Reportes</h6>
+                                </li>
+
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual(
+                                                'Pages/Admin/reporteUsuarios.php'
+                                            )
+                                        ) ?>"
+                                        href="<?= $escapar($urlReporteUsuariosAdmin) ?>">
+
+                                        <i class="bi bi-people me-2" aria-hidden="true"></i>
+                                        Reporte de usuarios
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual(
+                                                'Pages/Admin/reporteVentas.php'
+                                            )
+                                        ) ?>"
+                                        href="<?= $escapar($urlReporteVentasAdmin) ?>">
+
+                                        <i class="bi bi-cash-stack me-2" aria-hidden="true"></i>
+                                        Reporte de ventas
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual(
+                                                'Pages/Admin/reporteVuelos.php'
+                                            )
+                                        ) ?>"
+                                        href="<?= $escapar($urlReporteVuelosAdmin) ?>">
+
+                                        <i class="bi bi-bar-chart-line me-2" aria-hidden="true"></i>
+                                        Reporte de vuelos
+                                    </a>
+                                </li>
 
                             </ul>
                         </li>
 
                     <?php endif; ?>
 
-                    <!-- Opciones del CEO -->
-                    <?php if ($esCeo && $tieneVuelosCeo): ?>
 
-                        <li class="nav-item">
+                    <!-- ==================================================
+                         CEO
+                         ================================================== -->
+
+                    <?php if ($esCeo): ?>
+
+                        <li class="nav-item dropdown">
+
                             <a
-                                class="nav-link<?= $claseActiva(
-                                    $paginaActual === 'vuelos.php' && $esPaginaCeo
-                                ) ?>"
-                                href="<?= $escapar(
-                                    $baseUrl . '/Pages/CEO/vuelos.php'
-                                ) ?>"
-                                <?= $paginaActual === 'vuelos.php' && $esPaginaCeo
-                                    ? 'aria-current="page"'
-                                    : '' ?>
-                            >
-                                <i class="bi bi-airplane me-1" aria-hidden="true"></i>
-                                Gestionar vuelos
+                                class="nav-link dropdown-toggle<?= $claseActiva($esPaginaCeo) ?>"
+                                href="#"
+                                role="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+
+                                <i class="bi bi-building-gear me-1" aria-hidden="true"></i>
+                                Gestión CEO
                             </a>
+
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+
+                                <!-- Gestionar vuelos -->
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual('Pages/Ceo/vuelos.php')
+                                        ) ?>"
+                                        href="<?= $escapar($urlGestionVuelosCeo) ?>">
+
+                                        <i class="bi bi-airplane me-2" aria-hidden="true"></i>
+                                        Gestionar vuelos
+                                    </a>
+                                </li>
+
+                                <!-- Reportes CEO -->
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual('Pages/Ceo/reportes.php')
+                                        ) ?>"
+                                        href="<?= $escapar($urlReportesCeo) ?>">
+
+                                        <i class="bi bi-bar-chart-line me-2" aria-hidden="true"></i>
+                                        Reportes
+                                    </a>
+                                </li>
+
+                                <!-- Gestionar promociones -->
+                                <li>
+                                    <a
+                                        class="dropdown-item<?= $claseActiva(
+                                            $rutaEsActual('Pages/Ceo/promociones.php')
+                                        ) ?>"
+                                        href="<?= $escapar($urlPromocionesCeo) ?>">
+
+                                        <i class="bi bi-megaphone me-2" aria-hidden="true"></i>
+                                        Gestionar promociones
+                                    </a>
+                                </li>
+
+                            </ul>
                         </li>
 
                     <?php endif; ?>
 
-                    <!-- Menú de usuario para cualquier rol -->
+
+                    <!-- ==================================================
+                         MENÚ DE CUENTA: TODOS LOS USUARIOS REGISTRADOS
+                         ================================================== -->
+
                     <li class="nav-item dropdown user-menu">
 
                         <a
@@ -488,8 +681,8 @@ $tieneGestionNovedades = is_file(
                             href="#"
                             role="button"
                             data-bs-toggle="dropdown"
-                            aria-expanded="false"
-                        >
+                            aria-expanded="false">
+
                             <span class="user-avatar" aria-hidden="true">
                                 <?= $escapar($iniciales) ?>
                             </span>
@@ -505,45 +698,47 @@ $tieneGestionNovedades = is_file(
 
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
 
-                            <!-- Enlaces exclusivos del pasajero -->
+                            <!-- Mis reservas: solo pasajero -->
                             <?php if ($esPasajero): ?>
 
                                 <li>
                                     <a
                                         class="dropdown-item<?= $claseActiva(
-                                            $paginaActual === 'mis-reservas.php' && $esPaginaPasajero
+                                            $paginaActual === 'mis-reservas.php'
+                                            && $esPaginaPasajero
                                         ) ?>"
-                                        href="<?= $escapar($urlMisReservas) ?>"
-                                    >
+                                        href="<?= $escapar($urlMisReservas) ?>">
+
                                         <i class="bi bi-ticket-perforated me-2" aria-hidden="true"></i>
                                         Mis reservas
                                     </a>
                                 </li>
 
-                                <li>
-                                    <a
-                                        class="dropdown-item<?= $claseActiva(
-                                            $paginaActual === 'perfil.php' && $esPaginaPasajero
-                                        ) ?>"
-                                        href="<?= $escapar($urlMiPerfil) ?>"
-                                    >
-                                        <i class="bi bi-person-circle me-2" aria-hidden="true"></i>
-                                        Mi perfil
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-
                             <?php endif; ?>
 
-                            <!-- Mapa del sitio para cualquier rol -->
+                            <!-- Mi perfil -->
+                            <li>
+                                <a
+                                    class="dropdown-item<?= $claseActiva(
+                                        $paginaActual === 'perfil.php'
+                                    ) ?>"
+                                    href="<?= $escapar($urlMiPerfil) ?>">
+
+                                    <i class="bi bi-person-circle me-2" aria-hidden="true"></i>
+                                    Mi perfil
+                                </a>
+                            </li>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+
+                            <!-- Mapa del sitio -->
                             <li>
                                 <a
                                     class="dropdown-item"
-                                    href="<?= $escapar($urlMapa) ?>"
-                                >
+                                    href="<?= $escapar($urlMapa) ?>">
+
                                     <i class="bi bi-diagram-3 me-2" aria-hidden="true"></i>
                                     Mapa del sitio
                                 </a>
@@ -553,26 +748,24 @@ $tieneGestionNovedades = is_file(
                                 <hr class="dropdown-divider">
                             </li>
 
-                            <!-- Cerrar sesión para admin, CEO y pasajero -->
+                            <!-- Cerrar sesión -->
                             <li>
                                 <form
                                     method="POST"
-                                    action="<?= $escapar($urlCerrarSesion) ?>"
-                                >
+                                    action="<?= $escapar($urlCerrarSesion) ?>">
+
                                     <input
                                         type="hidden"
                                         name="csrf_token"
-                                        value="<?= $escapar($csrfCerrarSesion) ?>"
-                                    >
+                                        value="<?= $escapar($csrfCerrarSesion) ?>">
 
                                     <button
                                         type="submit"
-                                        class="dropdown-item text-danger"
-                                    >
+                                        class="dropdown-item text-danger">
+
                                         <i
                                             class="bi bi-box-arrow-right me-2"
-                                            aria-hidden="true"
-                                        ></i>
+                                            aria-hidden="true"></i>
                                         Cerrar sesión
                                     </button>
                                 </form>
@@ -583,28 +776,34 @@ $tieneGestionNovedades = is_file(
 
                 <?php else: ?>
 
-                    <!-- Visitantes: iniciar sesión -->
+                    <!-- ==================================================
+                         VISITANTES
+                         ================================================== -->
+
                     <li class="nav-item">
                         <a
                             class="nav-link<?= $claseActiva(
-                                str_contains($rutaNormalizada, '/auth/login.php')
+                                str_contains(
+                                    $rutaNormalizada,
+                                    '/auth/login.php'
+                                )
                             ) ?>"
                             href="<?= $escapar($urlLogin) ?>"
-                            <?= str_contains($rutaNormalizada, '/auth/login.php')
-                                ? 'aria-current="page"'
-                                : '' ?>
-                        >
+                            <?= str_contains(
+                                $rutaNormalizada,
+                                '/auth/login.php'
+                            ) ? 'aria-current="page"' : '' ?>>
+
                             <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>
                             Iniciar sesión
                         </a>
                     </li>
 
-                    <!-- Visitantes: registrarse -->
                     <li class="nav-item ms-xl-2">
                         <a
                             class="btn btn-volara btn-volara-sm"
-                            href="<?= $escapar($urlRegistro) ?>"
-                        >
+                            href="<?= $escapar($urlRegistro) ?>">
+
                             Registrarse
                         </a>
                     </li>
