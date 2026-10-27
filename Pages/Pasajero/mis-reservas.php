@@ -690,13 +690,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                     <nav class="volara-pagination-container" aria-label="Páginas de reservas">
                         <div class="volara-pagination">
                             <ul class="pagination">
-                                <li class="page-item <?= $pagina <= 1 ? 'disabled' : '' ?>">
-                                    <?php if ($pagina > 1): ?>
-                                        <a class="page-link" href="<?= htmlspecialchars($urlPagina($pagina - 1, $estadoFiltro), ENT_QUOTES, 'UTF-8') ?>" aria-label="Página anterior">Anterior</a>
-                                    <?php else: ?>
-                                        <span class="page-link">Anterior</span>
-                                    <?php endif; ?>
-                                </li>
+                               
                                 <?php for ($n = 1; $n <= $totalPaginas; $n++): ?>
                                     <li class="page-item <?= $n === $pagina ? 'active' : '' ?>">
                                         <?php if ($n === $pagina): ?>
@@ -706,18 +700,9 @@ require __DIR__ . '/../../Includes/navbar.php';
                                         <?php endif; ?>
                                     </li>
                                 <?php endfor; ?>
-                                <li class="page-item <?= $pagina >= $totalPaginas ? 'disabled' : '' ?>">
-                                    <?php if ($pagina < $totalPaginas): ?>
-                                        <a class="page-link" href="<?= htmlspecialchars($urlPagina($pagina + 1, $estadoFiltro), ENT_QUOTES, 'UTF-8') ?>" aria-label="Página siguiente">Siguiente</a>
-                                    <?php else: ?>
-                                        <span class="page-link">Siguiente</span>
-                                    <?php endif; ?>
-                                </li>
+    
                             </ul>
-                            <p class="volara-pagination-info">
-                                Página <?= $pagina ?> de <?= $totalPaginas ?>.
                             
-                            </p>
                         </div>
                     </nav>
                 <?php endif; ?>

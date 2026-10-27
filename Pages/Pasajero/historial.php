@@ -487,13 +487,7 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                 <nav class="volara-history-pagination-container" aria-label="Paginación del historial">
                     <div class="volara-history-pagination">
                         <ul class="pagination justify-content-center flex-wrap">
-                            <li class="page-item <?= $paginaHistorial <= 1 ? 'disabled' : '' ?>">
-                                <?php if ($paginaHistorial > 1): ?>
-                                    <a class="page-link" href="<?= htmlspecialchars($urlPagina($paginaHistorial - 1), ENT_QUOTES, 'UTF-8') ?>" aria-label="Página anterior">Anterior</a>
-                                <?php else: ?>
-                                    <span class="page-link">Anterior</span>
-                                <?php endif; ?>
-                            </li>
+                            
 
                             <?php for ($numeroPagina = 1; $numeroPagina <= $totalPaginas; $numeroPagina++): ?>
                                 <li class="page-item <?= $numeroPagina === $paginaHistorial ? 'active' : '' ?>">
@@ -505,21 +499,9 @@ require_once __DIR__ . '/../../Includes/navbar.php';
                                 </li>
                             <?php endfor; ?>
 
-                            <li class="page-item <?= $paginaHistorial >= $totalPaginas ? 'disabled' : '' ?>">
-                                <?php if ($paginaHistorial < $totalPaginas): ?>
-                                    <a class="page-link" href="<?= htmlspecialchars($urlPagina($paginaHistorial + 1), ENT_QUOTES, 'UTF-8') ?>" aria-label="Página siguiente">Siguiente</a>
-                                <?php else: ?>
-                                    <span class="page-link">Siguiente</span>
-                                <?php endif; ?>
-                            </li>
                         </ul>
                     </div>
-                    <p class="volara-history-pagination-info">
-                        Página <?= $paginaHistorial ?> de <?= $totalPaginas ?>.
-                        Mostrando <?= $totalHistorial > 0 ? $offset + 1 : 0 ?> a
-                        <?= min($offset + count($historial), $totalHistorial) ?>
-                        de <?= $totalHistorial ?> reservas.
-                    </p>
+                    
                 </nav>
             <?php endif; ?>
 
