@@ -69,10 +69,10 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 <h3 class="h6 mb-1">Correo electrónico</h3>
 
                                 <a
-                                    href="mailto:volara.aerolinea@gmail.com"
+                                    href="mailto:volaraairline@gmail.com"
                                     class="text-break"
                                 >
-                                    volara.aerolinea@gmail.com
+                                    volaraairline@gmail.com
                                 </a>
 
                                 <p class="text-muted small mt-1 mb-0">

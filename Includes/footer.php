@@ -79,9 +79,9 @@ $esPasajeroFooter = in_array(
                 </p>
 
                 <p class="mb-2">
-                    <a href="mailto:volara.aerolinea@gmail.com">
+                    <a href="mailto:volaraairline@gmail.com">
                         <i class="bi bi-envelope me-2" aria-hidden="true"></i>
-                        volara.aerolinea@gmail.com
+                        volaraairline@gmail.com
                     </a>
                 </p>
 
