@@ -184,25 +184,34 @@ SET @vueloSUR204 = (
 -- Una aprobada, una pendiente y una denegada
 -- ============================================================
 
-INSERT INTO promociones
-    (codAerolinea, descripcion, descuento, estado)
+INSERT INTO promociones 
+    (codAerolinea, descripcion, descuento, destino, fechaDesde, fechaHasta, estado)
 VALUES
-    (
+        (
         @aerolineaVolara,
-        '15% de descuento en vuelos seleccionados',
+        '15% de descuento en todos los vuelos de Volara',
         15.00,
+        NULL,
+        CURDATE(),
+        DATE_ADD(CURDATE(), INTERVAL 90 DAY),
         'aprobada'
     ),
     (
         @aerolineaVolara,
-        '10% de descuento para temporada de verano',
+        '10% de descuento en vuelos a Mendoza en verano',
         10.00,
+        'Mendoza',
+        '2026-12-21',
+        '2027-03-20',
         'pendiente'
     ),
     (
         @aerolineaSur,
         '20% de descuento promocional',
         20.00,
+        'Córdoba',
+        NULL,
+        NULL,
         'denegada'
     );
 

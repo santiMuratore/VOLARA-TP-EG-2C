@@ -1701,43 +1701,7 @@ p:last-child {
     margin-top: 2rem;
 }
 
-.volara-pagination a,
-.table-action-btn,
-.volara-pagination span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    height: 40px;
-    padding: 0 0.65rem;
-    border: 1px solid var(--volara-border);
-    border-radius: var(--radius-sm);
-    color: var(--volara-dark);
-    font-size: 0.875rem;
-    font-weight: 700;
-    transition: all var(--transition);
-    text-decoration: none;
-}
-
-.volara-pagination a:hover {
-    border-color: var(--volara-red);
-    background: var(--volara-red-light);
-    color: var(--volara-red);
-}
-
-.volara-pagination .active {
-    border-color: var(--volara-red);
-    background: var(--volara-red);
-    color: var(--volara-white);
-}
-
-.volara-pagination .active {
-    border-color: var(--volara-red);
-    background: var(--volara-red);
-    color: var(--volara-white);
-}
-
-.volara-pagination span:not(.active) { opacity: 0.45; }
+.table-action-btn { text-decoration: none; }
 
 /* --- Dashboard -------------------------------- */
 .dashboard-grid {

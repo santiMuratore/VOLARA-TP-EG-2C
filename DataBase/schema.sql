@@ -167,6 +167,10 @@ CREATE TABLE promociones (
 
     descuento DECIMAL(5,2) NOT NULL,
 
+    destino VARCHAR(100) DEFAULT NULL,
+    fechaDesde DATE DEFAULT NULL,
+    fechaHasta DATE DEFAULT NULL,
+
     estado ENUM(
         'pendiente',
         'aprobada',
@@ -189,7 +193,14 @@ CREATE TABLE promociones (
         ON DELETE RESTRICT,
 
     CONSTRAINT chk_promocion_descuento
-        CHECK (descuento >= 1 AND descuento <= 100)
+        CHECK (descuento >= 1 AND descuento <= 100),
+
+    CONSTRAINT chk_promocion_fechas
+        CHECK (
+            fechaDesde IS NULL
+            OR fechaHasta IS NULL
+            OR fechaDesde <= fechaHasta
+        )
 
 ) ENGINE=InnoDB;
 
