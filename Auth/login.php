@@ -58,7 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['tipoUsuario'] = $usuario['tipoUsuario'];
         $_SESSION['codAerolinea'] = $usuario['codAerolinea'];
 
-        echo 'Login correcto';
+        header(
+            'Location: '
+            . BASE_URL
+            . '/Pages/Publico/index.php'
+        );
+
+        exit;
     }
 }
 ?>
