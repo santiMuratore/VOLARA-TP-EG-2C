@@ -9,9 +9,25 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // URL base del proyecto.
+// URL base del proyecto.
 if (!defined('BASE_URL')) {
-    $directorioProyecto = '/VOLARA-TP-EG-2C';
-    define('BASE_URL', $directorioProyecto);
+
+    $raizProyecto = realpath(dirname(__DIR__));
+    $raizServidor = realpath($_SERVER['DOCUMENT_ROOT']);
+
+    $raizProyecto = str_replace('\\', '/', $raizProyecto);
+    $raizServidor = str_replace('\\', '/', $raizServidor);
+
+    $directorioProyecto = str_replace(
+        $raizServidor,
+        '',
+        $raizProyecto
+    );
+
+    define(
+        'BASE_URL',
+        '/' . ltrim($directorioProyecto, '/')
+    );
 }
 
 /**

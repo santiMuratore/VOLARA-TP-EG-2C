@@ -1,8 +1,10 @@
 <?php
 
 require_once __DIR__ . '/../Includes/functions.php';
+require_once __DIR__ . '/../Includes/functionsF2.php';
 
 $error = '';
+$mail = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -61,38 +63,171 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+<?php
 
-<form method="post">
+$titulo = 'Iniciar sesión';
 
-    <label for="mail">Email</label>
-    <input
-        type="email"
-        id="mail"
-        name="mail"
-        value="<?= htmlspecialchars($mail) ?>"
-        required
-    >
+require_once __DIR__ . '/../Includes/header.php';
+require_once __DIR__ . '/../Includes/navbar.php';
 
-    <br>
+?>
+<main class="section section-gray">
 
-    <label for="clave">Contraseña</label>
-    <input
-        type="password"
-        id="clave"
-        name="clave"
-        required
-    >
+    <div class="container">
 
-    <br>
+        <div class="row justify-content-center">
 
-    <button type="submit">
-        Iniciar sesión
-    </button>
+            <div class="col-md-8 col-lg-5">
 
-</form>
+                <div class="volara-card">
 
-<?php if ($error !== ''): ?>
+                    
+                    <div class="text-center mb-4">
 
-    <p><?= htmlspecialchars($error) ?></p>
+                        <span class="eyebrow">
+                            Bienvenido
+                        </span>
 
-<?php endif; ?>
+                        <h1 class="section-title mt-2 mb-2">
+                            Iniciar sesión
+                        </h1>
+
+                        <p class="text-secondary mb-0">
+                            Ingresá a tu cuenta de Volara.
+                        </p>
+
+                    </div>
+
+
+                    
+                    <?php if ($error !== ''): ?>
+
+                        <div class="volara-alert alert-danger">
+
+                            <i
+                                class="bi bi-exclamation-circle-fill"
+                                aria-hidden="true"
+                            ></i>
+
+                            <span>
+                                <?= htmlspecialchars(
+                                    $error,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+
+                        </div>
+
+                    <?php endif; ?>
+
+
+                    <form method="post">
+
+                        
+                        <div class="form-group">
+
+                            <label
+                                for="mail"
+                                class="volara-label"
+                            >
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="mail"
+                                name="mail"
+                                class="volara-input"
+                                value="<?= htmlspecialchars(
+                                    $mail,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>"
+                                placeholder="nombre@correo.com"
+                                required
+                            >
+
+                        </div>
+
+
+                        
+                        <div class="form-group">
+
+                            <label
+                                for="clave"
+                                class="volara-label"
+                            >
+                                Contraseña
+                            </label>
+
+                            <input
+                                type="password"
+                                id="clave"
+                                name="clave"
+                                class="volara-input"
+                                placeholder="Ingresá tu contraseña"
+                                required
+                            >
+
+                        </div>
+
+
+                        
+                        <div class="text-end mb-4">
+
+                            <a
+                                href="<?= BASE_URL ?>/Auth/recuperarClave.php"
+                                class="fw-semibold"
+                            >
+                                ¿Olvidaste tu contraseña?
+                            </a>
+
+                        </div>
+
+
+                        
+                        <button
+                            type="submit"
+                            class="btn-volara btn-volara-lg w-100"
+                        >
+
+                            <i
+                                class="bi bi-box-arrow-in-right"
+                                aria-hidden="true"
+                            ></i>
+
+                            Iniciar sesión
+
+                        </button>
+
+
+                        
+                        <p class="text-center text-secondary mt-4 mb-0">
+
+                            ¿Todavía no tenés una cuenta?
+
+                            <a
+                                href="<?= BASE_URL ?>/Auth/registro.php"
+                                class="fw-semibold"
+                            >
+                                Registrate
+                            </a>
+
+                        </p>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+<?php
+require_once __DIR__ . '/../Includes/footer.php';
+?>
