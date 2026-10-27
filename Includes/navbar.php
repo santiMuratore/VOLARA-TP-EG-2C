@@ -232,19 +232,19 @@ $urlGestionNovedades = $baseUrl
     . '/Pages/Admin/novedades/index.php';
 
 $urlPromocionesAdmin = $baseUrl
-    . '/Pages/Admin/promocionesPendientes.php';
+    . '/Pages/Admin/promociones/promocionesPendientes.php';
 
 $urlAutorizacionCeo = $baseUrl
     . '/Pages/Admin/autorizacionCeos.php';
 
 $urlReporteUsuariosAdmin = $baseUrl
-    . '/Pages/Admin/reporteUsuarios.php';
+    . '/Pages/Admin/reportes/reporteUsuarios.php';
 
 $urlReporteVentasAdmin = $baseUrl
-    . '/Pages/Admin/reporteVentas.php';
+    . '/Pages/Admin/reportes/reporteVentas.php';
 
 $urlReporteVuelosAdmin = $baseUrl
-    . '/Pages/Admin/reporteVuelos.php';
+    . '/Pages/Admin/reportes/reporteVuelos.php';
 
 /*
 |--------------------------------------------------------------------------
@@ -259,7 +259,7 @@ $urlReportesCeo = $baseUrl
     . '/Pages/Ceo/reportes.php';
 
 $urlPromocionesCeo = $baseUrl
-    . '/Pages/Ceo/promociones.php';
+    . '/Pages/Ceo/promociones/promociones.php';
 
 ?>
 
