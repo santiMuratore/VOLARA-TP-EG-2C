@@ -1,12 +1,13 @@
 <?php
 require_once __DIR__ . '/../../../Includes/functions.php';
+require_once __DIR__ . '/../../../Includes/funcionPromociones.php';
 requerirRol('ceo aerolínea');
 
 $codPromocion = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
 $conexion = conectarDB();
 $consulta = $conexion->prepare(
-    "SELECT codPromocion, descripcion, descuento, estado
+    "SELECT codPromocion, descripcion, descuento, destino, fechaDesde, fechaHasta, estado
      FROM promociones
      WHERE codPromocion = :codPromocion
        AND codAerolinea = :codAerolinea"
@@ -47,19 +48,30 @@ require_once __DIR__ . '/../../../Includes/header.php';
 require_once __DIR__ . '/../../../Includes/navbar.php';
 ?>
 
-<main class="container my-4">
+<main id="contenido-principal" class="container my-4">
     <div class="row justify-content-center">
-        <div class="col-lg-6">
+        <div class="col-lg-7">
             <h1>Eliminar promoción</h1>
             <p>¿Seguro que querés eliminar esta promoción? No se puede deshacer.</p>
 
+            <?php if ($promocion['estado'] === 'aprobada'): ?>
+                <div class="volara-alert alert-warning" role="status">
+                    Esta promoción está aprobada. Si la eliminás, tu aerolínea se queda sin promoción
+                    vigente. Las reservas que ya la usaron conservan el precio que pagaron.
+                </div>
+            <?php endif; ?>
+
             <div class="volara-card-flat mb-4">
                 <p class="mb-2"><strong><?= htmlspecialchars($promocion['descripcion']) ?></strong></p>
-                <p class="mb-0">
-                    <?= htmlspecialchars($promocion['descuento']) ?>%
+                <p class="mb-1">
+                    <?= htmlspecialchars($promocion['descuento']) ?>% de descuento
                     <span class="volara-badge <?= $clasesEstado[$promocion['estado']] ?? 'badge-neutral' ?> ms-2">
                         <?= htmlspecialchars($promocion['estado']) ?>
                     </span>
+                </p>
+                <p class="mb-1 text-muted">Destino: <?= htmlspecialchars($promocion['destino'] ?? 'Todos') ?></p>
+                <p class="mb-0 text-muted">
+                    Vigencia: <?= htmlspecialchars(textoVigencia($promocion['fechaDesde'], $promocion['fechaHasta'])) ?>
                 </p>
             </div>
 

@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../../../Includes/functions.php';
+require_once __DIR__ . '/../../../Includes/funcionPromociones.php';
 requerirRol('administrador');
 
 $conexion = conectarDB();
 
 $error = '';
+$hoy = date('Y-m-d');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $codPromocion = (int) ($_POST['codPromocion'] ?? 0);
@@ -20,37 +22,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($accion === 'aprobar') {
                 $consulta = $conexion->prepare(
-                    "SELECT codAerolinea FROM promociones
-                    WHERE codPromocion = :codPromocion AND estado = 'pendiente'"
+                    "SELECT codAerolinea, fechaHasta FROM promociones
+                     WHERE codPromocion = :codPromocion AND estado = 'pendiente'"
                 );
                 $consulta->execute(['codPromocion' => $codPromocion]);
-                $codAerolinea = $consulta->fetchColumn();
+                $datos = $consulta->fetch(PDO::FETCH_ASSOC);
 
-                if ($codAerolinea !== false) {
-                    $consulta = $conexion->prepare(
-                        "UPDATE promociones SET estado = 'pendiente'
-                        WHERE codAerolinea = :codAerolinea AND estado = 'aprobada'"
-                    );
-                    $consulta->execute(['codAerolinea' => $codAerolinea]);
+                if ($datos !== false) {
+                    if ($datos['fechaHasta'] !== null && $datos['fechaHasta'] < $hoy) {
+                        $conexion->rollBack();
+                        $error = 'No se puede aprobar una promoción vencida. Podés denegarla.';
+                    } else {
+                        // La vigente actual (si hay) vuelve a pendiente
+                        $consulta = $conexion->prepare(
+                            "UPDATE promociones SET estado = 'pendiente'
+                             WHERE codAerolinea = :codAerolinea AND estado = 'aprobada'"
+                        );
+                        $consulta->execute(['codAerolinea' => $datos['codAerolinea']]);
+                    }
                 }
             }
 
-            $consulta = $conexion->prepare(
-                "UPDATE promociones SET estado = :estado
-                WHERE codPromocion = :codPromocion AND estado = 'pendiente'"
-            );
-            $consulta->execute([
-                'estado'       => $nuevoEstado,
-                'codPromocion' => $codPromocion,
-            ]);
+            if ($error === '') {
+                $consulta = $conexion->prepare(
+                    "UPDATE promociones SET estado = :estado
+                     WHERE codPromocion = :codPromocion AND estado = 'pendiente'"
+                );
+                $consulta->execute([
+                    'estado'       => $nuevoEstado,
+                    'codPromocion' => $codPromocion,
+                ]);
 
-            if ($consulta->rowCount() === 0) {
-                $conexion->rollBack();
-                $error = 'Esa promoción ya no está pendiente.';
-            } else {
-                $conexion->commit();
-                header('Location: promocionesPendientes.php?pagina=' . $paginaVuelta);
-                exit;
+                if ($consulta->rowCount() === 0) {
+                    $conexion->rollBack();
+                    $error = 'Esa promoción ya no está pendiente.';
+                } else {
+                    $conexion->commit();
+                    header('Location: promocionesPendientes.php?pagina=' . $paginaVuelta);
+                    exit;
+                }
             }
         } catch (PDOException $e) {
             if ($conexion->inTransaction()) {
@@ -76,7 +86,8 @@ $pagina = max(1, min($pagina, $totalPaginas));
 $offset = ($pagina - 1) * $porPagina;
 
 $consulta = $conexion->prepare(
-    "SELECT p.codPromocion, p.descripcion, p.descuento, a.nombre AS aerolinea
+    "SELECT p.codPromocion, p.descripcion, p.descuento, p.destino,
+            p.fechaDesde, p.fechaHasta, a.nombre AS aerolinea
      FROM promociones p
      INNER JOIN aerolineas a ON a.codAerolinea = p.codAerolinea
      WHERE p.estado = 'pendiente'
@@ -93,8 +104,11 @@ require_once __DIR__ . '/../../../Includes/header.php';
 require_once __DIR__ . '/../../../Includes/navbar.php';
 ?>
 
-<main class="container my-4">
+<main id="contenido-principal" class="container my-4">
     <h1>Promociones pendientes</h1>
+    <p class="text-muted">
+        Al aprobar una promoción, la que esté vigente de esa aerolínea vuelve a quedar pendiente.
+    </p>
 
     <?php if ($error !== ''): ?>
         <div class="volara-alert alert-danger" role="alert"><?= htmlspecialchars($error) ?></div>
@@ -113,23 +127,35 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
                         <th scope="col">Aerolínea</th>
                         <th scope="col">Descripción</th>
                         <th scope="col">Descuento</th>
+                        <th scope="col">Destino</th>
+                        <th scope="col">Vigencia</th>
                         <th scope="col">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($pendientes as $promocion): ?>
+                        <?php $vencida = $promocion['fechaHasta'] !== null && $promocion['fechaHasta'] < $hoy; ?>
                         <tr>
                             <td><?= htmlspecialchars($promocion['aerolinea']) ?></td>
                             <td><?= htmlspecialchars($promocion['descripcion']) ?></td>
                             <td><?= htmlspecialchars($promocion['descuento']) ?>%</td>
+                            <td><?= htmlspecialchars($promocion['destino'] ?? 'Todos') ?></td>
+                            <td>
+                                <?= htmlspecialchars(textoVigencia($promocion['fechaDesde'], $promocion['fechaHasta'])) ?>
+                                <?php if ($vencida): ?>
+                                    <span class="volara-badge badge-cancelled ms-1">Vencida</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <form method="post" class="table-actions">
                                     <input type="hidden" name="codPromocion" value="<?= (int) $promocion['codPromocion'] ?>">
                                     <input type="hidden" name="pagina" value="<?= $pagina ?>">
-                                    <button type="submit" name="accion" value="aprobar"
-                                            class="table-action-btn" aria-label="Aprobar promoción" title="Aprobar">
-                                        <i class="bi bi-check-lg" aria-hidden="true"></i>
-                                    </button>
+                                    <?php if (!$vencida): ?>
+                                        <button type="submit" name="accion" value="aprobar"
+                                                class="table-action-btn" aria-label="Aprobar promoción" title="Aprobar">
+                                            <i class="bi bi-check-lg" aria-hidden="true"></i>
+                                        </button>
+                                    <?php endif; ?>
                                     <button type="submit" name="accion" value="denegar"
                                             class="table-action-btn danger" aria-label="Denegar promoción" title="Denegar">
                                         <i class="bi bi-x-lg" aria-hidden="true"></i>
@@ -142,29 +168,26 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
             </table>
         </div>
 
-        <nav aria-label="Paginación de promociones pendientes">
-            <div class="volara-pagination">
-                <?php if ($pagina > 1): ?>
-                    <a href="?pagina=<?= $pagina - 1 ?>">Anterior</a>
-                <?php else: ?>
-                    <span aria-disabled="true">Anterior</span>
-                <?php endif; ?>
-
-                <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                    <?php if ($i === $pagina): ?>
-                        <span class="active" aria-current="page"><?= $i ?></span>
-                    <?php else: ?>
-                        <a href="?pagina=<?= $i ?>"><?= $i ?></a>
-                    <?php endif; ?>
-                <?php endfor; ?>
-
-                <?php if ($pagina < $totalPaginas): ?>
-                    <a href="?pagina=<?= $pagina + 1 ?>">Siguiente</a>
-                <?php else: ?>
-                    <span aria-disabled="true">Siguiente</span>
-                <?php endif; ?>
-            </div>
-        </nav>
+        <div class="volara-pagination-container">
+            <nav class="volara-pagination" aria-label="Paginación de promociones pendientes">
+                <ul class="pagination">
+                    <li class="page-item <?= $pagina <= 1 ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?pagina=<?= max(1, $pagina - 1) ?>"
+                           <?= $pagina <= 1 ? 'aria-disabled="true" tabindex="-1"' : '' ?>>Anterior</a>
+                    </li>
+                    <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                        <li class="page-item <?= $i === $pagina ? 'active' : '' ?>"
+                            <?= $i === $pagina ? 'aria-current="page"' : '' ?>>
+                            <a class="page-link" href="?pagina=<?= $i ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    <li class="page-item <?= $pagina >= $totalPaginas ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?pagina=<?= min($totalPaginas, $pagina + 1) ?>"
+                           <?= $pagina >= $totalPaginas ? 'aria-disabled="true" tabindex="-1"' : '' ?>>Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
     <?php endif; ?>
 </main>
 
