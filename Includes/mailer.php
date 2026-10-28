@@ -32,6 +32,9 @@ function enviarMail(
         $mail->Username = SMTP_USER;
         $mail->Password = SMTP_PASS;
 
+        $mail->SMTPSecure =
+            PHPMailer::ENCRYPTION_STARTTLS;
+
         $mail->Port = SMTP_PORT;
 
         $mail->CharSet = 'UTF-8';
@@ -58,7 +61,8 @@ function enviarMail(
         $mail->isHTML(true);
 
         $mail->Subject = $asunto;
-        $mail->Body = $cuerpo;
+        $mail->AltBody =
+            strip_tags($cuerpo);
 
         $mail->send();
 

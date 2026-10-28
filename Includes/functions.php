@@ -50,8 +50,17 @@ function conectarDB(): PDO
         return $conexion;
 
     } catch (PDOException $e) {
-        header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
-        exit;
+
+        error_log(
+            'VOLARA - Error de conexión DB: '
+            . $e->getMessage()
+        );
+
+        http_response_code(500);
+
+        exit(
+            'No se pudo conectar con la base de datos.'
+        );
     }
 }
 
@@ -74,7 +83,13 @@ function requerirRol(string $rol): void
     requerirLogin();
 
     if ($_SESSION['tipoUsuario'] !== $rol) {
-        header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
+
+        header(
+            'Location: '
+            . rtrim(BASE_URL, '/')
+            . '/Pages/Publico/index.php'
+        );
+
         exit;
     }
 }
@@ -108,8 +123,15 @@ function usuarioActual(): array
     $usuario = $consulta->fetch(PDO::FETCH_ASSOC);
 
     if (!$usuario) {
+
         session_destroy();
-        header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
+
+        header(
+            'Location: '
+            . rtrim(BASE_URL, '/')
+            . '/Pages/Publico/index.php'
+        );
+
         exit;
     }
 

@@ -2,3 +2,5 @@ division-trabajo-entornos-graficos.md
 Pages/pruebas.php
 /config/config.local.php
 Pages/pruebasMail.php
+DataBase/seed.sql
+DataBase/seed_hosting.sql
