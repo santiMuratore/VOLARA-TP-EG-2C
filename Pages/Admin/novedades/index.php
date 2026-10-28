@@ -33,7 +33,12 @@ $rol = function_exists('mb_strtolower')
     ? mb_strtolower($rol, 'UTF-8')
     : strtolower($rol);
 $rol = strtr($rol, [
-    'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u'
+    'á' => 'a',
+    'é' => 'e',
+    'í' => 'i',
+    'ó' => 'o',
+    'ú' => 'u',
+    'ü' => 'u'
 ]);
 
 if (empty($_SESSION['codUsuario'])) {
@@ -235,15 +240,13 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
                                                 class="table-action-btn"
                                                 href="<?= $escapar($baseUrl . '/Pages/Admin/novedades/editar.php?cod=' . (int) $novedad['codNovedad']) ?>"
                                                 aria-label="Editar <?= $escapar($novedad['titulo'] ?? '') ?>"
-                                                title="Editar"
-                                            >
+                                                title="Editar">
                                                 <i class="bi bi-pencil" aria-hidden="true"></i>
                                             </a>
                                             <form
                                                 method="POST"
                                                 action="<?= $escapar($urlListado) ?>"
-                                                onsubmit="return confirm('¿Seguro que querés eliminar esta novedad? Esta acción no se puede deshacer.');"
-                                            >
+                                                onsubmit="return confirm('¿Seguro que querés eliminar esta novedad? Esta acción no se puede deshacer.');">
                                                 <input type="hidden" name="csrf_token" value="<?= $escapar(csrfToken()) ?>">
                                                 <input type="hidden" name="codNovedad" value="<?= (int) $novedad['codNovedad'] ?>">
                                                 <input type="hidden" name="accion" value="eliminar">
@@ -251,8 +254,7 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
                                                     type="submit"
                                                     class="table-action-btn danger"
                                                     aria-label="Eliminar <?= $escapar($novedad['titulo'] ?? '') ?>"
-                                                    title="Eliminar"
-                                                >
+                                                    title="Eliminar">
                                                     <i class="bi bi-trash" aria-hidden="true"></i>
                                                 </button>
                                             </form>
@@ -264,11 +266,17 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
                     </table>
                 </div>
 
+
                 <?php if ($total > $porPagina): ?>
-                    <div class="d-flex justify-content-center mt-4">
-                        <?= $paginationHTML ?>
-                    </div>
+                    <nav
+                        class="volara-pagination-container mt-4"
+                        aria-label="Páginas de aerolíneas">
+                        <div class="volara-pagination">
+                            <?= $paginationHTML ?>
+                        </div>
+                    </nav>
                 <?php endif; ?>
+
             <?php else: ?>
                 <div class="volara-card-flat text-center py-5">
                     <i class="bi bi-newspaper empty-state-icon" aria-hidden="true"></i>
