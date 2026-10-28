@@ -1,9 +1,4 @@
 <?php
-/**
- * Alta de aerolíneas - VOLARA.
- * Ubicación: Pages/Admin/aerolineas/crear.php
- */
-
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
@@ -15,9 +10,6 @@ $baseUrl = rtrim(BASE_URL, '/');
 $urlListado = $baseUrl . '/Pages/Admin/aerolineas/index.php';
 $escapar = static fn($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 
-/* --------------------------------------------------------------------------
- * Autenticación y autorización.
- * -------------------------------------------------------------------------- */
 $usuarioActual = [];
 if (!empty($_SESSION['codUsuario']) && function_exists('usuarioActual')) {
     $datosUsuario = usuarioActual();
@@ -51,9 +43,6 @@ $codigoIATA = '';
 $nombre = '';
 $pais = '';
 
-/* --------------------------------------------------------------------------
- * Crear aerolínea.
- * -------------------------------------------------------------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tokenRecibido = is_string($_POST['csrf_token'] ?? null) ? $_POST['csrf_token'] : null;
 

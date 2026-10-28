@@ -1,8 +1,4 @@
 <?php
-/**
- * Edición de aerolíneas - VOLARA.
- * Ubicación: Pages/Admin/aerolineas/editar.php
- */
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -15,9 +11,6 @@ $baseUrl = rtrim(BASE_URL, '/');
 $urlListado = $baseUrl . '/Pages/Admin/aerolineas/index.php';
 $escapar = static fn($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 
-/* --------------------------------------------------------------------------
- * Autenticación y autorización.
- * -------------------------------------------------------------------------- */
 $usuarioActual = [];
 if (!empty($_SESSION['codUsuario']) && function_exists('usuarioActual')) {
     $datosUsuario = usuarioActual();

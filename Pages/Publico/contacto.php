@@ -12,7 +12,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
 <main id="contenido-principal" class="volara-public-page volara-contacto-page" tabindex="-1">
 
-    <!-- Encabezado -->
     <section class="page-header">
         <div class="container">
             <h1>Contacto</h1>
@@ -34,13 +33,11 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-    <!-- Información de contacto -->
     <section class="volara-public-section">
         <div class="container">
 
             <div class="row justify-content-center g-4">
 
-                <!-- Datos de contacto -->
                 <div class="col-12 col-lg-7">
                     <div class="volara-card">
 
@@ -111,7 +108,6 @@ require __DIR__ . '/../../Includes/navbar.php';
                     </div>
                 </div>
 
-                <!-- Enlaces complementarios -->
                 <aside class="col-12 col-lg-5">
 
                     <div class="volara-card mb-4">

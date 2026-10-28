@@ -4,23 +4,11 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-/*
-|--------------------------------------------------------------------------
-| Includes compartidos: igual que en vuelos.php
-|--------------------------------------------------------------------------
-*/
-
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
 $baseUrl = rtrim(BASE_URL, '/');
 $urlHistorial = $baseUrl . '/Pages/Pasajero/historial.php';
-
-/*
-|--------------------------------------------------------------------------
-| Verificar sesión y rol
-|--------------------------------------------------------------------------
-*/
 
 if (empty($_SESSION['codUsuario'])) {
     header('Location: ' . $baseUrl . '/Auth/login.php');
@@ -47,12 +35,6 @@ if (!in_array($rolUsuario, ['usuario', 'pasajero', 'cliente'], true)) {
     exit;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Configuración
-|--------------------------------------------------------------------------
-*/
-
 $titulo = 'Historial de reservas';
 $pageDescription = 'Consultá tus reservas confirmadas y canceladas en VOLARA.';
 $codUsuario = (int) $_SESSION['codUsuario'];
@@ -66,15 +48,6 @@ $paginaHistorial = 1;
 $offset = 0;
 $error = '';
 
-/*
-|--------------------------------------------------------------------------
-| Consultar historial y paginar
-|--------------------------------------------------------------------------
-| El schema.sql define los estados confirmada, cancelada y pendiente de pago.
-| El historial muestra únicamente las confirmadas y las canceladas.
-|--------------------------------------------------------------------------
-*/
-
 try {
     $conexion = conectarDB();
 
@@ -84,7 +57,6 @@ try {
 
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // 1. Contar todos los movimientos del pasajero.
     $sqlConteo = "
         SELECT COUNT(*)
         FROM reservas r
@@ -97,13 +69,11 @@ try {
     $stmtConteo->execute();
     $totalHistorial = (int) $stmtConteo->fetchColumn();
 
-    // 2. Calcular páginas y offset con la función ya usada en vuelos.php.
     $datosPaginacion = paginar($totalHistorial, $porPagina, $paginaSolicitada);
     $paginaHistorial = (int) $datosPaginacion['paginaActual'];
     $totalPaginas = (int) $datosPaginacion['totalPaginas'];
     $offset = (int) $datosPaginacion['offset'];
 
-    // 3. Consultar exclusivamente los registros de la página actual.
     $sqlHistorial = "
         SELECT
             r.codReserva,
@@ -151,22 +121,12 @@ try {
     $error = 'No se pudo cargar tu historial. Intentá nuevamente más tarde.';
 }
 
-/*
-|--------------------------------------------------------------------------
-| Enlaces de paginación manuales
-|--------------------------------------------------------------------------
-| No se llama a generarPaginacionHTML(), para evitar confundir el orden
-| de sus argumentos. Los enlaces conservan el parámetro pagina.
-|--------------------------------------------------------------------------
-*/
-
 $urlPagina = static function (int $numeroPagina) use ($urlHistorial): string {
     return $urlHistorial . '?' . http_build_query([
         'pagina' => max(1, $numeroPagina),
     ]);
 };
 
-// Mismas plantillas compartidas que en vuelos.php y mis-reservas.php.
 require_once __DIR__ . '/../../Includes/header.php';
 require_once __DIR__ . '/../../Includes/navbar.php';
 ?>

@@ -7,23 +7,11 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
-/*
-|--------------------------------------------------------------------------
-| Configuración de la página
-|--------------------------------------------------------------------------
-*/
-
 $titulo = 'Mapa del sitio';
 $pageDescription = 'Explorá las secciones disponibles de VOLARA.';
 
 $baseUrl = rtrim(BASE_URL, '/');
 $raizProyecto = dirname(__DIR__, 2);
-
-/*
-|--------------------------------------------------------------------------
-| Usuario actual
-|--------------------------------------------------------------------------
-*/
 
 $estaLogueado = !empty($_SESSION['codUsuario']);
 
@@ -36,12 +24,6 @@ if ($estaLogueado && function_exists('usuarioActual')) {
         $usuario = $usuarioActual;
     }
 }
-
-/*
-|--------------------------------------------------------------------------
-| Normalización del rol
-|--------------------------------------------------------------------------
-*/
 
 $rol = trim((string) (
     $usuario['rol']
@@ -81,12 +63,6 @@ $esPasajero = in_array(
     true
 );
 
-/*
-|--------------------------------------------------------------------------
-| Mapa de páginas públicas
-|--------------------------------------------------------------------------
-*/
-
 $mapa = [
     'Público' => [
         'Inicio' => 'Pages/Publico/index.php',
@@ -100,24 +76,12 @@ $mapa = [
     ],
 ];
 
-/*
-|--------------------------------------------------------------------------
-| Secciones para visitantes
-|--------------------------------------------------------------------------
-*/
-
 if (!$estaLogueado) {
     $mapa['Cuenta'] = [
         'Iniciar sesión' => 'Auth/login.php',
         'Registrarse' => 'Auth/registro.php',
     ];
 }
-
-/*
-|--------------------------------------------------------------------------
-| Secciones del pasajero
-|--------------------------------------------------------------------------
-*/
 
 if ($estaLogueado && $esPasajero) {
     $mapa['Pasajero'] = [
@@ -126,12 +90,6 @@ if ($estaLogueado && $esPasajero) {
         'Mi perfil' => 'Pages/Pasajero/perfil.php',
     ];
 }
-
-/*
-|--------------------------------------------------------------------------
-| Secciones del CEO
-|--------------------------------------------------------------------------
-*/
 
 if ($estaLogueado && $esCeo) {
     $mapa['CEO'] = [
@@ -142,12 +100,6 @@ if ($estaLogueado && $esCeo) {
     ];
 }
 
-/*
-|--------------------------------------------------------------------------
-| Secciones del administrador
-|--------------------------------------------------------------------------
-*/
-
 if ($estaLogueado && $esAdmin) {
     $mapa['Administración'] = [
         'Gestionar aerolíneas' => 'Pages/Admin/aerolineas/index.php',
@@ -156,16 +108,6 @@ if ($estaLogueado && $esAdmin) {
         'Reportes' => 'Pages/Admin/reportes/reporteVentas.php',
     ];
 }
-
-/*
-|--------------------------------------------------------------------------
-| Mostrar solamente archivos existentes
-|--------------------------------------------------------------------------
-|
-| Se comprueba la ruta física dentro del proyecto para no mostrar
-| enlaces a páginas que todavía no fueron creadas.
-|
-*/
 
 foreach ($mapa as $seccion => $paginas) {
     foreach ($paginas as $nombre => $ruta) {
@@ -189,12 +131,6 @@ foreach ($mapa as $seccion => $paginas) {
     }
 }
 
-/*
-|--------------------------------------------------------------------------
-| Encabezado y navegación compartidos
-|--------------------------------------------------------------------------
-*/
-
 require __DIR__ . '/../../Includes/header.php';
 require __DIR__ . '/../../Includes/navbar.php';
 
@@ -202,7 +138,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
 <main id="contenido-principal" tabindex="-1">
 
-    <!-- Encabezado de la página -->
     <section class="page-header">
         <div class="container">
 
@@ -240,7 +175,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-    <!-- Contenido del mapa -->
     <section class="section">
         <div class="container">
 

@@ -10,10 +10,6 @@ require_once __DIR__ . '/../../Includes/funcionPromociones.php';
 
 $baseUrl = rtrim(BASE_URL, '/');
 
-/* --------------------------------------------------------------------------
- * Autenticación y autorización
- * -------------------------------------------------------------------------- */
-
 if (empty($_SESSION['codUsuario'])) {
     header('Location: ' . $baseUrl . '/Auth/login.php');
     exit;
@@ -37,10 +33,6 @@ if (!in_array($rol, ['pasajero', 'usuario', 'cliente'], true)) {
     header('Location: ' . $baseUrl . '/Pages/Publico/index.php');
     exit;
 }
-
-/* --------------------------------------------------------------------------
- * Datos iniciales
- * -------------------------------------------------------------------------- */
 
 $titulo = 'Elegir asientos';
 $pageDescription = 'Elegí de uno a seis asientos y confirmá tu reserva en VOLARA.';
@@ -91,10 +83,6 @@ $asientosMapa = [];
 $asientosOcupados = [];
 $error = null;
 
-/*
- * Recibir los asientos seleccionados.
- * La validación definitiva de la cantidad se realiza al procesar el POST.
- */
 $asientosRecibidos = $_POST['asientos'] ?? [];
 
 if (!is_array($asientosRecibidos)) {
@@ -115,10 +103,6 @@ foreach ($asientosRecibidos as $asientoRecibido) {
 
 $asientosSeleccionados = array_values(array_unique($asientosSeleccionados));
 
-/* --------------------------------------------------------------------------
- * Generar etiquetas de asientos: 6 por fila (A, B, C - pasillo - D, E, F)
- * -------------------------------------------------------------------------- */
-
 $generarAsientos = static function (int $cantidad): array {
     $columnas = ['A', 'B', 'C', 'D', 'E', 'F'];
     $asientos = [];
@@ -136,10 +120,6 @@ $generarAsientos = static function (int $cantidad): array {
 
     return $asientos;
 };
-
-/* --------------------------------------------------------------------------
- * Obtener asientos ocupados a partir de reservas existentes
- * -------------------------------------------------------------------------- */
 
 $obtenerAsientosOcupados = static function (
     PDO $db,
@@ -178,10 +158,6 @@ $obtenerAsientosOcupados = static function (
         ) {
             $ocupados[$etiqueta] = true;
         } else {
-            /*
-             * Compatibilidad con reservas antiguas sin un asiento informado:
-             * se les asigna visualmente un asiento libre.
-             */
             $reservasSinAsiento++;
         }
     }
@@ -201,10 +177,6 @@ $obtenerAsientosOcupados = static function (
 
     return $ocupados;
 };
-
-/* --------------------------------------------------------------------------
- * Consultar vuelo y promoción
- * -------------------------------------------------------------------------- */
 
 try {
     $conexion = conectarDB();
@@ -255,12 +227,6 @@ try {
     $error = 'No se pudo cargar el vuelo. Intentá nuevamente más tarde.';
 }
 
-/* --------------------------------------------------------------------------
- * Confirmar de 1 a 6 asientos en una única operación
- *
- * Cada asiento genera una fila en reservas para el mismo usuario y vuelo.
- * -------------------------------------------------------------------------- */
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
     $tokenRecibido = $_POST['csrf_token'] ?? '';
 
@@ -277,10 +243,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
         try {
             $conexion->beginTransaction();
 
-            /*
-             * Bloquear el vuelo para evitar que dos operaciones descuenten
-             * simultáneamente la misma disponibilidad.
-             */
             $sqlVueloBloqueado = "
                 SELECT
                     codVuelo,
@@ -364,10 +326,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
                 $precioFinal = precioConDescuento($precioFinal, $promocionActual);
             }
 
-            /*
-             * Descontar los asientos juntos, verificando nuevamente
-             * que la capacidad sea suficiente.
-             */
             $sqlActualizar = "
                 UPDATE vuelos
                 SET asientosDisponibles = asientosDisponibles - :cantidad
@@ -413,11 +371,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
 
             $consultaInsertar = $conexion->prepare($sqlInsertar);
 
-            /*
-             * Todos los asientos de esta compra comparten el mismo codCompra:
-             * se pagan juntos con una única confirmación. Una compra posterior
-             * del mismo vuelo genera otro codCompra y se paga por separado.
-             */
             $codCompra = bin2hex(random_bytes(8));
 
             foreach ($asientosSeleccionados as $etiqueta) {
@@ -462,13 +415,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
     }
 }
 
-/* --------------------------------------------------------------------------
- * Preparar mapa de asientos para mostrarlo
- * -------------------------------------------------------------------------- */
-
 if ($vuelo && $conexion instanceof PDO) {
     try {
-        // Actualizar la disponibilidad mostrada.
         $consultaDisponibilidad = $conexion->prepare(
             'SELECT asientosDisponibles
              FROM vuelos
@@ -494,7 +442,6 @@ if ($vuelo && $conexion instanceof PDO) {
             $asientosMapa
         );
 
-        // Mantener marcados los elegidos que sigan libres.
         $asientosSeleccionados = array_values(array_filter(
             $asientosSeleccionados,
             static function ($etiqueta) use ($asientosOcupados) {
@@ -511,10 +458,6 @@ if ($vuelo && $conexion instanceof PDO) {
         $asientosOcupados = [];
     }
 }
-
-/* --------------------------------------------------------------------------
- * Formatear los datos que se muestran
- * -------------------------------------------------------------------------- */
 
 $fechaVuelo = '';
 
@@ -1216,7 +1159,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 'label[for="' + asiento.id + '"]'
             );
 
-            // Los asientos ya ocupados siempre permanecen deshabilitados.
             if (asiento.dataset.occupied === '1') {
                 asiento.disabled = true;
 
@@ -1227,10 +1169,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            /*
-             * Al alcanzar el máximo, se deshabilitan solo los asientos
-             * disponibles que no estén seleccionados.
-             */
             const bloquearPorLimite =
                 seleccionados >= limite && !asiento.checked;
 

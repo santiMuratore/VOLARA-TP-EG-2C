@@ -2,11 +2,9 @@
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
-// Configuración de la página.
 $titulo = 'Promociones';
 $pageDescription = 'Descubrí las promociones y descuentos de las aerolíneas de VOLARA.';
 
-// Variables iniciales.
 $promociones = [];
 $total = 0;
 $error = null;
@@ -14,14 +12,11 @@ $error = null;
 $pagina = max(1, (int) ($_GET['pagina'] ?? 1));
 $porPagina = 9;
 
-// Estados que pueden mostrarse públicamente.
-// Ajustar esta lista si tu base de datos utiliza otros valores.
 $estadosPublicos = "'aprobada', 'aprobado', 'vigente', 'activa', 'publicada', 'publicado'";
 
 try {
     $conexion = conectarDB();
 
-    // Contar las promociones publicables.
     $sqlCount = "
         SELECT COUNT(*)
         FROM promociones p
@@ -37,7 +32,6 @@ try {
     $pagina = $paginacion['paginaActual'];
     $offset = $paginacion['offset'];
 
-    // Consultar promociones y aerolíneas asociadas.
     $sql = "
         SELECT
             p.codPromocion,
@@ -66,14 +60,12 @@ try {
     $error = 'No se pudieron cargar las promociones. Intentá nuevamente más tarde.';
 }
 
-// Encabezado y navegación compartidos.
 require __DIR__ . '/../../Includes/header.php';
 require __DIR__ . '/../../Includes/navbar.php';
 ?>
 
 <main id="contenido-principal" tabindex="-1">
 
-    <!-- Encabezado -->
     <section class="page-header">
         <div class="container">
 
@@ -100,7 +92,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-    <!-- Listado de promociones -->
     <section class="section">
         <div class="container">
 
@@ -168,7 +159,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                             <article class="volara-card h-100 d-flex flex-column">
 
-                                <!-- Descuento -->
                                 <div class="d-flex justify-content-between
                                             align-items-center gap-2 mb-4">
 
@@ -250,7 +240,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                 </div>
 
-                <!-- Paginación -->
                 <?php if ($paginacion['totalPaginas'] > 1): ?>
 
                     <div class="mt-5">

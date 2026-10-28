@@ -4,23 +4,11 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-/*
-|--------------------------------------------------------------------------
-| Includes: usar exactamente la misma ruta que la página de vuelos
-|--------------------------------------------------------------------------
-*/
-
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
 $baseUrl = rtrim(BASE_URL, '/');
 $urlMisReservas = BASE_URL . '/Pages/Pasajero/mis-reservas.php';
-
-/*
-|--------------------------------------------------------------------------
-| Autenticación
-|--------------------------------------------------------------------------
-*/
 
 if (empty($_SESSION['codUsuario'])) {
     header('Location: ' . BASE_URL . '/Auth/login.php');
@@ -41,12 +29,6 @@ if (!in_array($rolUsuario, ['usuario', 'pasajero', 'cliente'], true)) {
     header('Location: ' . BASE_URL . '/Pages/Publico/index.php');
     exit;
 }
-
-/*
-|--------------------------------------------------------------------------
-| Configuración
-|--------------------------------------------------------------------------
-*/
 
 $titulo = 'Mis reservas';
 $pageDescription = 'Consultá tus reservas de vuelos en VOLARA.';
@@ -69,7 +51,6 @@ $conteos = [
     'cancelada' => 0,
 ];
 
-/* Los estados corresponden al ENUM definido en schema.sql. */
 $filtros = [
     'todas' => [
         'titulo' => 'Todas',
@@ -95,19 +76,12 @@ if (!isset($filtros[$estadoFiltro])) {
 }
 $condicionFiltro = $filtros[$estadoFiltro]['condicion'];
 
-/* Los enlaces mantienen el filtro actual y cambian solo la página. */
 $urlPagina = static function (int $numeroPagina, string $estado) use ($urlMisReservas): string {
     return $urlMisReservas . '?' . http_build_query([
         'estado' => $estado,
         'pagina' => max(1, $numeroPagina),
     ]);
 };
-
-/*
-|--------------------------------------------------------------------------
-| CSRF y mensajes de retorno
-|--------------------------------------------------------------------------
-*/
 
 if (empty($_SESSION['csrf_reservas'])) {
     $_SESSION['csrf_reservas'] = bin2hex(random_bytes(32));
@@ -134,12 +108,6 @@ if (($_GET['creada'] ?? '') === '1') {
         $mensajeExito = 'Tus asientos quedaron reservados. Se pagan juntos, con una sola confirmación, desde «Pagos pendientes».';
     }
 }
-
-/*
-|--------------------------------------------------------------------------
-| Consultas y acciones
-|--------------------------------------------------------------------------
-*/
 
 try {
     $conexion = conectarDB();
@@ -331,7 +299,6 @@ try {
         }
     }
 
-    /* Contar por estado para mostrar las cantidades en los filtros. */
     $conteos = [
         'todas' => 0,
         'pendiente' => 0,
@@ -359,7 +326,6 @@ try {
         }
     }
 
-    /* Contar los resultados del filtro seleccionado. */
     $sqlTotal = "
         SELECT COUNT(*)
         FROM reservas r
@@ -370,13 +336,11 @@ try {
     $stmt->execute(['codUsuario' => $codUsuario]);
     $totalReservas = (int) $stmt->fetchColumn();
 
-    /* Usar la misma función paginar() que funciona en vuelos.php. */
     $datosPaginacion = paginar($totalReservas, $porPagina, $paginaSolicitada);
     $pagina = (int) $datosPaginacion['paginaActual'];
     $totalPaginas = (int) $datosPaginacion['totalPaginas'];
     $offset = (int) $datosPaginacion['offset'];
 
-    /* Recuperar solo los registros de la página actual. */
     $sqlReservas = "
         SELECT
             r.codReserva,
@@ -406,7 +370,6 @@ try {
     $stmt->execute();
     $reservas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    /* Pagos pendientes: una tarjeta por compra (asientos reservados juntos). */
     $stmt = $conexion->prepare("
         SELECT r.codReserva, r.codCompra, r.asiento, r.precioFinal,
                v.codigoVuelo, v.origen, v.destino, v.fecha, v.hora
@@ -448,12 +411,6 @@ try {
     error_log('VOLARA - Error cargando reservas: ' . $e->getMessage());
     $error = 'No se pudieron cargar tus reservas. Revisá la conexión con la base de datos o el registro de errores de PHP.';
 }
-
-/*
-|--------------------------------------------------------------------------
-| Encabezado y navbar: misma forma que la página de vuelos
-|--------------------------------------------------------------------------
-*/
 
 require __DIR__ . '/../../Includes/header.php';
 require __DIR__ . '/../../Includes/navbar.php';
@@ -685,7 +642,6 @@ require __DIR__ . '/../../Includes/navbar.php';
                     <?php endforeach; ?>
                 </div>
 
-                <!-- Mostrar controles también si hay una sola página. -->
                 <?php if ($totalReservas > 0): ?>
                     <nav class="volara-pagination-container" aria-label="Páginas de reservas">
                         <div class="volara-pagination">
@@ -712,6 +668,5 @@ require __DIR__ . '/../../Includes/navbar.php';
 </main>
 
 <?php
-/* Footer: exactamente la misma ruta absoluta relativa usada en vuelos.php. */
 require __DIR__ . '/../../Includes/footer.php';
 ?>

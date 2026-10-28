@@ -2,11 +2,9 @@
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
-// Configuración de la página.
 $titulo = 'Novedades';
 $pageDescription = 'Conocé las últimas novedades y comunicaciones de VOLARA.';
 
-// Variables iniciales.
 $novedades = [];
 $total = 0;
 $error = null;
@@ -17,7 +15,6 @@ $porPagina = 9;
 try {
     $conexion = conectarDB();
 
-    // Contar las novedades vigentes.
     $sqlCount = "
         SELECT COUNT(*) AS total
         FROM novedades
@@ -28,12 +25,10 @@ try {
     $countStmt = $conexion->query($sqlCount);
     $total = (int) $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Calcular la paginación.
     $paginacion = paginar($total, $porPagina, $pagina);
     $pagina = $paginacion['paginaActual'];
     $offset = $paginacion['offset'];
 
-    // Consultar las novedades de la página actual.
     $sql = "
         SELECT
             codNovedad,
@@ -60,7 +55,6 @@ try {
     $error = 'No se pudieron cargar las novedades. Intentá nuevamente más tarde.';
 }
 
-// Preparar enlaces de paginación.
 $totalPaginas = $paginacion['totalPaginas'] ?? 1;
 $inicioPagina = max(1, $pagina - 2);
 $finPagina = min($totalPaginas, $inicioPagina + 4);
@@ -71,14 +65,12 @@ if ($finPagina - $inicioPagina < 4) {
 
 $urlNovedades = BASE_URL . '/Pages/Publico/novedades.php';
 
-// Encabezado y navbar compartidos.
 require __DIR__ . '/../../Includes/header.php';
 require __DIR__ . '/../../Includes/navbar.php';
 ?>
 
 <main id="contenido-principal" tabindex="-1">
 
-    <!-- Encabezado -->
     <section class="page-header">
         <div class="container">
 
@@ -105,7 +97,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-    <!-- Listado de novedades -->
     <section class="section">
         <div class="container">
 
@@ -172,7 +163,6 @@ require __DIR__ . '/../../Includes/navbar.php';
                         <?php
                         $textoNovedad = (string) ($n['texto'] ?? '');
 
-                        // Resumen del texto.
                         if (function_exists('mb_strimwidth')) {
                             $resumen = mb_strimwidth(
                                 $textoNovedad,
@@ -187,7 +177,6 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 : $textoNovedad;
                         }
 
-                        // Formatear fechas.
                         $fechaPublicacion = !empty($n['fechaPublicacion'])
                             && strtotime($n['fechaPublicacion']) !== false
                             ? date('d/m/Y', strtotime($n['fechaPublicacion']))
@@ -262,7 +251,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                 </div>
 
-                <!-- Paginación -->
                 <?php if ($totalPaginas > 1): ?>
 
                     <nav

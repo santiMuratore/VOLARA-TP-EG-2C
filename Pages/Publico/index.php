@@ -2,16 +2,12 @@
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
-// Configuración de la página.
-// Se define antes de incluir el header.
 $titulo = 'Inicio';
 $pageDescription = 'Descubrí destinos, consultá aerolíneas y explorá las novedades de VOLARA.';
 
-// Inicializar novedades.
 $novedadesDestacadas = [];
 $errorNovedades = false;
 
-// Consultar novedades vigentes.
 try {
     $conexion = conectarDB();
 
@@ -37,14 +33,12 @@ try {
     $errorNovedades = true;
 }
 
-// Estructura común de la página.
 require __DIR__ . '/../../Includes/header.php';
 require __DIR__ . '/../../Includes/navbar.php';
 ?>
 
 <main id="contenido-principal" tabindex="-1">
 
-    <!-- HERO PRINCIPAL -->
     <section class="hero" aria-labelledby="hero-title">
         <div class="container">
 
@@ -123,8 +117,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-
-    <!-- ACCESOS PRINCIPALES -->
     <section class="section" aria-labelledby="accesos-title">
         <div class="container">
 
@@ -140,7 +132,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
             <div class="row g-4">
 
-                <!-- Vuelos -->
                 <div class="col-md-4">
                     <article class="volara-card h-100">
 
@@ -166,7 +157,6 @@ require __DIR__ . '/../../Includes/navbar.php';
                     </article>
                 </div>
 
-                <!-- Aerolíneas -->
                 <div class="col-md-4">
                     <article class="volara-card h-100">
 
@@ -222,8 +212,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-
-    <!-- NOVEDADES -->
     <section
         class="section section-gray"
         aria-labelledby="novedades-title"
@@ -378,8 +366,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-
-    <!-- BENEFICIOS -->
     <section class="section" aria-labelledby="beneficios-title">
         <div class="container">
 

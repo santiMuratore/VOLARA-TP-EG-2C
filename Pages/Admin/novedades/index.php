@@ -1,8 +1,4 @@
 <?php
-/**
- * Listado y eliminación de novedades de VOLARA.
- * Ubicación: Pages/Admin/novedades/index.php
- */
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -19,9 +15,6 @@ $escapar = static function ($valor): string {
     return htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 };
 
-/* --------------------------------------------------------------------------
- * Control de acceso: únicamente admin/administrador.
- * -------------------------------------------------------------------------- */
 $datosUsuario = [];
 if (function_exists('usuarioActual')) {
     $usuarioConsultado = usuarioActual();
@@ -61,9 +54,6 @@ $novedades = [];
 $total = 0;
 $conexion = null;
 
-/* --------------------------------------------------------------------------
- * Mensajes recibidos tras una redirección.
- * -------------------------------------------------------------------------- */
 if (isset($_GET['mensaje'])) {
     $mensaje = trim((string) $_GET['mensaje']);
     $tipoRecibido = (string) ($_GET['tipo'] ?? 'info');
@@ -72,9 +62,6 @@ if (isset($_GET['mensaje'])) {
         : 'info';
 }
 
-/* --------------------------------------------------------------------------
- * Eliminar: solo POST + CSRF.
- * -------------------------------------------------------------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';
     $idRecibido = filter_var(
@@ -111,9 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-/* --------------------------------------------------------------------------
- * Listado paginado.
- * -------------------------------------------------------------------------- */
 $paginaSolicitada = max(1, (int) ($_GET['pagina'] ?? 1));
 $porPagina = 10;
 $paginacion = paginar(0, $porPagina, $paginaSolicitada);

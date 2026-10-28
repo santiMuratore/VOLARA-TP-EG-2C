@@ -3,11 +3,9 @@
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
-// Configuración de la página.
 $titulo = 'Buscar vuelos';
 $pageDescription = 'Consultá los vuelos registrados en VOLARA y filtrá por origen, destino, fecha y clase.';
 
-// Valores del buscador.
 $origen = trim($_GET['origen'] ?? '');
 $destino = trim($_GET['destino'] ?? '');
 $fecha = trim($_GET['fecha'] ?? '');
@@ -20,7 +18,6 @@ if (!in_array($clase, $clasesPermitidas, true)) {
     $clase = '';
 }
 
-// Validar el formato de fecha.
 if (
     $fecha !== ''
     && (
@@ -44,16 +41,6 @@ $error = null;
 
 try {
     $conexion = conectarDB();
-
-    /*
-    |--------------------------------------------------------------------------
-    | Construir los filtros
-    |--------------------------------------------------------------------------
-    |
-    | Mostrar solamente vuelos activos.
-    | Los demás filtros se agregan mediante AND.
-    |--------------------------------------------------------------------------
-    */
 
     $condiciones = ['v.activo = 1'];
     $parametros = [];
@@ -86,12 +73,6 @@ try {
             ON v.codAerolinea = a.codAerolinea
     ";
 
-    /*
-    |--------------------------------------------------------------------------
-    | Contar vuelos activos que coinciden con los filtros
-    |--------------------------------------------------------------------------
-    */
-
     $sqlCount = "
         SELECT COUNT(*) AS total
         " . $from . $where;
@@ -101,22 +82,11 @@ try {
 
     $total = (int) $stmtCount->fetchColumn();
 
-    /*
-    |--------------------------------------------------------------------------
-    | Calcular la paginación
-    |--------------------------------------------------------------------------
-    */
 
     $paginacion = paginar($total, $porPagina, $pagina);
 
     $pagina = $paginacion['paginaActual'];
     $offset = $paginacion['offset'];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Consultar los vuelos activos de la página actual
-    |--------------------------------------------------------------------------
-    */
 
     $sql = "
         SELECT
@@ -154,12 +124,6 @@ try {
     $error = 'No se pudieron cargar los vuelos. Intentá nuevamente más tarde.';
 }
 
-/*
-|--------------------------------------------------------------------------
-| Conservar filtros al cambiar de página
-|--------------------------------------------------------------------------
-*/
-
 $filtrosActivos = [];
 
 if ($origen !== '') {
@@ -184,14 +148,12 @@ if (!empty($filtrosActivos)) {
     $urlPaginacion .= '?' . http_build_query($filtrosActivos);
 }
 
-// Encabezado y navbar compartidos.
 require __DIR__ . '/../../Includes/header.php';
 require __DIR__ . '/../../Includes/navbar.php';
 
 ?>
 
 <style>
-    /* VOLARA: paginación compacta para resultados de vuelos */
     .volara-pagination-container {
         display: flex;
         justify-content: center;
@@ -213,7 +175,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         margin: 0;
         padding: 0;
     }
-
     .volara-pagination .page-link {
         display: flex;
         align-items: center;
@@ -287,7 +248,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
 <main id="contenido-principal" tabindex="-1">
 
-    <!-- ENCABEZADO -->
     <section class="page-header">
         <div class="container">
 
@@ -314,7 +274,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-    <!-- BUSCADOR -->
     <section class="section section-gray">
         <div class="container">
 
@@ -456,7 +415,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-    <!-- RESULTADOS -->
     <section class="section">
         <div class="container">
 
@@ -649,7 +607,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                                 </div>
 
-                                <!-- Información -->
                                 <div class="flight-meta">
 
                                     <div class="flight-meta-item">
@@ -683,7 +640,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                                 </div>
 
-                                <!-- Acción del vuelo -->
                                 <div class="mt-4 pt-3 border-top">
 
                                     <?php if (
@@ -745,7 +701,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                 </div>
 
-                <!-- Paginación compacta VOLARA -->
                 <?php if ($total > $porPagina): ?>
 
                     <nav
@@ -767,7 +722,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
             <?php endif; ?>
 
-            <!-- Acceso a la cuenta -->
             <?php if (empty($_SESSION['codUsuario'])): ?>
 
                 <div class="volara-card-flat mt-5">

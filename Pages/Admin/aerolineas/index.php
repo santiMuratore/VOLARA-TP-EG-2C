@@ -1,8 +1,4 @@
 <?php
-/**
- * Listado y baja de aerolíneas - VOLARA.
- * Ubicación: Pages/Admin/aerolineas/index.php
- */
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -15,9 +11,6 @@ $baseUrl = rtrim(BASE_URL, '/');
 $urlListado = $baseUrl . '/Pages/Admin/aerolineas/index.php';
 $escapar = static fn($valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 
-/* --------------------------------------------------------------------------
- * Autenticación y autorización: solo admin/administrador.
- * -------------------------------------------------------------------------- */
 $usuarioActual = [];
 if (!empty($_SESSION['codUsuario']) && function_exists('usuarioActual')) {
     $datosUsuario = usuarioActual();
@@ -53,9 +46,6 @@ $aerolineas = [];
 $total = 0;
 $paginationHTML = '';
 
-/* --------------------------------------------------------------------------
- * Mensaje de resultado recibido por GET. El contenido siempre se escapa.
- * -------------------------------------------------------------------------- */
 if (isset($_GET['mensaje']) && is_string($_GET['mensaje'])) {
     $mensaje = trim($_GET['mensaje']);
     $tipoSolicitado = is_string($_GET['tipo'] ?? null) ? $_GET['tipo'] : 'info';
@@ -64,9 +54,6 @@ if (isset($_GET['mensaje']) && is_string($_GET['mensaje'])) {
         : 'info';
 }
 
-/* --------------------------------------------------------------------------
- * Eliminar: únicamente POST + CSRF y sin registros dependientes.
- * -------------------------------------------------------------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = is_string($_POST['accion'] ?? null) ? $_POST['accion'] : '';
     $tokenRecibido = is_string($_POST['csrf_token'] ?? null) ? $_POST['csrf_token'] : null;
@@ -147,7 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Patrón POST/Redirect/GET: evita repetir el envío al actualizar el navegador.
     header(
         'Location: ' . $urlListado
         . '?mensaje=' . rawurlencode($mensaje)
@@ -156,9 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-/* --------------------------------------------------------------------------
- * Listado paginado.
- * -------------------------------------------------------------------------- */
 $pagina = max(1, (int) ($_GET['pagina'] ?? 1));
 $porPagina = 10;
 

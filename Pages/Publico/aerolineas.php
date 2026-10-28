@@ -2,11 +2,9 @@
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
 
-// Configuración de la página.
 $titulo = 'Aerolíneas';
 $pageDescription = 'Conocé las aerolíneas registradas en VOLARA.';
 
-// Variables iniciales.
 $aerolineas = [];
 $error = null;
 $total = 0;
@@ -17,19 +15,16 @@ $porPagina = 9;
 try {
     $conexion = conectarDB();
 
-    // Contar el total de aerolíneas.
     $stmt = $conexion->query(
         "SELECT COUNT(*) AS total FROM aerolineas"
     );
 
     $total = (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-    // Calcular la paginación.
     $paginacion = paginar($total, $porPagina, $pagina);
     $pagina = $paginacion['paginaActual'];
     $offset = $paginacion['offset'];
 
-    // Obtener las aerolíneas de la página actual.
     $sql = "
         SELECT codAerolinea, codigoIATA, nombre, pais
         FROM aerolineas
@@ -49,7 +44,6 @@ try {
     $error = 'No se pudieron cargar las aerolíneas. Intentá nuevamente más tarde.';
 }
 
-// Encabezado y navegación compartidos.
 require __DIR__ . '/../../Includes/header.php';
 require __DIR__ . '/../../Includes/navbar.php';
 ?>
@@ -83,7 +77,6 @@ require __DIR__ . '/../../Includes/navbar.php';
         </div>
     </section>
 
-    <!-- Listado -->
     <section class="section">
         <div class="container">
 
@@ -147,7 +140,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                             <article class="volara-card h-100 d-flex flex-column">
 
-                                <!-- Icono e IATA -->
                                 <div class="d-flex justify-content-between
                                             align-items-center mb-4">
 
@@ -168,7 +160,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                                 </div>
 
-                                <!-- Información -->
                                 <h3 class="h5 mb-3">
                                     <?= htmlspecialchars(
                                         $a['nombre'],
@@ -190,7 +181,6 @@ require __DIR__ . '/../../Includes/navbar.php';
                                     ) ?>
                                 </p>
 
-                                <!-- Acción -->
                                 <div class="mt-auto">
                                     <a
                                         href="<?= BASE_URL ?>/Pages/Publico/vuelos.php"
@@ -212,7 +202,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                 </div>
 
-                <!-- Paginación -->
                 <?php if ($total > $porPagina): ?>
                     <div class="mt-5">
                         <?= generarPaginacionHTML(

@@ -1,20 +1,8 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Sesión
-|--------------------------------------------------------------------------
-*/
-
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
-
-/*
-|--------------------------------------------------------------------------
-| Buscar los archivos Includes
-|--------------------------------------------------------------------------
-*/
 
 $directoriosPosibles = [
     dirname(__DIR__) . '/Includes',
@@ -42,12 +30,6 @@ if ($directorioIncludes === null) {
     exit('Error de configuración. Verificá la ubicación de los archivos Includes.');
 }
 
-/*
-|--------------------------------------------------------------------------
-| Cargar funciones compartidas
-|--------------------------------------------------------------------------
-*/
-
 require_once $directorioIncludes . '/functions.php';
 require_once $directorioIncludes . '/functionsF2.php';
 
@@ -58,22 +40,10 @@ if (!defined('BASE_URL')) {
 
 $baseUrl = rtrim(BASE_URL, '/');
 
-/*
-|--------------------------------------------------------------------------
-| Verificar sesión
-|--------------------------------------------------------------------------
-*/
-
 if (empty($_SESSION['codUsuario'])) {
     header('Location: ' . $baseUrl . '/Auth/login.php');
     exit;
 }
-
-/*
-|--------------------------------------------------------------------------
-| Verificar rol del usuario
-|--------------------------------------------------------------------------
-*/
 
 $rolUsuario = trim((string) (
     $_SESSION['tipoUsuario']
@@ -110,12 +80,6 @@ if (!in_array($rolUsuario, $rolesPermitidosPerfil, true)) {
     exit;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Datos de la página
-|--------------------------------------------------------------------------
-*/
-
 $titulo = 'Mi perfil';
 $pageDescription = 'Consultá y actualizá los datos de tu cuenta VOLARA.';
 
@@ -123,23 +87,11 @@ $errores = [];
 $mensajeExito = '';
 $perfil = null;
 
-/*
-|--------------------------------------------------------------------------
-| Token CSRF
-|--------------------------------------------------------------------------
-*/
-
 if (empty($_SESSION['csrf_perfil'])) {
     $_SESSION['csrf_perfil'] = bin2hex(random_bytes(32));
 }
 
 $csrfToken = $_SESSION['csrf_perfil'];
-
-/*
-|--------------------------------------------------------------------------
-| Obtener perfil
-|--------------------------------------------------------------------------
-*/
 
 try {
     $conexion = conectarDB();
@@ -173,12 +125,6 @@ try {
     $errores[] = 'No se pudo cargar tu perfil. Intentá nuevamente.';
 }
 
-/*
-|--------------------------------------------------------------------------
-| Valores iniciales del formulario
-|--------------------------------------------------------------------------
-*/
-
 $nombre = (string) ($perfil['nombre'] ?? '');
 $apellido = (string) ($perfil['apellido'] ?? '');
 $telefono = (string) ($perfil['telefono'] ?? '');
@@ -186,12 +132,6 @@ $telefono = (string) ($perfil['telefono'] ?? '');
 $claveActual = '';
 $claveNueva = '';
 $confirmarClave = '';
-
-/*
-|--------------------------------------------------------------------------
-| Procesar actualización
-|--------------------------------------------------------------------------
-*/
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
 
@@ -203,9 +143,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
     $claveNueva = (string) ($_POST['claveNueva'] ?? '');
     $confirmarClave = (string) ($_POST['confirmarClave'] ?? '');
 
-    /*
-     * Validar el formulario.
-     */
     if (
         !isset($_POST['csrf_token']) ||
         !hash_equals(
@@ -246,9 +183,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
         $errores[] = 'El teléfono no puede superar los 30 caracteres.';
     }
 
-    /*
-     * Comprobar si se quiere cambiar la contraseña.
-     */
     $cambiarClave = (
         $claveActual !== '' ||
         $claveNueva !== '' ||
@@ -276,9 +210,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
         }
     }
 
-    /*
-     * Guardar los cambios si no existen errores.
-     */
     if (empty($errores)) {
 
         try {
@@ -331,24 +262,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
             $consulta = $conexion->prepare($sql);
             $consulta->execute($parametros);
 
-            /*
-             * Renovar el token después de guardar.
-             */
             $_SESSION['csrf_perfil'] = bin2hex(random_bytes(32));
             $csrfToken = $_SESSION['csrf_perfil'];
 
             $mensajeExito = 'Tu perfil se actualizó correctamente.';
 
-            /*
-             * Limpiar contraseñas del formulario.
-             */
             $claveActual = '';
             $claveNueva = '';
             $confirmarClave = '';
 
-            /*
-             * Recargar los datos actualizados.
-             */
             $consulta = $conexion->prepare("
                 SELECT
                     codUsuario,
@@ -373,7 +295,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
             $apellido = (string) ($perfil['apellido'] ?? '');
             $telefono = (string) ($perfil['telefono'] ?? '');
 
-            // Mantener actualizados los datos disponibles para la sesión.
             $_SESSION['nombre'] = $nombre;
             $_SESSION['apellido'] = $apellido;
         } catch (PDOException $e) {
@@ -383,12 +304,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $perfil) {
         }
     }
 }
-
-/*
-|--------------------------------------------------------------------------
-| Buscar plantillas compartidas
-|--------------------------------------------------------------------------
-*/
 
 $archivoHeader = $directorioIncludes . '/header.php';
 $archivoNavbar = $directorioIncludes . '/navbar.php';
@@ -405,12 +320,6 @@ if (
     exit('No se encontraron las plantillas compartidas de VOLARA.');
 }
 
-/*
-|--------------------------------------------------------------------------
-| Encabezado y navegación
-|--------------------------------------------------------------------------
-*/
-
 require $archivoHeader;
 require $archivoNavbar;
 
@@ -420,7 +329,6 @@ require $archivoNavbar;
     id="contenido-principal"
     class="volara-public-page volara-pasajero-page"
     tabindex="-1">
-    <!-- Encabezado de página -->
     <section class="page-header">
         <div class="container">
 
@@ -453,7 +361,6 @@ require $archivoNavbar;
         </div>
     </section>
 
-    <!-- Formulario de perfil -->
     <section class="volara-public-section">
         <div class="container">
 

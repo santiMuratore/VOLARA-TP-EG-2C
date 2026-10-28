@@ -1,5 +1,4 @@
 <?php
-/** Editar novedad de VOLARA. Ubicación: Pages/Admin/novedades/editar.php */
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
@@ -14,7 +13,6 @@ $escapar = static function ($valor): string {
     return htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 };
 
-/* Control de acceso */
 $datosUsuario = [];
 if (function_exists('usuarioActual')) {
     $usuarioConsultado = usuarioActual();
