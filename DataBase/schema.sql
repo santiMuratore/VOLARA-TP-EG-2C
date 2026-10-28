@@ -257,6 +257,11 @@ CREATE TABLE reservas (
     -- NULL permite conservar reservas antiguas sin asiento.
     asiento VARCHAR(5) DEFAULT NULL,
 
+    -- Identifica los asientos reservados juntos en una misma compra (hasta 6).
+    -- Se confirman y pagan en un único pago. NULL en reservas antiguas:
+    -- cada una se paga por separado.
+    codCompra VARCHAR(32) DEFAULT NULL,
+
     fechaReserva DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fechaPago DATETIME DEFAULT NULL,
     fechaCancelacion DATETIME DEFAULT NULL,
@@ -268,6 +273,7 @@ CREATE TABLE reservas (
     KEY idx_reserva_promocion (codPromocion),
     KEY idx_reserva_estado (estadoReserva),
     KEY idx_reserva_fecha (fechaReserva),
+    KEY idx_reserva_compra (codCompra),
 
     CONSTRAINT fk_reserva_usuario
         FOREIGN KEY (codUsuario)

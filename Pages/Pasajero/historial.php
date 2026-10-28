@@ -62,7 +62,7 @@ $paginaSolicitada = max(1, (int) ($_GET['pagina'] ?? 1));
 $historial = [];
 $totalHistorial = 0;
 $totalPaginas = 1;
-$paginaActual = 1;
+$paginaHistorial = 1;
 $offset = 0;
 $error = '';
 
@@ -99,7 +99,7 @@ try {
 
     // 2. Calcular páginas y offset con la función ya usada en vuelos.php.
     $datosPaginacion = paginar($totalHistorial, $porPagina, $paginaSolicitada);
-    $paginaActual = (int) $datosPaginacion['paginaActual'];
+    $paginaHistorial = (int) $datosPaginacion['paginaActual'];
     $totalPaginas = (int) $datosPaginacion['totalPaginas'];
     $offset = (int) $datosPaginacion['offset'];
 
@@ -167,11 +167,10 @@ $urlPagina = static function (int $numeroPagina) use ($urlHistorial): string {
 };
 
 // Mismas plantillas compartidas que en vuelos.php y mis-reservas.php.
-require __DIR__ . '/../../Includes/header.php';
-require __DIR__ . '/../../Includes/navbar.php';
+require_once __DIR__ . '/../../Includes/header.php';
+require_once __DIR__ . '/../../Includes/navbar.php';
 ?>
 
-<!-- VOLARA_HISTORIAL_ACTIVE_BUILD_20261027_B -->
 <style>
     .volara-history-list {
         display: grid;
@@ -231,37 +230,15 @@ require __DIR__ . '/../../Includes/navbar.php';
         font-size: 1.2rem;
         font-weight: 750;
     }
-
     .volara-history-pagination-container {
         display: flex;
+        flex-direction: column;
+        align-items: center;
         justify-content: center;
         width: 100%;
         margin: 1.75rem 0 .5rem;
     }
 
-    /* Evita que estilos globales oculten la paginación o el pie del sitio. */
-    .volara-history-pagination-container {
-        display: flex !important;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
-        z-index: 2;
-        visibility: visible !important;
-        opacity: 1 !important;
-        min-height: 2.5rem;
-    }
-
-    footer,
-    .volara-footer,
-    .site-footer,
-    .footer {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
-    }
 
     .volara-history-pagination {
         max-width: 100%;
@@ -506,22 +483,15 @@ require __DIR__ . '/../../Includes/navbar.php';
 
             <?php endif; ?>
 
-            <!-- VOLARA_HISTORIAL_FIX_20261027: paginación independiente de las tarjetas -->
             <?php if ($totalHistorial > 0): ?>
-                <nav class="volara-history-pagination-container" aria-label="Paginación del historial" style="display:flex !important; visibility:visible !important; opacity:1 !important;">
+                <nav class="volara-history-pagination-container" aria-label="Paginación del historial">
                     <div class="volara-history-pagination">
                         <ul class="pagination justify-content-center flex-wrap">
-                            <li class="page-item <?= $paginaActual <= 1 ? 'disabled' : '' ?>">
-                                <?php if ($paginaActual > 1): ?>
-                                    <a class="page-link" href="<?= htmlspecialchars($urlPagina($paginaActual - 1), ENT_QUOTES, 'UTF-8') ?>" aria-label="Página anterior">Anterior</a>
-                                <?php else: ?>
-                                    <span class="page-link">Anterior</span>
-                                <?php endif; ?>
-                            </li>
+                            
 
                             <?php for ($numeroPagina = 1; $numeroPagina <= $totalPaginas; $numeroPagina++): ?>
-                                <li class="page-item <?= $numeroPagina === $paginaActual ? 'active' : '' ?>">
-                                    <?php if ($numeroPagina === $paginaActual): ?>
+                                <li class="page-item <?= $numeroPagina === $paginaHistorial ? 'active' : '' ?>">
+                                    <?php if ($numeroPagina === $paginaHistorial): ?>
                                         <span class="page-link" aria-current="page"><?= $numeroPagina ?></span>
                                     <?php else: ?>
                                         <a class="page-link" href="<?= htmlspecialchars($urlPagina($numeroPagina), ENT_QUOTES, 'UTF-8') ?>"><?= $numeroPagina ?></a>
@@ -529,21 +499,9 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 </li>
                             <?php endfor; ?>
 
-                            <li class="page-item <?= $paginaActual >= $totalPaginas ? 'disabled' : '' ?>">
-                                <?php if ($paginaActual < $totalPaginas): ?>
-                                    <a class="page-link" href="<?= htmlspecialchars($urlPagina($paginaActual + 1), ENT_QUOTES, 'UTF-8') ?>" aria-label="Página siguiente">Siguiente</a>
-                                <?php else: ?>
-                                    <span class="page-link">Siguiente</span>
-                                <?php endif; ?>
-                            </li>
                         </ul>
                     </div>
-                    <p class="volara-history-pagination-info">
-                        Página <?= $paginaActual ?> de <?= $totalPaginas ?>.
-                        Mostrando <?= $totalHistorial > 0 ? $offset + 1 : 0 ?> a
-                        <?= min($offset + count($historial), $totalHistorial) ?>
-                        de <?= $totalHistorial ?> reservas.
-                    </p>
+                    
                 </nav>
             <?php endif; ?>
 
@@ -552,13 +510,4 @@ require __DIR__ . '/../../Includes/navbar.php';
     </section>
 </main>
 
-<!-- VOLARA_HISTORIAL_FOOTER_REQUIRE_20261027 -->
-<?php
-$archivoFooterVolara = __DIR__ . '/../../Includes/footer.php';
-if (is_file($archivoFooterVolara)) {
-    require_once $archivoFooterVolara;
-} else {
-    error_log('VOLARA: no se encontró el footer: ' . $archivoFooterVolara);
-    echo '<div class="container alert alert-warning mt-4">No se encontró Includes/footer.php.</div>';
-}
-?>
+<?php require_once __DIR__ . '/../../Includes/footer.php'; ?>

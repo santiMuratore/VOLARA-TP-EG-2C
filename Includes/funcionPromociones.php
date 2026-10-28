@@ -7,7 +7,7 @@ function promocionVigente(int $codAerolinea, string $destino, ?string $fecha = n
 
     $conexion = conectarDB();
     $sql = "
-        SELECT codPromocion, descuento
+        SELECT codPromocion, descuento, descripcion
         FROM promociones
         WHERE codAerolinea = :codAerolinea
           AND estado = 'aprobada'

@@ -55,6 +55,7 @@ $porPagina = 4;
 $paginaSolicitada = max(1, (int) ($_GET['pagina'] ?? 1));
 
 $reservas = [];
+$gruposPendientes = [];
 $error = '';
 $mensajeExito = '';
 $totalReservas = 0;
@@ -116,11 +117,22 @@ $csrfToken = (string) $_SESSION['csrf_reservas'];
 $resultado = (string) ($_GET['resultado'] ?? '');
 if ($resultado === 'confirmada') {
     $mensajeExito = 'La reserva se confirmó correctamente.';
+    if (!empty($_SESSION['flash_pago']) && is_array($_SESSION['flash_pago'])) {
+        $cantidadPagada = (int) ($_SESSION['flash_pago']['cantidad'] ?? 0);
+        $totalPagado = (float) ($_SESSION['flash_pago']['total'] ?? 0);
+        $mensajeExito = 'Pago confirmado: ' . $cantidadPagada . ' '
+            . ($cantidadPagada === 1 ? 'asiento' : 'asientos')
+            . ' por un total de $' . number_format($totalPagado, 2, ',', '.') . '.';
+    }
+    unset($_SESSION['flash_pago']);
 } elseif ($resultado === 'cancelada') {
     $mensajeExito = 'La reserva se canceló correctamente.';
 }
 if (($_GET['creada'] ?? '') === '1') {
     $mensajeExito = 'Tu reserva se creó correctamente y quedó pendiente de pago.';
+    if ((int) ($_GET['cantidad'] ?? 1) > 1) {
+        $mensajeExito = 'Tus asientos quedaron reservados. Se pagan juntos, con una sola confirmación, desde «Pagos pendientes».';
+    }
 }
 
 /*
@@ -157,7 +169,7 @@ try {
                 $conexion->beginTransaction();
 
                 $sqlActual = "
-                    SELECT r.codReserva, r.codVuelo, r.estadoReserva, v.fecha, v.hora
+                    SELECT r.codReserva, r.codVuelo, r.estadoReserva, r.codCompra, v.fecha, v.hora
                     FROM reservas r
                     INNER JOIN vuelos v ON v.codVuelo = r.codVuelo
                     WHERE r.codReserva = :codReserva
@@ -182,23 +194,70 @@ try {
                         throw new DomainException('Esta reserva ya no está pendiente de pago.');
                     }
 
-                    $stmt = $conexion->prepare(" 
+                    /*
+                     * El pago es único por compra: se confirman juntas todas las
+                     * reservas pendientes que comparten el mismo codCompra.
+                     * Las reservas anteriores sin codCompra se pagan por separado.
+                     */
+                    $codCompraActual = (string) ($reservaActual['codCompra'] ?? '');
+
+                    if ($codCompraActual !== '') {
+                        $stmt = $conexion->prepare("
+                            SELECT codReserva, precioFinal
+                            FROM reservas
+                            WHERE codUsuario = :codUsuario
+                              AND codCompra = :codCompra
+                              AND estadoReserva = 'pendiente de pago'
+                            FOR UPDATE
+                        ");
+                        $stmt->execute([
+                            'codUsuario' => $codUsuario,
+                            'codCompra' => $codCompraActual,
+                        ]);
+                    } else {
+                        $stmt = $conexion->prepare("
+                            SELECT codReserva, precioFinal
+                            FROM reservas
+                            WHERE codUsuario = :codUsuario
+                              AND codReserva = :codReserva
+                              AND estadoReserva = 'pendiente de pago'
+                            FOR UPDATE
+                        ");
+                        $stmt->execute([
+                            'codUsuario' => $codUsuario,
+                            'codReserva' => (int) $codReservaPost,
+                        ]);
+                    }
+
+                    $reservasAPagar = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                    if (empty($reservasAPagar)) {
+                        throw new DomainException('No hay reservas pendientes de pago para confirmar. Actualizá la página.');
+                    }
+
+                    $codigosAPagar = array_map('intval', array_column($reservasAPagar, 'codReserva'));
+                    $totalAPagar = round((float) array_sum(array_column($reservasAPagar, 'precioFinal')), 2);
+                    $marcadores = implode(',', array_fill(0, count($codigosAPagar), '?'));
+
+                    $stmt = $conexion->prepare("
                         UPDATE reservas
                         SET estadoReserva = 'confirmada', fechaPago = NOW()
-                        WHERE codReserva = :codReserva
-                          AND codUsuario = :codUsuario
+                        WHERE codUsuario = ?
                           AND estadoReserva = 'pendiente de pago'
+                          AND codReserva IN ($marcadores)
                     ");
-                    $stmt->execute([
-                        'codReserva' => (int) $codReservaPost,
-                        'codUsuario' => $codUsuario,
-                    ]);
-                    if ($stmt->rowCount() !== 1) {
-                        throw new DomainException('No se pudo confirmar esta reserva. Actualizá la página e intentá nuevamente.');
+                    $stmt->execute(array_merge([$codUsuario], $codigosAPagar));
+
+                    if ($stmt->rowCount() !== count($codigosAPagar)) {
+                        throw new DomainException('No se pudo confirmar el pago. Actualizá la página e intentá nuevamente.');
                     }
 
                     $conexion->commit();
                     $_SESSION['csrf_reservas'] = bin2hex(random_bytes(32));
+                    $_SESSION['flash_pago'] = [
+                        'cantidad' => count($codigosAPagar),
+                        'total' => $totalAPagar,
+                    ];
                     header('Location: ' . $urlMisReservas . '?' . http_build_query([
                         'resultado' => 'confirmada',
                         'estado' => 'confirmada',
@@ -324,6 +383,7 @@ try {
             r.estadoReserva,
             r.precioFinal,
             r.asiento,
+            r.codCompra,
             v.codigoVuelo,
             v.origen,
             v.destino,
@@ -345,6 +405,45 @@ try {
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $reservas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    /* Pagos pendientes: una tarjeta por compra (asientos reservados juntos). */
+    $stmt = $conexion->prepare("
+        SELECT r.codReserva, r.codCompra, r.asiento, r.precioFinal,
+               v.codigoVuelo, v.origen, v.destino, v.fecha, v.hora
+        FROM reservas r
+        LEFT JOIN vuelos v ON v.codVuelo = r.codVuelo
+        WHERE r.codUsuario = :codUsuario
+          AND r.estadoReserva = 'pendiente de pago'
+        ORDER BY v.fecha, v.hora, r.codReserva
+    ");
+    $stmt->execute(['codUsuario' => $codUsuario]);
+
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+        $clave = ((string) ($fila['codCompra'] ?? '')) !== ''
+            ? 'c' . $fila['codCompra']
+            : 'r' . $fila['codReserva'];
+
+        if (!isset($gruposPendientes[$clave])) {
+            $gruposPendientes[$clave] = [
+                'codReserva' => (int) $fila['codReserva'],
+                'codigoVuelo' => (string) ($fila['codigoVuelo'] ?? ''),
+                'origen' => (string) ($fila['origen'] ?? ''),
+                'destino' => (string) ($fila['destino'] ?? ''),
+                'fecha' => (string) ($fila['fecha'] ?? ''),
+                'hora' => (string) ($fila['hora'] ?? ''),
+                'asientos' => [],
+                'cantidad' => 0,
+                'total' => 0.0,
+            ];
+        }
+
+        $asientoGrupo = trim((string) ($fila['asiento'] ?? ''));
+        if ($asientoGrupo !== '') {
+            $gruposPendientes[$clave]['asientos'][] = $asientoGrupo;
+        }
+        $gruposPendientes[$clave]['cantidad']++;
+        $gruposPendientes[$clave]['total'] += (float) $fila['precioFinal'];
+    }
 } catch (Throwable $e) {
     error_log('VOLARA - Error cargando reservas: ' . $e->getMessage());
     $error = 'No se pudieron cargar tus reservas. Revisá la conexión con la base de datos o el registro de errores de PHP.';
@@ -431,6 +530,59 @@ require __DIR__ . '/../../Includes/navbar.php';
                 </div>
             </nav>
 
+            <?php if (!empty($gruposPendientes) && in_array($estadoFiltro, ['todas', 'pendiente'], true)): ?>
+                <section class="mb-5" aria-labelledby="titulo-pagos-pendientes">
+                    <h2 class="h4 mb-1" id="titulo-pagos-pendientes">Pagos pendientes</h2>
+                    <p class="text-muted mb-3">Los asientos reservados juntos se pagan con una sola confirmación.</p>
+
+                    <div class="row g-4">
+                        <?php foreach ($gruposPendientes as $grupo): ?>
+                            <?php
+                            $fechaGrupo = $grupo['fecha'] !== '' && strtotime($grupo['fecha']) !== false
+                                ? date('d/m/Y', strtotime($grupo['fecha']))
+                                : 'Fecha no disponible';
+                            $horaGrupo = $grupo['hora'] !== '' ? substr($grupo['hora'], 0, 5) : '';
+                            ?>
+                            <div class="col-12">
+                                <article class="volara-card">
+                                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                        <div class="min-w-0">
+                                            <h3 class="h5 mb-1">
+                                                <?= htmlspecialchars($grupo['origen'], ENT_QUOTES, 'UTF-8') ?>
+                                                <i class="bi bi-arrow-right text-danger mx-1" aria-hidden="true"></i>
+                                                <?= htmlspecialchars($grupo['destino'], ENT_QUOTES, 'UTF-8') ?>
+                                            </h3>
+                                            <p class="text-muted small mb-2">
+                                                Vuelo <?= htmlspecialchars($grupo['codigoVuelo'], ENT_QUOTES, 'UTF-8') ?>
+                                                · <?= htmlspecialchars($fechaGrupo, ENT_QUOTES, 'UTF-8') ?> <?= htmlspecialchars($horaGrupo, ENT_QUOTES, 'UTF-8') ?>
+                                            </p>
+                                            <p class="mb-0">
+                                                <strong><?= (int) $grupo['cantidad'] ?> <?= (int) $grupo['cantidad'] === 1 ? 'asiento' : 'asientos' ?>:</strong>
+                                                <?php foreach ($grupo['asientos'] as $asientoGrupo): ?>
+                                                    <span class="badge text-bg-light border"><?= htmlspecialchars($asientoGrupo, ENT_QUOTES, 'UTF-8') ?></span>
+                                                <?php endforeach; ?>
+                                            </p>
+                                        </div>
+                                        <div class="text-md-end">
+                                            <p class="text-muted small mb-0">Total a pagar</p>
+                                            <p class="h4 mb-3">$<?= number_format($grupo['total'], 2, ',', '.') ?></p>
+                                            <form method="post" action="<?= htmlspecialchars($urlMisReservas . '?' . http_build_query(['estado' => $estadoFiltro, 'pagina' => $pagina]), ENT_QUOTES, 'UTF-8') ?>">
+                                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                                                <input type="hidden" name="codReserva" value="<?= (int) $grupo['codReserva'] ?>">
+                                                <input type="hidden" name="accion" value="confirmar">
+                                                <button type="submit" class="btn btn-volara">
+                                                    <i class="bi bi-credit-card me-1" aria-hidden="true"></i>Confirmar pago de $<?= number_format($grupo['total'], 2, ',', '.') ?>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </article>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
+
             <?php if ($error === '' && empty($reservas)): ?>
                 <div class="volara-card text-center py-5">
                     <div class="stat-icon stat-icon-red mx-auto mb-3"><i class="bi bi-ticket-perforated" aria-hidden="true"></i></div>
@@ -510,12 +662,9 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 </div>
                                 <div class="d-flex flex-wrap gap-2 mt-4">
                                     <?php if ($estadoNormalizado === 'pendiente de pago'): ?>
-                                        <form method="post" action="<?= htmlspecialchars($urlMisReservas . '?' . http_build_query(['estado' => $estadoFiltro, 'pagina' => $pagina]), ENT_QUOTES, 'UTF-8') ?>">
-                                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                                            <input type="hidden" name="codReserva" value="<?= (int) $reserva['codReserva'] ?>">
-                                            <input type="hidden" name="accion" value="confirmar">
-                                            <button type="submit" class="btn btn-volara"><i class="bi bi-credit-card me-1" aria-hidden="true"></i>Confirmar pago</button>
-                                        </form>
+                                        <p class="text-muted small mb-0 align-self-center">
+                                            <i class="bi bi-credit-card me-1" aria-hidden="true"></i>Se paga junto con el resto de tu compra, desde «Pagos pendientes».
+                                        </p>
                                     <?php endif; ?>
                                     <?php if ($puedeCancelar): ?>
                                         <form method="post" action="<?= htmlspecialchars($urlMisReservas . '?' . http_build_query(['estado' => $estadoFiltro, 'pagina' => $pagina]), ENT_QUOTES, 'UTF-8') ?>" onsubmit="return confirm('¿Seguro que querés cancelar esta reserva?');">
@@ -541,13 +690,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                     <nav class="volara-pagination-container" aria-label="Páginas de reservas">
                         <div class="volara-pagination">
                             <ul class="pagination">
-                                <li class="page-item <?= $pagina <= 1 ? 'disabled' : '' ?>">
-                                    <?php if ($pagina > 1): ?>
-                                        <a class="page-link" href="<?= htmlspecialchars($urlPagina($pagina - 1, $estadoFiltro), ENT_QUOTES, 'UTF-8') ?>" aria-label="Página anterior">Anterior</a>
-                                    <?php else: ?>
-                                        <span class="page-link">Anterior</span>
-                                    <?php endif; ?>
-                                </li>
+                               
                                 <?php for ($n = 1; $n <= $totalPaginas; $n++): ?>
                                     <li class="page-item <?= $n === $pagina ? 'active' : '' ?>">
                                         <?php if ($n === $pagina): ?>
@@ -557,18 +700,9 @@ require __DIR__ . '/../../Includes/navbar.php';
                                         <?php endif; ?>
                                     </li>
                                 <?php endfor; ?>
-                                <li class="page-item <?= $pagina >= $totalPaginas ? 'disabled' : '' ?>">
-                                    <?php if ($pagina < $totalPaginas): ?>
-                                        <a class="page-link" href="<?= htmlspecialchars($urlPagina($pagina + 1, $estadoFiltro), ENT_QUOTES, 'UTF-8') ?>" aria-label="Página siguiente">Siguiente</a>
-                                    <?php else: ?>
-                                        <span class="page-link">Siguiente</span>
-                                    <?php endif; ?>
-                                </li>
+    
                             </ul>
-                            <p class="volara-pagination-info">
-                                Página <?= $pagina ?> de <?= $totalPaginas ?>.
                             
-                            </p>
                         </div>
                     </nav>
                 <?php endif; ?>
