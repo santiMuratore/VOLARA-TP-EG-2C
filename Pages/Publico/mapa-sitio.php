@@ -93,7 +93,6 @@ if ($estaLogueado && $esPasajero) {
 
 if ($estaLogueado && $esCeo) {
     $mapa['CEO'] = [
-        'Inicio del CEO' => 'Pages/Ceo/index.php',
         'Gestionar vuelos' => 'Pages/Ceo/vuelos.php',
         'Promociones' => 'Pages/Ceo/promociones/promociones.php',
         'Reportes' => 'Pages/Ceo/reportes.php',

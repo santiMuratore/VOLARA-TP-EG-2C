@@ -125,7 +125,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                     Explorá VOLARA
                 </h2>
 
-                <p class="section-subtitle">
+                <p class="section-subtitle mx-auto">
                     Encontrá rápidamente lo que estás buscando.
                 </p>
             </div>

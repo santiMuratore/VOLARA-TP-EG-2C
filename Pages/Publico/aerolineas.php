@@ -183,7 +183,7 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                                 <div class="mt-auto">
                                     <a
-                                        href="<?= BASE_URL ?>/Pages/Publico/vuelos.php"
+                                        href="<?= BASE_URL ?>/Pages/Publico/vuelos.php?codAerolinea=<?= (int) $a['codAerolinea'] ?>"
                                         class="btn btn-volara-outline w-100"
                                     >
                                         Consultar vuelos

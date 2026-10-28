@@ -28,7 +28,8 @@ function conectarDB(): PDO
         return $conexion;
 
     } catch (PDOException $e) {
-        die('Error al conectar con la base de datos.');
+        header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
+        exit;
     }
 }
 
@@ -51,7 +52,8 @@ function requerirRol(string $rol): void
     requerirLogin();
 
     if ($_SESSION['tipoUsuario'] !== $rol) {
-        die('Acceso denegado. No tenés permisos para ingresar.');
+        header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
+        exit;
     }
 }
 
@@ -84,7 +86,9 @@ function usuarioActual(): array
     $usuario = $consulta->fetch(PDO::FETCH_ASSOC);
 
     if (!$usuario) {
-        die('No se encontró el usuario de la sesión.');
+        session_destroy();
+        header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
+        exit;
     }
 
     return $usuario;

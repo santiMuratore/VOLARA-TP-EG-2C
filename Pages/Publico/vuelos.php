@@ -2,16 +2,16 @@
 
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
+require_once __DIR__ . '/../../Includes/funcionPromociones.php';
 
 $titulo = 'Buscar vuelos';
-$pageDescription = 'Consultá los vuelos registrados en VOLARA y filtrá por origen, destino, fecha y clase.';
+$pageDescription = 'Consultá los vuelos registrados en VOLARA y filtrá por origen, destino, fecha, clase y aerolínea.';
 
 $origen = trim($_GET['origen'] ?? '');
 $destino = trim($_GET['destino'] ?? '');
 $fecha = trim($_GET['fecha'] ?? '');
-
+$codAerolinea = filter_var($_GET['codAerolinea'] ?? null, FILTER_VALIDATE_INT) ?: 0;
 $clase = strtolower(trim($_GET['clase'] ?? ''));
-
 $clasesPermitidas = ['economica', 'premium', 'business'];
 
 if (!in_array($clase, $clasesPermitidas, true)) {
@@ -42,6 +42,9 @@ $error = null;
 try {
     $conexion = conectarDB();
 
+    // Obtener aerolíneas para el select del buscador
+    $aerolineas = $conexion->query("SELECT codAerolinea, nombre FROM aerolineas ORDER BY nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
+
     $condiciones = ['v.activo = 1'];
     $parametros = [];
 
@@ -63,6 +66,11 @@ try {
     if ($clase !== '') {
         $condiciones[] = 'LOWER(v.clase) = :clase';
         $parametros['clase'] = $clase;
+    }
+
+    if ($codAerolinea > 0) {
+        $condiciones[] = 'v.codAerolinea = :codAerolinea';
+        $parametros['codAerolinea'] = $codAerolinea;
     }
 
     $where = ' WHERE ' . implode(' AND ', $condiciones);
@@ -92,6 +100,7 @@ try {
         SELECT
             v.codVuelo,
             v.codigoVuelo,
+            v.codAerolinea,
             v.origen,
             v.destino,
             v.fecha,
@@ -108,7 +117,8 @@ try {
     $stmt = $conexion->prepare($sql);
 
     foreach ($parametros as $nombre => $valor) {
-        $stmt->bindValue(':' . $nombre, $valor, PDO::PARAM_STR);
+        $tipo = is_int($valor) ? PDO::PARAM_INT : PDO::PARAM_STR;
+        $stmt->bindValue(':' . $nombre, $valor, $tipo);
     }
 
     $stmt->bindValue(':limite', $porPagina, PDO::PARAM_INT);
@@ -140,6 +150,9 @@ if ($fecha !== '') {
 
 if ($clase !== '') {
     $filtrosActivos['clase'] = $clase;
+}
+if ($codAerolinea > 0) {
+    $filtrosActivos['codAerolinea'] = $codAerolinea;
 }
 
 $urlPaginacion = BASE_URL . '/Pages/Publico/vuelos.php';
@@ -342,6 +355,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 class="volara-input"
                                 id="fecha"
                                 name="fecha"
+                                min="<?= date('Y-m-d') ?>"
                                 value="<?= htmlspecialchars(
                                     $fecha,
                                     ENT_QUOTES,
@@ -378,6 +392,31 @@ require __DIR__ . '/../../Includes/navbar.php';
                                     <?= $clase === 'business' ? 'selected' : '' ?>>
                                     Business
                                 </option>
+
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="volara-label" for="codAerolinea">
+                                Aerolínea
+                            </label>
+
+                            <select
+                                class="volara-select"
+                                id="codAerolinea"
+                                name="codAerolinea">
+
+                                <option value="">Todas las aerolíneas</option>
+
+                                <?php if (!empty($aerolineas)): ?>
+                                    <?php foreach ($aerolineas as $aero): ?>
+                                        <option
+                                            value="<?= (int) $aero['codAerolinea'] ?>"
+                                            <?= $codAerolinea === (int) $aero['codAerolinea'] ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($aero['nombre'], ENT_QUOTES, 'UTF-8') ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
 
                             </select>
                         </div>
@@ -487,34 +526,29 @@ require __DIR__ . '/../../Includes/navbar.php';
                     <?php foreach ($vuelos as $v): ?>
 
                         <?php
-                        $claseVuelo = strtolower(
-                            (string) ($v['clase'] ?? '')
-                        );
-
+                        $claseVuelo = strtolower((string) ($v['clase'] ?? ''));
                         $nombresClases = [
                             'economica' => 'Económica',
                             'premium' => 'Premium',
                             'business' => 'Business',
                         ];
+                        $nombreClase = $nombresClases[$claseVuelo] ?? ucfirst($claseVuelo);
 
-                        $nombreClase = $nombresClases[$claseVuelo]
-                            ?? ucfirst($claseVuelo);
-
-                        $fechaVuelo = !empty($v['fecha'])
-                            && strtotime($v['fecha']) !== false
+                        $fechaVuelo = !empty($v['fecha']) && strtotime($v['fecha']) !== false
                             ? date('d/m/Y', strtotime($v['fecha']))
                             : 'Sin fecha';
 
-                        $horaVuelo = !empty($v['hora'])
-                            ? substr((string) $v['hora'], 0, 5)
-                            : '--:--';
+                        $horaVuelo = !empty($v['hora']) ? substr((string) $v['hora'], 0, 5) : '--:--';
+
+                        $promocion = promocionVigente((int) $v['codAerolinea'], (string) $v['destino']);
+                        $precioBase = (float) $v['precio'];
+                        $precioFinal = precioConDescuento($precioBase, $promocion);
                         ?>
 
                         <div class="col-12 col-lg-6">
 
                             <article class="flight-card h-100">
 
-                                <!-- Aerolínea y código -->
                                 <div class="d-flex flex-wrap
                                             justify-content-between
                                             align-items-start gap-2 mb-4">
@@ -548,7 +582,6 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                                 </div>
 
-                                <!-- Ruta -->
                                 <div class="flight-route">
 
                                     <div class="flight-airport">
@@ -621,21 +654,24 @@ require __DIR__ . '/../../Includes/navbar.php';
                                         ) ?>
                                     </div>
 
-                                    <div class="flight-price">
-
-                                        <div class="amount">
-                                            <?= '$' . number_format(
-                                                (float) $v['precio'],
-                                                0,
-                                                ',',
-                                                '.'
-                                            ) ?>
-                                        </div>
-
-                                        <small class="text-muted">
-                                            Precio registrado
-                                        </small>
-
+                                    <div class="flight-price text-end">
+                                        <?php if ($promocion): ?>
+                                            <div class="badge bg-success mb-1">
+                                                <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>
+                                                <?= number_format($promocion['descuento'], 0, ',', '.') ?>% OFF
+                                            </div>
+                                            <div class="amount text-success">
+                                                $<?= number_format($precioFinal, 2, ',', '.') ?>
+                                            </div>
+                                            <small class="text-muted">
+                                                <del>$<?= number_format($precioBase, 2, ',', '.') ?></del>
+                                            </small>
+                                        <?php else: ?>
+                                            <div class="amount">
+                                                $<?= number_format($precioBase, 2, ',', '.') ?>
+                                            </div>
+                                            <small class="text-muted">Precio final</small>
+                                        <?php endif; ?>
                                     </div>
 
                                 </div>
