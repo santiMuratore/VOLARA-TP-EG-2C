@@ -69,7 +69,9 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 <h3 class="h6 mb-1">Correo electrónico</h3>
 
                                 <a
-                                    href="mailto:volaraairline@gmail.com"
+                                    href="https://mail.google.com/mail/?view=cm&fs=1&to=volaraairline@gmail.com&su=Consulta%20sobre%20VOLARA"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     class="text-break"
                                 >
                                     volaraairline@gmail.com

@@ -79,7 +79,11 @@ $esPasajeroFooter = in_array(
                 </p>
 
                 <p class="mb-2">
-                    <a href="mailto:volaraairline@gmail.com">
+                    <a
+                        href="https://mail.google.com/mail/?view=cm&fs=1&to=volaraairline@gmail.com&su=Consulta%20sobre%20VOLARA"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <i class="bi bi-envelope me-2" aria-hidden="true"></i>
                         volaraairline@gmail.com
                     </a>
