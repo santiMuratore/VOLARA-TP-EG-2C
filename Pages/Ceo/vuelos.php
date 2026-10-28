@@ -224,8 +224,8 @@
 
                             <div class="col-md-4 form-group">
                                 <label class="volara-label" for="precio">Precio *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" min="0.01" step="0.01"
-                                       value="<?= htmlspecialchars($_POST['precio'] ?? '') ?>" required>
+                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" min="100000" step="10000"
+                                       value="<?= htmlspecialchars($_POST['precio'] ?? 100000) ?>" required>
                                 <?php if (isset($errores['precio'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['precio']) ?></div>
                                 <?php endif; ?>
@@ -233,8 +233,8 @@
 
                             <div class="col-md-4 form-group">
                                 <label class="volara-label" for="cantidad">Asientos *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'cantidad') ?>" type="number" id="cantidad" name="cantidad" min="1" step="1"
-                                       value="<?= htmlspecialchars($_POST['cantidad'] ?? '') ?>" required>
+                                <input class="volara-input <?= claseInvalida($errores, 'cantidad') ?>" type="number" id="cantidad" name="cantidad" min="100" step="10"
+                                       value="<?= htmlspecialchars($_POST['cantidad'] ?? 100) ?>" required>
                                 <?php if (isset($errores['cantidad'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['cantidad']) ?></div>
                                 <?php endif; ?>
