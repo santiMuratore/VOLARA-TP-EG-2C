@@ -185,10 +185,10 @@ explicar, no deben entregarlo.
 
 El informe debe incluir una sección "Uso de herramientas de IA" (media carilla alcanza no debe ser extenso) con:
 
-- [ ] *Qué herramientas usaron* (nombre y versión aproximada).
-- [ ] *Para qué las usaron*: código, redacción del informe, diagramas, estimaciones,
+- [X] *Qué herramientas usaron* (nombre y versión aproximada).
+- [X] *Para qué las usaron*: código, redacción del informe, diagramas, estimaciones,
       debugging, traducción, etc.
-- [ ] *Qué verificaron y cómo*: para el código y los datos generados, qué chequearon
+- [X] *Qué verificaron y cómo*: para el código y los datos generados, qué chequearon
       a mano, qué corrigieron y por qué.
 
 Si el grupo no utilizó ninguna herramienta de IA, también debe declararlo.
