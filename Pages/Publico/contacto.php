@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
@@ -98,7 +97,9 @@ require __DIR__ . '/../../Includes/navbar.php';
                         </div>
 
                         <a
-                            href="mailto:volara.aerolinea@gmail.com?subject=Consulta%20sobre%20VOLARA"
+                            href="https://mail.google.com/mail/?view=cm&fs=1&to=volaraairline@gmail.com&su=Consulta%20sobre%20VOLARA"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             class="btn btn-volara"
                         >
                             <i class="bi bi-send me-2"></i>

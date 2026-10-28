@@ -9,6 +9,14 @@ $conexion = conectarDB();
 $mensaje = '';
 $error = '';
 
+if (empty($_SESSION['csrf_ceos'])) {
+    $_SESSION['csrf_ceos'] =
+        bin2hex(random_bytes(32));
+}
+
+$csrfToken =
+    $_SESSION['csrf_ceos'];
+
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
