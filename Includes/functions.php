@@ -56,11 +56,8 @@ function conectarDB(): PDO
             . $e->getMessage()
         );
 
-        http_response_code(500);
-
-        exit(
-            'No se pudo conectar con la base de datos.'
-        );
+        require_once __DIR__ . '/errorDB.php';
+        exit();
     }
 }
 
