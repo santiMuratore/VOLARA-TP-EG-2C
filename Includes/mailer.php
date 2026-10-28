@@ -4,7 +4,12 @@ require_once __DIR__ . '/../Librerias/PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../Librerias/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/../Librerias/PHPMailer/src/SMTP.php';
 
-require_once __DIR__ . '/../config/config.local.php';
+$configLocal =
+    __DIR__ . '/../config/config.local.php';
+
+if (is_file($configLocal)) {
+    require_once $configLocal;
+}
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -61,8 +66,10 @@ function enviarMail(
 
     } catch (Exception $e) {
 
-        echo 'Error de PHPMailer: '
-            . htmlspecialchars($mail->ErrorInfo);
+        error_log(
+            'Error de PHPMailer: '
+            . $mail->ErrorInfo
+        );
 
         return false;
     }

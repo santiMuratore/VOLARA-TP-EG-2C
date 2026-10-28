@@ -161,7 +161,7 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
             <p class="text-muted mb-3">Actualizá el título, el contenido y la vigencia de la novedad.</p>
             <nav aria-label="Ruta de navegación">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="<?= $escapar($baseUrl . '/Pages/Admin/index.php') ?>">Panel de administración</a></li>
+                    <li class="breadcrumb-item"><a href="<?= $escapar($baseUrl . '/Pages/Publico/index.php') ?>">Inicio</a></li>
                     <li class="breadcrumb-item"><a href="<?= $escapar($urlListado) ?>">Novedades</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Editar</li>
                 </ol>

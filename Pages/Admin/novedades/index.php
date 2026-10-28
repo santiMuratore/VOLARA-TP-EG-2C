@@ -152,7 +152,7 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
             <nav aria-label="Ruta de navegación">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item">
-                        <a href="<?= $escapar($baseUrl . '/Pages/Admin/index.php') ?>">Panel de administración</a>
+                        <a href="<?= $escapar($baseUrl . '/Pages/Publico/index.php') ?>">Inicio</a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">Novedades</li>
                 </ol>

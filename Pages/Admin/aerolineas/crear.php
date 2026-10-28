@@ -142,7 +142,7 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
             <p class="text-muted mb-3">Completá los datos para registrar una nueva aerolínea.</p>
             <nav aria-label="Ruta de navegación">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="<?= $escapar($baseUrl . '/Pages/Admin/index.php') ?>">Panel de administración</a></li>
+                    <li class="breadcrumb-item"><a href="<?= $escapar($baseUrl . '/Pages/Publico/index.php') ?>">Inicio</a></li>
                     <li class="breadcrumb-item"><a href="<?= $escapar($urlListado) ?>">Aerolíneas</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Crear</li>
                 </ol>
