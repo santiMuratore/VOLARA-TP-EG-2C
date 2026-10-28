@@ -209,14 +209,32 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                 Contraseña
                             </label>
 
+                            <div class="password-field">
+
                             <input
                                 type="password"
                                 id="clave"
                                 name="clave"
                                 class="volara-input"
                                 placeholder="Ingresá tu contraseña"
+                                autocomplete="current-password"
                                 required
                             >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="clave"
+                                aria-label="Mostrar contraseña"
+                                title="Mostrar contraseña"
+                            >
+                                <i
+                                    class="bi bi-eye"
+                                    aria-hidden="true"
+                                ></i>
+                            </button>
+
+                        </div>
 
                         </div>
 
