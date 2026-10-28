@@ -61,6 +61,7 @@ function enviarMail(
         $mail->isHTML(true);
 
         $mail->Subject = $asunto;
+        $mail->Body = $cuerpo;
         $mail->AltBody =
             strip_tags($cuerpo);
 

@@ -43,7 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (string) $csrfRecibido
         )
     ) {
-        header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
+        header(
+            'Location: '
+            . rtrim(BASE_URL, '/')
+            . '/Pages/Publico/index.php'
+        );
         exit;
     }
 
