@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteBase /VOLARA-TP-EG-2C/
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ Pages/Publico/404.php [L]
