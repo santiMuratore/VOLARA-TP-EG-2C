@@ -3,6 +3,15 @@
 require_once __DIR__ . '/../Includes/functions.php';
 require_once __DIR__ . '/../Includes/mailer.php';
 
+/*
+ * Esta página es solo para visitantes: si ya hay una sesión iniciada
+ * (por ejemplo, abierta desde otra pestaña), se redirige al inicio.
+ */
+if (!empty($_SESSION['codUsuario'])) {
+    header('Location: ' . rtrim(BASE_URL, '/') . '/Pages/Publico/index.php');
+    exit;
+}
+
 $errores = [];
 $aerolineas = [];
 $conexion = null;
