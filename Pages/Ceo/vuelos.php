@@ -156,6 +156,11 @@
                     <?php endif; ?>
 
                     <form action="<?= htmlspecialchars($_SERVER["PHP_SELF"]) ?>" method="post">
+                        <p class="required-help">
+                            Los campos marcados con
+                            <span class="required-mark" aria-hidden="true">*</span>
+                            son obligatorios.
+                        </p>
                         <input
                             type="hidden"
                             name="csrf_token"
@@ -169,7 +174,7 @@
                         <!-- Fila 1: origen y destino -->
                         <div class="row">
                             <div class="col-md-6 form-group">
-                                <label class="volara-label" for="origen">Origen *</label>
+                                <label class="volara-label" for="origen">Origen <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'origen') ?>" type="text" id="origen" name="origen" maxlength="100"
                                        value="<?= htmlspecialchars($_POST['origen'] ?? '') ?>" required>
                                 <?php if (isset($errores['origen'])): ?>
@@ -178,7 +183,7 @@
                             </div>
 
                             <div class="col-md-6 form-group">
-                                <label class="volara-label" for="destino">Destino *</label>
+                                <label class="volara-label" for="destino">Destino <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'destino') ?>" type="text" id="destino" name="destino" maxlength="100"
                                        value="<?= htmlspecialchars($_POST['destino'] ?? '') ?>" required>
                                 <?php if (isset($errores['destino'])): ?>
@@ -190,7 +195,7 @@
                         <!-- Fila 2: fecha y hora -->
                         <div class="row">
                             <div class="col-md-6 form-group">
-                                <label class="volara-label" for="fecha">Fecha *</label>
+                                <label class="volara-label" for="fecha">Fecha <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'fecha') ?>" type="date" id="fecha" name="fecha" min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
                                        value="<?= htmlspecialchars($_POST['fecha'] ?? '') ?>" required>
                                 <?php if (isset($errores['fecha'])): ?>
@@ -199,7 +204,7 @@
                             </div>
 
                             <div class="col-md-6 form-group">
-                                <label class="volara-label" for="hora">Hora *</label>
+                                <label class="volara-label" for="hora">Hora <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'hora') ?>" type="time" id="hora" name="hora"
                                        value="<?= htmlspecialchars($_POST['hora'] ?? '') ?>" required>
                                 <?php if (isset($errores['hora'])): ?>
@@ -211,7 +216,7 @@
                         <!-- Fila 3: clase, precio y cantidad de asientos -->
                         <div class="row">
                             <div class="col-md-4 form-group">
-                                <label class="volara-label" for="clase">Clase *</label>
+                                <label class="volara-label" for="clase">Clase <span class="required-mark" aria-hidden="true">*</span></label>
                                 <select class="volara-select <?= claseInvalida($errores, 'clase') ?>" id="clase" name="clase" required>
                                     <option value="economica" <?= ($_POST['clase'] ?? '') === 'economica' ? 'selected' : '' ?>>Económica</option>
                                     <option value="premium" <?= ($_POST['clase'] ?? '') === 'premium' ? 'selected' : '' ?>>Premium</option>
@@ -223,7 +228,7 @@
                             </div>
 
                             <div class="col-md-4 form-group">
-                                <label class="volara-label" for="precio">Precio *</label>
+                                <label class="volara-label" for="precio">Precio <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" min="100000" step="10000"
                                        value="<?= htmlspecialchars($_POST['precio'] ?? 100000) ?>" required>
                                 <?php if (isset($errores['precio'])): ?>
@@ -232,7 +237,7 @@
                             </div>
 
                             <div class="col-md-4 form-group">
-                                <label class="volara-label" for="cantidad">Asientos *</label>
+                                <label class="volara-label" for="cantidad">Asientos <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'cantidad') ?>" type="number" id="cantidad" name="cantidad" min="100" step="10"
                                        value="<?= htmlspecialchars($_POST['cantidad'] ?? 100) ?>" required>
                                 <?php if (isset($errores['cantidad'])): ?>

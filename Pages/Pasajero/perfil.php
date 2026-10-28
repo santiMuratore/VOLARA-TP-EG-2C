@@ -460,6 +460,11 @@ require $archivoNavbar;
                             <hr class="my-4">
 
                             <form method="POST" action="">
+                                <p class="required-help">
+                                    Los campos marcados con
+                                    <span class="required-mark" aria-hidden="true">*</span>
+                                    son obligatorios.
+                                </p>
 
                                 <input
                                     type="hidden"
@@ -480,7 +485,8 @@ require $archivoNavbar;
                                         <label
                                             class="volara-label"
                                             for="nombre">
-                                            Nombre *
+                                            Nombre
+                                            <span class="required-mark" aria-hidden="true">*</span>
                                         </label>
 
                                         <input
@@ -505,7 +511,8 @@ require $archivoNavbar;
                                         <label
                                             class="volara-label"
                                             for="apellido">
-                                            Apellido *
+                                            Apellido
+                                            <span class="required-mark" aria-hidden="true">*</span>
                                         </label>
 
                                         <input
