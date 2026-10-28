@@ -395,7 +395,6 @@ $urlPromocionesCeo = $baseUrl . '/Pages/Ceo/promociones/promociones.php';
                                     </a>
                                 </li>
                                 <li>
-<<<<<<< HEAD
                                     <a
                                         class="dropdown-item<?= $claseActiva(
                                             $rutaEsActual('Pages/Ceo/promociones/promociones.php')
@@ -404,11 +403,9 @@ $urlPromocionesCeo = $baseUrl . '/Pages/Ceo/promociones/promociones.php';
 
                                         <i class="bi bi-megaphone me-2" aria-hidden="true"></i>
                                         Gestionar promociones
-=======
                                     <a class="dropdown-item<?= $claseActiva($rutaEsActual('Pages/Ceo/promociones/promociones.php')) ?>" href="<?= $escapar($urlPromocionesCeo) ?>">
                                         <i class="bi bi-megaphone me-2" aria-hidden="true"></i>Gestionar promociones
->>>>>>> 21e3f1b4ad24721b1862f9889ed0fc6d759e2978
-                                    </a>
+                                  </a>
                                 </li>
                             </ul>
                         </li>
