@@ -268,13 +268,11 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
 
 
                 <?php if ($total > $porPagina): ?>
-                    <nav
-                        class="volara-pagination-container mt-4"
-                        aria-label="Páginas de aerolíneas">
+                    <div class="volara-pagination-container mt-4">
                         <div class="volara-pagination">
                             <?= $paginationHTML ?>
                         </div>
-                    </nav>
+                    </div>
                 <?php endif; ?>
 
             <?php else: ?>

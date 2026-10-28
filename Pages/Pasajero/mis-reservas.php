@@ -447,6 +447,36 @@ require __DIR__ . '/../../Includes/navbar.php';
 
     <section class="volara-public-section">
         <div class="container">
+            <?php if ($estadoFiltro === 'pendiente' || isset($_GET['creada'])): ?>
+
+                <div class="booking-progress">
+                    <p class="booking-progress-text">
+                        Paso 3 de 3 · Confirmá el pago
+                    </p>
+
+                    <ol class="booking-steps" aria-label="Progreso de la reserva">
+                        <li class="booking-step completed">
+                            <span class="booking-step-number">
+                                <i class="bi bi-check-lg" aria-hidden="true"></i>
+                            </span>
+                            <span>Buscar vuelo</span>
+                        </li>
+
+                        <li class="booking-step completed">
+                            <span class="booking-step-number">
+                                <i class="bi bi-check-lg" aria-hidden="true"></i>
+                            </span>
+                            <span>Elegir asientos</span>
+                        </li>
+
+                        <li class="booking-step active" aria-current="step">
+                            <span class="booking-step-number">3</span>
+                            <span>Confirmar pago</span>
+                        </li>
+                    </ol>
+                </div>
+
+            <?php endif; ?>
             <?php if ($mensajeExito !== ''): ?>
                 <div class="volara-alert alert-success" role="status">
                     <i class="bi bi-check-circle-fill" aria-hidden="true"></i>

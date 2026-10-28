@@ -36,6 +36,10 @@ $clasesEstado = [
     'denegada'  => 'badge-denied',
 ];
 
+// Mensaje de resultado de crear, modificar o eliminar (se muestra una sola vez)
+$mensaje = $_SESSION['flash_promociones'] ?? null;
+unset($_SESSION['flash_promociones']);
+
 $titulo = 'Mis promociones';
 require_once __DIR__ . '/../../../Includes/header.php';
 require_once __DIR__ . '/../../../Includes/navbar.php';
@@ -48,6 +52,13 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
             <i class="bi bi-plus-lg" aria-hidden="true"></i> Crear promoción
         </a>
     </div>
+
+    <?php if ($mensaje): ?>
+        <div class="volara-alert alert-<?= $mensaje['tipo'] === 'success' ? 'success' : 'danger' ?>"
+             role="<?= $mensaje['tipo'] === 'success' ? 'status' : 'alert' ?>">
+            <?= htmlspecialchars($mensaje['texto']) ?>
+        </div>
+    <?php endif; ?>
 
     <?php if (empty($promociones)): ?>
         <div class="empty-state">

@@ -885,7 +885,30 @@ require_once __DIR__ . '/../../Includes/navbar.php';
 
     <section class="section">
         <div class="container">
+            <div class="booking-progress">
+                <p class="booking-progress-text">
+                    Paso 2 de 3 · Elegí tus asientos
+                </p>
 
+                <ol class="booking-steps" aria-label="Progreso de la reserva">
+                    <li class="booking-step completed">
+                        <span class="booking-step-number">
+                            <i class="bi bi-check-lg" aria-hidden="true"></i>
+                        </span>
+                        <span>Buscar vuelo</span>
+                    </li>
+
+                    <li class="booking-step active" aria-current="step">
+                        <span class="booking-step-number">2</span>
+                        <span>Elegir asientos</span>
+                    </li>
+
+                    <li class="booking-step">
+                        <span class="booking-step-number">3</span>
+                        <span>Confirmar pago</span>
+                    </li>
+                </ol>
+            </div>
             <?php if ($error !== null): ?>
                 <div class="volara-alert alert-danger mb-4" role="alert">
                     <i class="bi bi-exclamation-circle me-2" aria-hidden="true"></i>

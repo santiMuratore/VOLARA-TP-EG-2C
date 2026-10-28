@@ -146,7 +146,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-6">
                 <div class="volara-card">
-                    <h2 class="h4">Modificar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?></h2>
+                    <h1 class="h4">Modificar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?></h1>
                     <p class="section-subtitle mb-3">
                         Clase <?= htmlspecialchars($nombresClase[$vuelo['clase']] ?? $vuelo['clase']) ?>
                     </p>
@@ -171,6 +171,11 @@
                     <?php endif; ?>
 
                     <form action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>?id=<?= (int) $codVuelo ?>" method="post">
+                        <p class="required-help">
+                            Los campos marcados con
+                            <span class="required-mark" aria-hidden="true">*</span>
+                            son obligatorios.
+                        </p>
                         <input
                             type="hidden"
                             name="csrf_token"
@@ -184,7 +189,7 @@
                         <!-- Fila 1: origen y destino -->
                         <div class="row">
                             <div class="col-md-6 form-group">
-                                <label class="volara-label" for="origen">Origen *</label>
+                                <label class="volara-label" for="origen">Origen <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'origen') ?>" type="text" id="origen" name="origen" maxlength="100"
                                        value="<?= htmlspecialchars($origen) ?>" <?= $soloPrecio ? 'readonly' : '' ?> required>
                                 <?php if (isset($errores['origen'])): ?>
@@ -193,7 +198,7 @@
                             </div>
 
                             <div class="col-md-6 form-group">
-                                <label class="volara-label" for="destino">Destino *</label>
+                                <label class="volara-label" for="destino">Destino <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'destino') ?>" type="text" id="destino" name="destino" maxlength="100"
                                        value="<?= htmlspecialchars($destino) ?>" <?= $soloPrecio ? 'readonly' : '' ?> required>
                                 <?php if (isset($errores['destino'])): ?>
@@ -205,7 +210,7 @@
                         <!-- Fila 2: fecha y hora -->
                         <div class="row">
                             <div class="col-md-6 form-group">
-                                <label class="volara-label" for="fecha">Fecha *</label>
+                                <label class="volara-label" for="fecha">Fecha <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'fecha') ?>" type="date" id="fecha" name="fecha"
                                        value="<?= htmlspecialchars($fecha) ?>" <?= $soloPrecio ? 'readonly' : '' ?> required>
                                 <?php if (isset($errores['fecha'])): ?>
@@ -214,7 +219,7 @@
                             </div>
 
                             <div class="col-md-6 form-group">
-                                <label class="volara-label" for="hora">Hora *</label>
+                                <label class="volara-label" for="hora">Hora <span class="required-mark" aria-hidden="true">*</span></label>
                                 <input class="volara-input <?= claseInvalida($errores, 'hora') ?>" type="time" id="hora" name="hora"
                                        value="<?= htmlspecialchars($hora) ?>" <?= $soloPrecio ? 'readonly' : '' ?> required>
                                 <?php if (isset($errores['hora'])): ?>
@@ -227,7 +232,7 @@
                         <div class="row">
                             <div class="col-md-6 form-group">
                                 <label class="volara-label" for="precio">Precio *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" min="0.01" step="0.01"
+                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" min="100000" step="10000"
                                        value="<?= htmlspecialchars($precio) ?>" required>
                                 <?php if (isset($errores['precio'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['precio']) ?></div>

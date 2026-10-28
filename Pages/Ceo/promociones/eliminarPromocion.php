@@ -28,6 +28,10 @@ $consulta->execute([
 $promocion = $consulta->fetch(PDO::FETCH_ASSOC);
 
 if (!$promocion) {
+    $_SESSION['flash_promociones'] = [
+        'tipo'  => 'danger',
+        'texto' => 'La promoción que querés eliminar no existe.',
+    ];
     header('Location: promociones.php');
     exit;
 }
@@ -43,23 +47,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (string) $csrfRecibido
         )
     ) {
-        header(
-            'Location: '
-            . rtrim(BASE_URL, '/')
-            . '/Pages/Publico/index.php'
-        );
+        $_SESSION['flash_promociones'] = [
+            'tipo'  => 'danger',
+            'texto' => 'La solicitud no es válida. No se eliminó la promoción.',
+        ];
+        header('Location: promociones.php');
         exit;
     }
 
-    $consulta = $conexion->prepare(
-        "DELETE FROM promociones
-         WHERE codPromocion = :codPromocion
-           AND codAerolinea = :codAerolinea"
-    );
-    $consulta->execute([
-        'codPromocion' => $codPromocion,
-        'codAerolinea' => $_SESSION['codAerolinea'],
-    ]);
+    try {
+        $consulta = $conexion->prepare(
+            "DELETE FROM promociones
+             WHERE codPromocion = :codPromocion
+               AND codAerolinea = :codAerolinea"
+        );
+        $consulta->execute([
+            'codPromocion' => $codPromocion,
+            'codAerolinea' => $_SESSION['codAerolinea'],
+        ]);
+
+        $_SESSION['flash_promociones'] = [
+            'tipo'  => 'success',
+            'texto' => 'La promoción se eliminó correctamente.',
+        ];
+    } catch (PDOException $e) {
+        error_log('VOLARA - Error al eliminar promoción: ' . $e->getMessage());
+        $_SESSION['flash_promociones'] = [
+            'tipo'  => 'danger',
+            'texto' => 'No se pudo eliminar la promoción. Intentá nuevamente.',
+        ];
+    }
 
     $_SESSION['csrf_eliminar_promocion'] =
         bin2hex(random_bytes(32));

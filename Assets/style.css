@@ -879,7 +879,7 @@ p:last-child {
 }
 
 .volara-input::placeholder {
-    color: #939BA5;
+    color: var(--volara-gray);
 }
 
 .volara-label {
@@ -1158,6 +1158,34 @@ p:last-child {
 
 .volara-table tbody tr:last-child td {
     border-bottom: 0;
+}
+
+/* Tabla de vuelos del CEO: compacta, sin scroll horizontal y sin cortar palabras ni números.
+   Solo la ruta puede pasar a otra línea, y únicamente entre palabras. */
+.tabla-vuelos thead th {
+    padding: 0.7rem 0.5rem;
+    font-size: 0.68rem;
+    letter-spacing: 0;
+}
+
+.tabla-vuelos tbody td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+
+.tabla-vuelos tbody td:nth-child(2) {
+    white-space: normal;
+}
+
+.tabla-vuelos .table-actions {
+    gap: 0.3rem;
+}
+
+.tabla-vuelos .table-action-btn {
+    width: 30px;
+    height: 30px;
 }
 
 .table-responsive,
@@ -2324,6 +2352,9 @@ main {
 }
 
 /* Enlaces */
+main a:not(.btn):not(.nav-link):not(.navbar-brand):not(.page-link):visited {
+    color: #6f3c78;
+}
 .volara-footer-links {
     display: flex;
     flex-direction: column;
@@ -2567,6 +2598,81 @@ main.volara-public-page ~ footer.volara-footer {
     }
 }
 
+/* ─── Pasos del proceso de reserva ─────────────────────── */
+
+.booking-progress {
+    margin-bottom: 2rem;
+}
+
+.booking-progress-text {
+    margin-bottom: 0.75rem;
+    color: var(--volara-gray);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.booking-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.booking-step {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--volara-border);
+    border-radius: var(--radius-md);
+    background: var(--volara-white);
+    color: var(--volara-gray);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.booking-step-number {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--volara-gray-light);
+    color: var(--volara-gray);
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.booking-step.active {
+    border-color: var(--volara-red);
+    background: var(--volara-red-light);
+    color: var(--volara-red);
+}
+
+.booking-step.active .booking-step-number {
+    background: var(--volara-red);
+    color: var(--volara-white);
+}
+
+.booking-step.completed {
+    color: var(--volara-success);
+}
+
+.booking-step.completed .booking-step-number {
+    background: var(--volara-success-light);
+    color: var(--volara-success);
+}
+
+@media (max-width: 767.98px) {
+    .booking-steps {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* =========================================================
    VOLARA - Paginación compacta para resultados de vuelos
    ========================================================= */
@@ -2751,8 +2857,18 @@ main.volara-public-page ~ footer.volara-footer {
     color: #151D25;
 }
 
-.password-toggle:focus,
 .password-toggle:focus-visible {
-    outline: none;
-    box-shadow: none;
+    outline: 3px solid var(--volara-red);
+    outline-offset: 2px;
+}
+
+.required-mark {
+    color: var(--volara-red);
+    font-weight: 800;
+}
+
+.required-help {
+    margin-bottom: 1rem;
+    color: var(--volara-gray);
+    font-size: 0.82rem;
 }
