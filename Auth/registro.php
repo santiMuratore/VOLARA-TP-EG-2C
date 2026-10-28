@@ -3,6 +3,15 @@
 require_once __DIR__ . '/../Includes/functions.php';
 require_once __DIR__ . '/../Includes/mailer.php';
 
+/*
+ * Esta página es solo para visitantes: si ya hay una sesión iniciada
+ * (por ejemplo, abierta desde otra pestaña), se redirige al inicio.
+ */
+if (!empty($_SESSION['codUsuario'])) {
+    header('Location: ' . rtrim(BASE_URL, '/') . '/Pages/Publico/index.php');
+    exit;
+}
+
 $errores = [];
 $aerolineas = [];
 $conexion = null;
@@ -61,27 +70,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $errores[] = 'El nombre es obligatorio.';
 
-} elseif (mb_strlen($nombre) < 2) {
+    } elseif (mb_strlen($nombre) < 2) {
 
-    $errores[] = 'El nombre debe contener al menos 2 caracteres.';
-}
+        $errores[] =
+            'El nombre debe contener al menos 2 caracteres.';
 
-if ($apellido === '') {
+    } elseif (mb_strlen($nombre) > 80) {
 
-    $errores[] = 'El apellido es obligatorio.';
+        $errores[] =
+            'El nombre no puede superar los 80 caracteres.';
+    }
 
-} elseif (mb_strlen($apellido) < 2) {
+    if ($apellido === '') {
 
-    $errores[] = 'El apellido debe contener al menos 2 caracteres.';
-}
+        $errores[] = 'El apellido es obligatorio.';
+
+    } elseif (mb_strlen($apellido) < 2) {
+
+        $errores[] =
+            'El apellido debe contener al menos 2 caracteres.';
+
+    } elseif (mb_strlen($apellido) > 80) {
+
+        $errores[] =
+            'El apellido no puede superar los 80 caracteres.';
+    }
 
 if (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
 
     $errores[] = 'El email no es válido.';
 
-} elseif (strlen($mail) > 254) {
+} elseif (strlen($mail) > 150) {
 
-    $errores[] = 'El email es demasiado largo.';
+    $errores[] =
+        'El email no puede superar los 150 caracteres.';
 }
 
 if (strlen($telefono) > 30) {
@@ -423,7 +445,7 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                             'UTF-8'
                                         ) ?>"
                                         minlength="2"
-                                        maxlength="100"
+                                        maxlength="80"
                                         required
                                     >
 
@@ -455,7 +477,7 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                             'UTF-8'
                                         ) ?>"
                                         minlength="2"
-                                        maxlength="100"
+                                        maxlength="80"
                                         required
                                     >
 
@@ -486,7 +508,7 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                             ENT_QUOTES,
                                             'UTF-8'
                                         ) ?>"
-                                        maxlength="254"
+                                        maxlength="150"
                                         placeholder="nombre@correo.com"
                                         required
                                     >
