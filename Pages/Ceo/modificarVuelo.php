@@ -227,7 +227,7 @@
                         <div class="row">
                             <div class="col-md-6 form-group">
                                 <label class="volara-label" for="precio">Precio *</label>
-                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" min="0.01" step="0.01"
+                                <input class="volara-input <?= claseInvalida($errores, 'precio') ?>" type="number" id="precio" name="precio" min="100000" step="10000"
                                        value="<?= htmlspecialchars($precio) ?>" required>
                                 <?php if (isset($errores['precio'])): ?>
                                     <div class="form-error"><?= htmlspecialchars($errores['precio']) ?></div>

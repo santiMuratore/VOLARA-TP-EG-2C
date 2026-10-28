@@ -79,15 +79,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     (codAerolinea, descripcion, descuento, destino, fechaDesde, fechaHasta, estado)
                 VALUES
                     (:codAerolinea, :descripcion, :descuento, :destino, :fechaDesde, :fechaHasta, 'pendiente')";
-        $consulta = $conexion->prepare($sql);
-        $consulta->execute([
-            'codAerolinea' => $_SESSION['codAerolinea'],
-            'descripcion'  => $descripcion,
-            'descuento'    => $descuento,
-            'destino'      => $destino !== '' ? $destino : null,
-            'fechaDesde'   => $fechaDesde !== '' ? $fechaDesde : null,
-            'fechaHasta'   => $fechaHasta !== '' ? $fechaHasta : null,
-        ]);
+        try {
+            $consulta = $conexion->prepare($sql);
+            $consulta->execute([
+                'codAerolinea' => $_SESSION['codAerolinea'],
+                'descripcion'  => $descripcion,
+                'descuento'    => $descuento,
+                'destino'      => $destino !== '' ? $destino : null,
+                'fechaDesde'   => $fechaDesde !== '' ? $fechaDesde : null,
+                'fechaHasta'   => $fechaHasta !== '' ? $fechaHasta : null,
+            ]);
+
+            $_SESSION['flash_promociones'] = [
+                'tipo'  => 'success',
+                'texto' => 'La promoción se creó correctamente. Queda pendiente hasta que el administrador la apruebe.',
+            ];
+        } catch (PDOException $e) {
+            error_log('VOLARA - Error al crear promoción: ' . $e->getMessage());
+            $_SESSION['flash_promociones'] = [
+                'tipo'  => 'danger',
+                'texto' => 'No se pudo crear la promoción. Intentá nuevamente.',
+            ];
+        }
 
         $_SESSION['csrf_alta_promocion'] =
             bin2hex(random_bytes(32));

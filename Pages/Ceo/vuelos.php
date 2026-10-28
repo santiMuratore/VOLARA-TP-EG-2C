@@ -278,7 +278,7 @@
                         </div>
                     <?php else: ?>
                         <div class="volara-table-responsive">
-                            <table class="volara-table">
+                            <table class="volara-table tabla-vuelos">
                                 <thead>
                                     <tr>
                                         <th>Vuelo</th>

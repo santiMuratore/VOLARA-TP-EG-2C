@@ -19,6 +19,10 @@ $consulta->execute([
 $promocion = $consulta->fetch(PDO::FETCH_ASSOC);
 
 if (!$promocion) {
+    $_SESSION['flash_promociones'] = [
+        'tipo'  => 'danger',
+        'texto' => 'La promoción que querés modificar no existe.',
+    ];
     header('Location: promociones.php');
     exit;
 }
@@ -98,26 +102,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errores)) {
-        $consulta = $conexion->prepare(
-            "UPDATE promociones
-             SET descripcion = :descripcion,
-                 descuento = :descuento,
-                 destino = :destino,
-                 fechaDesde = :fechaDesde,
-                 fechaHasta = :fechaHasta,
-                 estado = 'pendiente'
-             WHERE codPromocion = :codPromocion
-               AND codAerolinea = :codAerolinea"
-        );
-        $consulta->execute([
-            'descripcion'  => $descripcion,
-            'descuento'    => $descuento,
-            'destino'      => $destino !== '' ? $destino : null,
-            'fechaDesde'   => $fechaDesde !== '' ? $fechaDesde : null,
-            'fechaHasta'   => $fechaHasta !== '' ? $fechaHasta : null,
-            'codPromocion' => $codPromocion,
-            'codAerolinea' => $_SESSION['codAerolinea'],
-        ]);
+        try {
+            $consulta = $conexion->prepare(
+                "UPDATE promociones
+                 SET descripcion = :descripcion,
+                     descuento = :descuento,
+                     destino = :destino,
+                     fechaDesde = :fechaDesde,
+                     fechaHasta = :fechaHasta,
+                     estado = 'pendiente'
+                 WHERE codPromocion = :codPromocion
+                   AND codAerolinea = :codAerolinea"
+            );
+            $consulta->execute([
+                'descripcion'  => $descripcion,
+                'descuento'    => $descuento,
+                'destino'      => $destino !== '' ? $destino : null,
+                'fechaDesde'   => $fechaDesde !== '' ? $fechaDesde : null,
+                'fechaHasta'   => $fechaHasta !== '' ? $fechaHasta : null,
+                'codPromocion' => $codPromocion,
+                'codAerolinea' => $_SESSION['codAerolinea'],
+            ]);
+
+            $_SESSION['flash_promociones'] = [
+                'tipo'  => 'success',
+                'texto' => 'La promoción se modificó correctamente. Queda pendiente de aprobación.',
+            ];
+        } catch (PDOException $e) {
+            error_log('VOLARA - Error al modificar promoción: ' . $e->getMessage());
+            $_SESSION['flash_promociones'] = [
+                'tipo'  => 'danger',
+                'texto' => 'No se pudo modificar la promoción. Intentá nuevamente.',
+            ];
+        }
 
         $_SESSION['csrf_modificar_promocion'] =
             bin2hex(random_bytes(32));
