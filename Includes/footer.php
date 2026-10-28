@@ -292,6 +292,89 @@ document.querySelectorAll('.password-toggle').forEach(function (boton) {
         );
     });
 });
+
+document.querySelectorAll('form').forEach(function (formulario) {
+
+    const campos = formulario.querySelectorAll(
+        'input[required], select[required], textarea[required]'
+    );
+
+    if (campos.length === 0) {
+        return;
+    }
+
+    formulario.noValidate = true;
+
+    campos.forEach(function (campo) {
+
+        function actualizarEstado() {
+
+            if (campo.checkValidity()) {
+                campo.classList.remove('is-invalid');
+                campo.removeAttribute('aria-invalid');
+            } else {
+                campo.classList.add('is-invalid');
+                campo.setAttribute('aria-invalid', 'true');
+            }
+        }
+
+        
+        campo.addEventListener('blur', function () {
+            campo.dataset.validacionActiva = 'true';
+            actualizarEstado();
+        });
+
+        
+        campo.addEventListener('input', function () {
+
+            if (campo.dataset.validacionActiva === 'true') {
+                actualizarEstado();
+            }
+        });
+
+        
+        campo.addEventListener('change', function () {
+            campo.dataset.validacionActiva = 'true';
+            actualizarEstado();
+        });
+    });
+
+    
+    formulario.addEventListener('submit', function (evento) {
+
+        let primerCampoInvalido = null;
+
+        campos.forEach(function (campo) {
+
+            campo.dataset.validacionActiva = 'true';
+
+            if (!campo.checkValidity()) {
+
+                campo.classList.add('is-invalid');
+                campo.setAttribute('aria-invalid', 'true');
+
+                if (primerCampoInvalido === null) {
+                    primerCampoInvalido = campo;
+                }
+
+            } else {
+                campo.classList.remove('is-invalid');
+                campo.removeAttribute('aria-invalid');
+            }
+        });
+
+        if (!formulario.checkValidity()) {
+
+            evento.preventDefault();
+
+            formulario.reportValidity();
+
+            if (primerCampoInvalido !== null) {
+                primerCampoInvalido.focus();
+            }
+        }
+    });
+});
 </script>
 
 </body>

@@ -300,6 +300,11 @@ require_once __DIR__ . '/../Includes/navbar.php';
 
 
                     <form method="post">
+                        <p class="required-help">
+                            Los campos marcados con
+                            <span class="required-mark" aria-hidden="true">*</span>
+                            son obligatorios.
+                        </p>
 
                         <input
                             type="hidden"
@@ -319,6 +324,7 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                 class="volara-label"
                             >
                                 Email
+                                <span class="required-mark" aria-hidden="true">*</span>
                             </label>
 
                             <input

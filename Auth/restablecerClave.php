@@ -262,6 +262,11 @@ require_once __DIR__ . '/../Includes/navbar.php';
 
 
                         <form method="post">
+                            <p class="required-help">
+                                Los campos marcados con
+                                <span class="required-mark" aria-hidden="true">*</span>
+                                son obligatorios.
+                            </p>
                             <input
                                 type="hidden"
                                 name="csrf_token"
@@ -290,6 +295,7 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                     class="volara-label"
                                 >
                                     Nueva contraseña
+                                    <span class="required-mark" aria-hidden="true">*</span>
                                 </label>
 
                                 <div class="password-field">
@@ -327,6 +333,7 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                     class="volara-label"
                                 >
                                     Confirmar nueva contraseña
+                                    <span class="required-mark" aria-hidden="true">*</span>
                                 </label>
 
                                 <div class="password-field">

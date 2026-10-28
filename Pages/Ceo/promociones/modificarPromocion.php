@@ -166,6 +166,11 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
             <?php endforeach; ?>
 
             <form method="post" class="volara-card-flat">
+                <p class="required-help">
+                    Los campos marcados con
+                    <span class="required-mark" aria-hidden="true">*</span>
+                    son obligatorios.
+                </p>
                 <input
                     type="hidden"
                     name="csrf_token"
@@ -176,13 +181,13 @@ require_once __DIR__ . '/../../../Includes/navbar.php';
                     ) ?>"
                 >
                 <div class="form-group">
-                    <label for="descripcion" class="volara-label">Descripción</label>
+                    <label for="descripcion" class="volara-label">Descripción<span class="required-mark" aria-hidden="true">*</span></label>
                     <input type="text" class="volara-input" id="descripcion" name="descripcion"
                            maxlength="255" required value="<?= htmlspecialchars($descripcion) ?>">
                 </div>
 
                 <div class="form-group">
-                    <label for="descuento" class="volara-label">Descuento (%)</label>
+                    <label for="descuento" class="volara-label">Descuento (%)<span class="required-mark" aria-hidden="true">*</span></label>
                     <input type="number" class="volara-input" id="descuento" name="descuento"
                            min="1" max="100" step="0.01" required value="<?= htmlspecialchars($descuento) ?>">
                 </div>

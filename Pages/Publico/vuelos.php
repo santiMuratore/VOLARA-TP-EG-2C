@@ -303,6 +303,29 @@ require __DIR__ . '/../../Includes/navbar.php';
     <section class="section section-gray">
         <div class="container">
 
+                        <div class="booking-progress">
+                <p class="booking-progress-text">
+                    Paso 1 de 3 · Buscá tu vuelo
+                </p>
+
+                <ol class="booking-steps" aria-label="Progreso de la reserva">
+                    <li class="booking-step active" aria-current="step">
+                        <span class="booking-step-number">1</span>
+                        <span>Buscar vuelo</span>
+                    </li>
+
+                    <li class="booking-step">
+                        <span class="booking-step-number">2</span>
+                        <span>Elegir asientos</span>
+                    </li>
+
+                    <li class="booking-step">
+                        <span class="booking-step-number">3</span>
+                        <span>Confirmar pago</span>
+                    </li>
+                </ol>
+            </div>
+
             <div class="mb-4">
                 <h2 class="section-title">Encontrá tu próximo vuelo</h2>
 
