@@ -45,8 +45,21 @@ try {
     // Obtener aerolíneas para el select del buscador
     $aerolineas = $conexion->query("SELECT codAerolinea, nombre FROM aerolineas ORDER BY nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-    $condiciones = ['v.activo = 1'];
-    $parametros = [];
+    $condiciones = [
+        'v.activo = 1',
+        '(
+            v.fecha > :fechaActual
+            OR (
+                v.fecha = :fechaActual
+                AND v.hora > :horaActual
+            )
+        )'
+    ];
+
+    $parametros = [
+        'fechaActual' => date('Y-m-d'),
+        'horaActual' => date('H:i:s'),
+    ];
 
     if ($origen !== '') {
         $condiciones[] = 'v.origen LIKE :origen';

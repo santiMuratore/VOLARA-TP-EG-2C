@@ -29,7 +29,9 @@ CREATE TABLE aerolineas (
     UNIQUE KEY uk_aerolinea_iata (codigoIATA),
     UNIQUE KEY uk_aerolinea_nombre (nombre)
 
-) ENGINE=InnoDB;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
@@ -84,7 +86,9 @@ CREATE TABLE usuarios (
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 
-) ENGINE=InnoDB;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
@@ -151,7 +155,9 @@ CREATE TABLE vuelos (
             AND asientosDisponibles <= asientosTotal
         )
 
-) ENGINE=InnoDB;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
@@ -202,7 +208,9 @@ CREATE TABLE promociones (
             OR fechaDesde <= fechaHasta
         )
 
-) ENGINE=InnoDB;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
@@ -230,7 +238,9 @@ CREATE TABLE novedades (
     CONSTRAINT chk_novedad_fechas
         CHECK (fechaExpiracion > fechaPublicacion)
 
-) ENGINE=InnoDB;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
@@ -296,7 +306,9 @@ CREATE TABLE reservas (
     CONSTRAINT chk_reserva_precio
         CHECK (precioFinal > 0)
 
-) ENGINE=InnoDB;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================

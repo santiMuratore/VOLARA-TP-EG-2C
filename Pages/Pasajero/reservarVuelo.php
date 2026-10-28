@@ -181,6 +181,9 @@ $obtenerAsientosOcupados = static function (
 try {
     $conexion = conectarDB();
 
+    $fechaActual = date('Y-m-d');
+    $horaActual = date('H:i:s');
+
     if ($codVuelo <= 0) {
         $error = 'No se recibió un vuelo válido.';
     } else {
@@ -202,12 +205,23 @@ try {
             INNER JOIN aerolineas a
                 ON a.codAerolinea = v.codAerolinea
             WHERE v.codVuelo = :codVuelo
-              AND v.activo = 1
+            AND v.activo = 1
+            AND (
+                v.fecha > :fechaActual
+                OR (
+                    v.fecha = :fechaActual
+                    AND v.hora > :horaActual
+                )
+            )
             LIMIT 1
         ";
 
         $consulta = $conexion->prepare($sql);
-        $consulta->execute(['codVuelo' => $codVuelo]);
+        $consulta->execute([
+            'codVuelo' => $codVuelo,
+            'fechaActual' => $fechaActual,
+            'horaActual' => $horaActual,
+        ]);
 
         $vuelo = $consulta->fetch(PDO::FETCH_ASSOC);
 
@@ -248,6 +262,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
                     codVuelo,
                     codAerolinea,
                     destino,
+                    fecha,
+                    hora,
                     precio,
                     asientosTotal,
                     asientosDisponibles,
@@ -262,9 +278,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $vuelo && $error === null) {
 
             $vueloActual = $consulta->fetch(PDO::FETCH_ASSOC);
 
-            if (!$vueloActual || (int) $vueloActual['activo'] !== 1) {
+            $fechaHoraSalida = DateTimeImmutable::createFromFormat(
+            'Y-m-d H:i:s',
+            $vueloActual['fecha'] . ' ' . $vueloActual['hora']
+            );
+
+            $ahora = new DateTimeImmutable('now');
+
+            if (
+                $fechaHoraSalida === false
+                || $fechaHoraSalida <= $ahora
+            ) {
                 throw new DomainException(
-                    'El vuelo ya no está disponible para reservar.'
+                    'Este vuelo ya salió y no puede reservarse.'
                 );
             }
 
