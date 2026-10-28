@@ -66,6 +66,12 @@ El proyecto está desarrollado utilizando:
 
 ---
 
+## Integrantes del grupo
+| Cataldo Luca
+| Conti Luca
+| Muratore Santiago
+| Videspón Nicolás
+
 ## 🎨 Identidad del proyecto
 
 **Volara** busca transmitir una identidad moderna, simple y relacionada
