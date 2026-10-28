@@ -879,7 +879,7 @@ p:last-child {
 }
 
 .volara-input::placeholder {
-    color: #939BA5;
+    color: var(--volara-gray);
 }
 
 .volara-label {
@@ -2857,10 +2857,9 @@ main.volara-public-page ~ footer.volara-footer {
     color: #151D25;
 }
 
-.password-toggle:focus,
 .password-toggle:focus-visible {
-    outline: none;
-    box-shadow: none;
+    outline: 3px solid var(--volara-red);
+    outline-offset: 2px;
 }
 
 .required-mark {

@@ -140,8 +140,9 @@
     require_once __DIR__ . '/../../Includes/header.php';
     require_once __DIR__ . '/../../Includes/navbar.php';
 ?>
-<main>
+<main id="contenido-principal" tabindex="-1">
     <div class="container py-4">
+        <h1 class="h3 mb-4">Gestión de vuelos</h1>
         <div class="row g-4">
 
             <div class="col-lg-5">

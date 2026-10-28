@@ -146,7 +146,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-6">
                 <div class="volara-card">
-                    <h2 class="h4">Modificar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?></h2>
+                    <h1 class="h4">Modificar vuelo <?= htmlspecialchars($vuelo['codigoVuelo']) ?></h1>
                     <p class="section-subtitle mb-3">
                         Clase <?= htmlspecialchars($nombresClase[$vuelo['clase']] ?? $vuelo['clase']) ?>
                     </p>

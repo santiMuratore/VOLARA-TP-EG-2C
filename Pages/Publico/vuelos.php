@@ -775,10 +775,7 @@ require __DIR__ . '/../../Includes/navbar.php';
 
                 <?php if ($total > $porPagina): ?>
 
-                    <nav
-                        class="volara-pagination-container mt-4"
-                        aria-label="Páginas de resultados de vuelos">
-
+                    <div class="volara-pagination-container mt-4">
                         <div class="volara-pagination">
                             <?= generarPaginacionHTML(
                                 $total,
@@ -787,8 +784,7 @@ require __DIR__ . '/../../Includes/navbar.php';
                                 $urlPaginacion
                             ) ?>
                         </div>
-
-                    </nav>
+                    </div>
 
                 <?php endif; ?>
 
