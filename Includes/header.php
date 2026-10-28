@@ -47,8 +47,21 @@ $extraCss = $extraCss ?? [];
         rel="stylesheet"
     >
 
+    <?php
+
+    $rutaStyle =
+        dirname(__DIR__)
+        . '/Assets/style.css';
+
+    $versionStyle =
+        is_file($rutaStyle)
+            ? filemtime($rutaStyle)
+            : time();
+
+    ?>
+
     <link
-        href="<?= BASE_URL ?>/Assets/style.css"
+        href="<?= BASE_URL ?>/Assets/style.css?v=<?= $versionStyle ?>"
         rel="stylesheet"
     >
 

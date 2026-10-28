@@ -539,6 +539,8 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                         Contraseña
                                     </label>
 
+                                    <div class="password-field">
+
                                     <input
                                         type="password"
                                         id="clave"
@@ -546,8 +548,21 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                         class="volara-input"
                                         minlength="8"
                                         placeholder="Mínimo 8 caracteres"
+                                        autocomplete="new-password"
                                         required
                                     >
+
+                                    <button
+                                        type="button"
+                                        class="password-toggle"
+                                        data-target="clave"
+                                        aria-label="Mostrar contraseña"
+                                        title="Mostrar contraseña"
+                                    >
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+
+                                </div>
 
                                 </div>
 
@@ -566,6 +581,8 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                         Confirmar contraseña
                                     </label>
 
+                                    <div class="password-field">
+
                                     <input
                                         type="password"
                                         id="confirmarClave"
@@ -573,8 +590,21 @@ require_once __DIR__ . '/../Includes/navbar.php';
                                         class="volara-input"
                                         minlength="8"
                                         placeholder="Repetí tu contraseña"
+                                        autocomplete="new-password"
                                         required
                                     >
+
+                                    <button
+                                        type="button"
+                                        class="password-toggle"
+                                        data-target="confirmarClave"
+                                        aria-label="Mostrar contraseña"
+                                        title="Mostrar contraseña"
+                                    >
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+
+                                </div>
 
                                 </div>
 

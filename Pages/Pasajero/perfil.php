@@ -596,12 +596,27 @@ require $archivoNavbar;
                                             Contraseña actual
                                         </label>
 
+                                        <div class="password-field">
+
                                         <input
                                             type="password"
                                             class="volara-input"
                                             id="claveActual"
                                             name="claveActual"
-                                            autocomplete="current-password">
+                                            autocomplete="current-password"
+                                        >
+
+                                        <button
+                                            type="button"
+                                            class="password-toggle"
+                                            data-target="claveActual"
+                                            aria-label="Mostrar contraseña"
+                                            title="Mostrar contraseña"
+                                        >
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </button>
+
+                                    </div>
 
                                     </div>
 
@@ -613,13 +628,28 @@ require $archivoNavbar;
                                             Nueva contraseña
                                         </label>
 
+                                        <div class="password-field">
+
                                         <input
                                             type="password"
                                             class="volara-input"
                                             id="claveNueva"
                                             name="claveNueva"
                                             minlength="8"
-                                            autocomplete="new-password">
+                                            autocomplete="new-password"
+                                        >
+
+                                        <button
+                                            type="button"
+                                            class="password-toggle"
+                                            data-target="claveNueva"
+                                            aria-label="Mostrar contraseña"
+                                            title="Mostrar contraseña"
+                                        >
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </button>
+
+                                    </div>
 
                                         <small class="text-muted d-block mt-1">
                                             Debe tener al menos 8 caracteres.
@@ -635,13 +665,28 @@ require $archivoNavbar;
                                             Confirmar contraseña
                                         </label>
 
+                                        <div class="password-field">
+
                                         <input
                                             type="password"
                                             class="volara-input"
                                             id="confirmarClave"
                                             name="confirmarClave"
                                             minlength="8"
-                                            autocomplete="new-password">
+                                            autocomplete="new-password"
+                                        >
+
+                                        <button
+                                            type="button"
+                                            class="password-toggle"
+                                            data-target="confirmarClave"
+                                            aria-label="Mostrar contraseña"
+                                            title="Mostrar contraseña"
+                                        >
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </button>
+
+                                    </div>
 
                                     </div>
 

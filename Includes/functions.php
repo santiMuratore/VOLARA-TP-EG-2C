@@ -1,4 +1,12 @@
 <?php
+
+$configLocal =
+    __DIR__ . '/../config/config.local.php';
+
+if (is_file($configLocal)) {
+    require_once $configLocal;
+}
+
 require_once __DIR__ . '/functionsF2.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -10,12 +18,26 @@ date_default_timezone_set('America/Argentina/Buenos_Aires');
 
 function conectarDB(): PDO
 {
-    $host = 'localhost';
-    $dbname = 'volara_db';
-    $usuario = 'root';
-    $clave = '';
+    $host = defined('DB_HOST')
+        ? DB_HOST
+        : 'localhost';
 
-    $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
+    $dbname = defined('DB_NAME')
+        ? DB_NAME
+        : 'volara_db';
+
+    $usuario = defined('DB_USER')
+        ? DB_USER
+        : 'root';
+
+    $clave = defined('DB_PASS')
+        ? DB_PASS
+        : '';
+
+    $dsn =
+        "mysql:host=$host;"
+        . "dbname=$dbname;"
+        . "charset=utf8mb4";
 
     try {
         $conexion = new PDO($dsn, $usuario, $clave);

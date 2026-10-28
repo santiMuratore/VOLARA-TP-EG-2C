@@ -1,4 +1,3 @@
-
 <?php
 $configLocal = __DIR__ . '/../config/config.local.php';
 
@@ -12,25 +11,35 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// URL base del proyecto.
-// URL base del proyecto.
 if (!defined('BASE_URL')) {
 
-    $raizProyecto = realpath(dirname(__DIR__));
-    $raizServidor = realpath($_SERVER['DOCUMENT_ROOT']);
+    $raizProyecto =
+        realpath(dirname(__DIR__));
 
-    $raizProyecto = str_replace('\\', '/', $raizProyecto);
-    $raizServidor = str_replace('\\', '/', $raizServidor);
+    $raizServidor =
+        realpath($_SERVER['DOCUMENT_ROOT']);
 
-    $directorioProyecto = str_replace(
-        $raizServidor,
-        '',
-        $raizProyecto
-    );
+    $raizProyecto =
+        str_replace('\\', '/', $raizProyecto);
+
+    $raizServidor =
+        str_replace('\\', '/', $raizServidor);
+
+    $directorioProyecto =
+        str_replace(
+            $raizServidor,
+            '',
+            $raizProyecto
+        );
+
+    $directorioProyecto =
+        trim($directorioProyecto, '/');
 
     define(
         'BASE_URL',
-        '/' . ltrim($directorioProyecto, '/')
+        $directorioProyecto === ''
+            ? ''
+            : '/' . $directorioProyecto
     );
 }
 

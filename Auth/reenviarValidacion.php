@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // -----------------------------------------
 
                 $cuerpo = plantillaValidacionVolara(
-                    $nombre,
+                    $usuario['nombre'],
                     $enlaceValidacion
                 );
 

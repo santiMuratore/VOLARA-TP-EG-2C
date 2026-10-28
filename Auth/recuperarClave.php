@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conexion = conectarDB();
 
         $sql = "
-            SELECT codUsuario, mail
+            SELECT codUsuario, mail, nombre
             FROM usuarios
             WHERE mail = :mail
         ";
@@ -45,6 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $usuario = $consulta->fetch(PDO::FETCH_ASSOC);
 
         if ($usuario) {
+
+             $nombre =
+                (string) $usuario['nombre'];
 
             $tokenRecuperacion = bin2hex(random_bytes(32));
 
@@ -64,31 +67,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
 
             $enlaceRecuperacion =
-                BASE_URL
+                rtrim(BASE_URL, '/')
                 . '/Auth/restablecerClave.php?token='
-                . urlencode($tokenRecuperacion);
+                . rawurlencode($tokenRecuperacion);
 
-            $cuerpo = "
-                <h2>Recuperación de contraseña</h2>
 
-                <p>
-                    Recibimos una solicitud para cambiar la contraseña de tu cuenta de Volara.
-                </p>
+            $nombreSeguro =
+            htmlspecialchars(
+                $nombre,
+                ENT_QUOTES,
+                'UTF-8'
+            );
+        
 
-                <p>
-                    El siguiente enlace será válido durante una hora:
-                </p>
-
-                <p>
-                    <a href=\"$enlaceRecuperacion\">
-                        Restablecer mi contraseña
-                    </a>
-                </p>
-
-                <p>
-                    Si no solicitaste este cambio, podés ignorar este correo.
-                </p>
-            ";
+            $cuerpo = plantillaRecuperacionVolara(
+                $nombre,
+                $enlaceRecuperacion
+            );
 
             enviarMail(
                 $usuario['mail'],

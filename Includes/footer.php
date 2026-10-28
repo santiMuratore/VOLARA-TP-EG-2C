@@ -240,7 +240,59 @@ $esPasajeroFooter = in_array(
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.querySelectorAll('.password-toggle').forEach(function (boton) {
+
+    boton.addEventListener('click', function () {
+
+        const idCampo =
+            boton.getAttribute('data-target');
+
+        const campo =
+            document.getElementById(idCampo);
+
+        if (!campo) {
+            return;
+        }
+
+        const mostrar =
+            campo.type === 'password';
+
+        campo.type =
+            mostrar ? 'text' : 'password';
+
+        const icono =
+            boton.querySelector('i');
+
+        if (icono) {
+
+            icono.classList.toggle(
+                'bi-eye',
+                !mostrar
+            );
+
+            icono.classList.toggle(
+                'bi-eye-slash',
+                mostrar
+            );
+        }
+
+        boton.setAttribute(
+            'aria-label',
+            mostrar
+                ? 'Ocultar contraseña'
+                : 'Mostrar contraseña'
+        );
+
+        boton.setAttribute(
+            'title',
+            mostrar
+                ? 'Ocultar contraseña'
+                : 'Mostrar contraseña'
+        );
+    });
+});
+</script>
 
 </body>
-
 </html>

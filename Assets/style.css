@@ -2705,3 +2705,54 @@ main.volara-public-page ~ footer.volara-footer {
     /* Cada reporte en su propia hoja */
     .hoja-impresion { break-after: page; page-break-after: always; }
 }
+
+.password-field {
+    position: relative;
+    width: 100%;
+}
+
+.password-field .volara-input {
+    width: 100%;
+    padding-right: 3.25rem;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.9rem;
+    transform: translateY(-50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+
+    color: #626B75;
+    font-size: 1.1rem;
+    line-height: 1;
+
+    cursor: pointer;
+    z-index: 5;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.password-toggle:hover {
+    background: #F4F6F8;
+    color: #151D25;
+}
+
+.password-toggle:focus,
+.password-toggle:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
