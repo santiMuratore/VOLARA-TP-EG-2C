@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../Includes/functions.php';
 require_once __DIR__ . '/../../Includes/functionsF2.php';
+require_once __DIR__ . '/../../Includes/funcionPromociones.php';
 
 $titulo = 'Promociones';
 $pageDescription = 'Descubrí las promociones y descuentos de las aerolíneas de VOLARA.';
@@ -23,11 +24,12 @@ try {
         INNER JOIN aerolineas a
             ON p.codAerolinea = a.codAerolinea
         WHERE LOWER(TRIM(p.estado)) IN ($estadosPublicos)
+          AND (p.fechaDesde IS NULL OR p.fechaDesde <= CURDATE())
+          AND (p.fechaHasta IS NULL OR p.fechaHasta >= CURDATE())
     ";
 
     $total = (int) $conexion->query($sqlCount)->fetchColumn();
 
-    // Calcular la paginación.
     $paginacion = paginar($total, $porPagina, $pagina);
     $pagina = $paginacion['paginaActual'];
     $offset = $paginacion['offset'];
@@ -38,12 +40,18 @@ try {
             p.descripcion,
             p.descuento,
             p.estado,
+            p.destino,
+            p.fechaDesde,
+            p.fechaHasta,
+            a.codAerolinea,
             a.nombre AS nombreAerolinea,
             a.codigoIATA AS codigoIATA
         FROM promociones p
         INNER JOIN aerolineas a
             ON p.codAerolinea = a.codAerolinea
         WHERE LOWER(TRIM(p.estado)) IN ($estadosPublicos)
+          AND (p.fechaDesde IS NULL OR p.fechaDesde <= CURDATE())
+          AND (p.fechaHasta IS NULL OR p.fechaHasta >= CURDATE())
         ORDER BY p.descuento DESC, p.codPromocion DESC
         LIMIT :limite OFFSET :offset
     ";
@@ -197,39 +205,37 @@ require __DIR__ . '/../../Includes/navbar.php';
                                         ) ?>
                                     <?php endif; ?>
                                 </p>
-
                                 <!-- Descripción -->
                                 <h3 class="h5 mb-3">
                                     Oferta de
-                                    <?= htmlspecialchars(
-                                        $promo['nombreAerolinea'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
+                                    <?= htmlspecialchars($promo['nombreAerolinea'], ENT_QUOTES, 'UTF-8') ?>
                                 </h3>
 
-                                <p class="text-muted mb-4">
-                                    <?= nl2br(htmlspecialchars(
-                                        $promo['descripcion'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    )) ?>
+                                <p class="text-muted mb-3">
+                                    <?= nl2br(htmlspecialchars($promo['descripcion'], ENT_QUOTES, 'UTF-8')) ?>
                                 </p>
+
+                                <!-- Detalles de la promoción -->
+                                <div class="mb-4 small">
+                                    <div class="text-muted mb-1">
+                                        <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>
+                                        <strong>Destino:</strong> <?= htmlspecialchars($promo['destino'] ?? 'Todos los destinos', ENT_QUOTES, 'UTF-8') ?>
+                                    </div>
+                                    <div class="text-muted">
+                                        <i class="bi bi-calendar-event me-1" aria-hidden="true"></i>
+                                        <strong>Vigencia:</strong> <?= htmlspecialchars(textoVigencia($promo['fechaDesde'], $promo['fechaHasta']), ENT_QUOTES, 'UTF-8') ?>
+                                    </div>
+                                </div>
 
                                 <!-- Acción -->
                                 <div class="mt-auto">
-
                                     <a
-                                        href="<?= BASE_URL ?>/Pages/Publico/vuelos.php"
+                                        href="<?= BASE_URL ?>/Pages/Publico/vuelos.php?codAerolinea=<?= (int) $promo['codAerolinea'] ?>"
                                         class="btn btn-volara w-100"
                                     >
                                         Consultar vuelos
-                                        <i
-                                            class="bi bi-arrow-right"
-                                            aria-hidden="true"
-                                        ></i>
+                                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
                                     </a>
-
                                 </div>
 
                             </article>

@@ -43,10 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (string) $csrfRecibido
         )
     ) {
-        die(
-            'La solicitud no es válida. '
-            . 'Recargá la página e intentá nuevamente.'
-        );
+        header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
+        exit;
     }
 
     $consulta = $conexion->prepare(

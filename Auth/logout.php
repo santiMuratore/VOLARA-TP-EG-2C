@@ -26,10 +26,8 @@ if (
         $csrfRecibido
     )
 ) {
-    die(
-        'La solicitud no es válida. '
-        . 'Recargá la página e intentá nuevamente.'
-    );
+    header('Location: /VOLARA-TP-EG-2C/Pages/Publico/index.php');
+        exit;
 }
 
 
