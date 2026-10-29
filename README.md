@@ -66,11 +66,36 @@ El proyecto está desarrollado utilizando:
 
 ---
 
+## URL de producción
+  (https://volara.site.je/)
+
+## Usuarios de prueba
+- Admin
+    - Correo: admin@volara.test
+    - Contraseña: VolaraAdmin#27_Nube!
+---------------------------------------
+- CEOs
+    - Correo: ceo.volara@volara.test
+    - Contraseña: Prueba123
+    -----------------------------------
+    - Correo: ceo.sur@volara.test
+    - Contraseña: Prueba123
+---------------------------------------
+- Usuarios
+    - Correo: lucia@volara.test
+    - Contraseña: Prueba123
+    -----------------------------------
+    - Correo: tomas@volara.test
+    - Contraseña: Prueba123
+    -----------------------------------
+    - Correo: sofia@volara.test
+    - Contraseña: Prueba123
+
 ## Integrantes del grupo
-| Cataldo Luca
-| Conti Luca
-| Muratore Santiago
-| Videspón Nicolás
+- Cataldo Luca
+- Conti Luca
+- Muratore Santiago
+- Videspón Nicolás
 
 ## 🎨 Identidad del proyecto
 
